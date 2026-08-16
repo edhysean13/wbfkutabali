@@ -2,141 +2,31 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WBF Admin</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#090909">
+<title>WBF Kuta-Bali | World Brand Factory</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#090909;color:#fff;font-family:Arial,Helvetica,sans-serif;min-height:100vh}
-.wrap{max-width:1100px;margin:auto;padding:28px 18px}
-.logo{width:58px;height:58px;border-radius:50%;object-fit:cover;background:#222}
-.login{max-width:430px;margin:8vh auto 0;background:#121212;border:1px solid #292929;border-radius:18px;padding:28px}
-h1{font-size:28px;margin:14px 0 6px}
-.sub{color:#888;font-size:13px;margin-bottom:22px}
-label{display:block;font-size:12px;color:#aaa;margin:14px 0 7px}
-input{width:100%;padding:13px;border-radius:8px;border:1px solid #333;background:#090909;color:#fff;outline:none}
-button{width:100%;margin-top:16px;padding:13px;border:0;border-radius:8px;background:#e21b23;color:#fff;font-weight:700;cursor:pointer}
-button:hover{background:#b9141b}
-.msg{margin-top:14px;font-size:13px;color:#aaa}
-.hidden{display:none}
-.top{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #242424;padding-bottom:18px}
-.signout{width:auto;margin:0;padding:9px 15px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
-.card{background:#121212;border:1px solid #292929;border-radius:14px;padding:20px}
-.num{font-size:28px;font-weight:800}
-.muted{color:#888;font-size:12px}
-.menu{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
-.menu button{margin:0;text-align:left;padding:18px;background:#151515;border:1px solid #333}
-.menu button:hover{background:#e21b23}
-.notice{margin-top:18px;padding:16px;border:1px solid #333;border-radius:12px;color:#aaa;font-size:13px;line-height:1.5}
-@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
+*{box-sizing:border-box}body{margin:0;background:#090909;color:#fff;font-family:Arial,Helvetica,sans-serif}header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:8px 5%;border-bottom:1px solid #242424;background:#090909;position:sticky;top:0;z-index:20}.logo{height:54px;width:54px;object-fit:cover;border-radius:50%}.nav{display:flex;gap:8px;align-items:center}.nav button{border:1px solid #333;background:#151515;color:#fff;width:42px;height:42px;border-radius:50%;font-size:18px}.hero{max-width:1200px;margin:22px auto;padding:55px 6%;min-height:410px;border-radius:24px;background-image:linear-gradient(90deg,rgba(0,0,0,.88),rgba(0,0,0,.55),rgba(0,0,0,.15)),url("https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1800&q=85");background-size:cover;background-position:center;display:flex;align-items:center}.kicker{font-size:12px;letter-spacing:2px;color:#c0c0c0;font-weight:bold}h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:uppercase}h1 span{color:#08a8f5}.hero p{max-width:570px;color:#d0d0d0;font-size:17px;line-height:1.6}.cta{display:inline-block;margin-top:12px;background:#08a8f5;color:#fff;text-decoration:none;font-weight:bold;padding:14px 22px;border-radius:8px}.container{max-width:1200px;margin:auto;padding:0 5%}.section{margin-top:34px}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.section-head h2{margin:0;font-size:24px}.muted{color:#888;font-size:13px}.products{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:#121212;border:1px solid #282828;border-radius:14px;overflow:hidden}.photo{height:220px;background:#e7e7e7;color:#111;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold}.info{padding:14px}.tag{font-size:10px;color:#e21b23;font-weight:bold;letter-spacing:1px}.name{font-weight:bold;margin:8px 0}.price{font-size:17px;font-weight:bold}.order{width:100%;margin-top:12px;padding:11px;border:0;border-radius:8px;background:#e21b23;color:#fff;font-weight:bold}.info-box{margin-top:32px;padding:20px;border:1px solid #282828;background:#111;border-radius:14px;color:#bdbdbd;line-height:1.6}.main-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap;margin-top:18px}.main-buttons a{display:block;flex:1;min-width:0;text-align:center;padding:12px 10px;border-radius:8px;background:#e21b23;color:#fff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.6px}.main-buttons a:hover{background:#b9141b}.brands-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;padding:80px 18px}.brands-modal.show{display:block}.brands-box{max-width:520px;margin:auto;background:#121212;border:1px solid #333;border-radius:16px;padding:20px}.brands-box .section-head button{background:#e21b23;color:#fff;border:0;border-radius:50%;width:36px;height:36px}.brand-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}.brand-list a{background:#e21b23;color:#fff;text-decoration:none;text-align:center;border-radius:8px;padding:14px 8px;font-weight:700;font-size:12px}.brand-list a:hover{background:#b9141b}footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:center;color:#777}@media(max-width:800px){.products{grid-template-columns:repeat(2,1fr)}.hero{margin:12px;border-radius:18px}}@media(max-width:500px){header{padding:8px 14px}.container{padding:0 14px}.hero{padding:35px 22px;min-height:350px}.photo{height:180px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-
-<section id="login" class="login">
-  <img class="logo" src="" alt="WBF" id="loginLogo">
-  <h1>WBF ADMIN</h1>
-  <div class="sub">World Brand Factory · Admin Panel</div>
-  <form id="loginForm">
-    <label>Email Admin</label>
-    <input id="email" type="email" autocomplete="username" required placeholder="admin@email.com">
-    <label>Password</label>
-    <input id="password" type="password" autocomplete="current-password" required placeholder="Password">
-    <button type="submit">LOGIN</button>
-  </form>
-  <div id="loginMsg" class="msg"></div>
-</section>
-
-<section id="dashboard" class="hidden">
-  <div class="top">
-    <div>
-      <div class="muted">WBF ADMIN</div>
-      <h1>Dashboard</h1>
-    </div>
-    <button class="signout" id="signout">LOGOUT</button>
-  </div>
-
-  <div class="grid">
-    <div class="card"><div class="num">6</div><div class="muted">BRANDS</div></div>
-    <div class="card"><div class="num" id="productCount">0</div><div class="muted">SKU / PRODUCTS</div></div>
-    <div class="card"><div class="num" id="orderCount">0</div><div class="muted">ORDERS</div></div>
-    <div class="card"><div class="num" id="paymentCount">0</div><div class="muted">PAYMENTS</div></div>
-  </div>
-
-  <div class="menu">
-    <button onclick="alert('Modul Brands kita lanjutkan berikutnya.')">🏷️ BRANDS</button>
-    <button onclick="alert('Modul SKU / Products kita lanjutkan berikutnya.')">📦 SKU / PRODUCTS</button>
-    <button onclick="alert('Modul Order Masuk kita lanjutkan berikutnya.')">🛒 ORDERS MASUK</button>
-    <button onclick="alert('Modul QRIS & pembayaran kita lanjutkan berikutnya.')">💳 PAYMENTS / QRIS</button>
-  </div>
-
-  <div class="notice">
-    Stok <b>tidak</b> dikelola di aplikasi. Setelah order masuk, Admin mengecek stok secara fisik di toko. Jika tersedia, Admin mengonfirmasi order dan pembayaran QRIS baru diberikan kepada customer.
-  </div>
-</section>
-</div>
-
-<script>
-const SUPABASE_URL = 'https://wjeyyklbcrqxawoxlphk.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const login = document.getElementById('login');
-const dashboard = document.getElementById('dashboard');
-const msg = document.getElementById('loginMsg');
-
-async function checkSession(){
-  const {data:{session}} = await supabase.auth.getSession();
-  if(session) await showDashboard();
-}
-
-async function showDashboard(){
-  const {data:{user}} = await supabase.auth.getUser();
-  if(!user) return;
-
-  const {data:isAdmin,error} = await supabase.rpc('wbf_is_admin');
-  if(error || !isAdmin){
-    await supabase.auth.signOut();
-    msg.textContent = 'Akun ini belum terdaftar sebagai Admin WBF.';
-    return;
-  }
-
-  login.classList.add('hidden');
-  dashboard.classList.remove('hidden');
-
-  // Counts will be connected to the Admin modules next.
-  document.getElementById('productCount').textContent = '0';
-  document.getElementById('orderCount').textContent = '0';
-  document.getElementById('paymentCount').textContent = '0';
-}
-
-document.getElementById('loginForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  msg.textContent = 'Memeriksa login...';
-  const {error} = await supabase.auth.signInWithPassword({
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value
-  });
-  if(error){ msg.textContent = error.message; return; }
-  await showDashboard();
-});
-
-document.getElementById('signout').addEventListener('click', async()=>{
-  await supabase.auth.signOut();
-  dashboard.classList.add('hidden');
-  login.classList.remove('hidden');
-});
-
-supabase.auth.onAuthStateChange((_event, session)=>{
-  if(!session){
-    dashboard.classList.add('hidden');
-    login.classList.remove('hidden');
-  }
-});
-
-checkSession();
-</script>
-</body>
-</html>
+<header><img class="logo" src="wbf-logo.jpeg" alt="WBF Kuta-Bali"><div class="nav"><button aria-label="Search">⌕</button><button aria-label="Cart">🛒</button><button aria-label="Menu">☰</button></div></header>
+<section class="hero" id="home"><div><div class="kicker">WBF KUTA-BALI • WORLD BRAND FACTORY</div><h1>THE BIGGEST<br><span>OUTLET SURFING IN ASIA</span></h1><p>Temukan koleksi fashion, surfing dan lifestyle dari brand pilihan WBF Kuta-Bali.</p><a class="cta" href="#brands" onclick="openBrands();return false;">EXPLORE COLLECTION</a></div></section>
+<section class="main-buttons container" id="main-navigation"><a href="#home">HOME</a><a href="#brands" onclick="openBrands();return false;">BRANDS</a><a href="#cart">CART</a><a href="#about">ABOUT</a></section>
+<div id="brandsModal" class="brands-modal" aria-hidden="true"><div class="brands-box"><div class="section-head"><h2>Brands</h2><button onclick="closeBrands()">×</button></div><div class="brand-list"><a href="#brand-volcom" onclick="closeBrands()">VOLCOM</a><a href="#brand-ripcurl" onclick="closeBrands()">RIPCURL</a><a href="#brand-mae" onclick="closeBrands()">MAE BALI</a><a href="#brand-zombies" onclick="closeBrands()">ZOMBIES</a><a href="#brand-tridatu" onclick="closeBrands()">TRIDATU BALI</a><a href="#brand-juicematic" onclick="closeBrands()">JUICEMATIC</a></div></div></div>
+<main class="container">
+<section class="section" id="new-arrival"><div class="section-head"><h2>New Arrival</h2><span class="muted">Katalog</span></div><div class="products" id="catalog">
+<article class="card" data-brand="VOLCOM"><div class="photo">VOLCOM PRODUCT</div><div class="info"><div class="tag">VOLCOM</div><div class="name">Latest Volcom Collection</div><div class="price">Lihat detail</div><button class="order" onclick="order('VOLCOM')">ORDER</button></div></article>
+<article class="card" data-brand="RIPCURL"><div class="photo">RIPCURL PRODUCT</div><div class="info"><div class="tag">RIPCURL</div><div class="name">Latest Ripcurl Collection</div><div class="price">Lihat detail</div><button class="order" onclick="order('RIPCURL')">ORDER</button></div></article>
+<article class="card" data-brand="MAE BALI"><div class="photo">MAE BALI PRODUCT</div><div class="info"><div class="tag">MAE BALI</div><div class="name">Latest Mae Bali Collection</div><div class="price">Lihat detail</div><button class="order" onclick="order('MAE BALI')">ORDER</button></div></article>
+<article class="card" data-brand="ZOMBIES"><div class="photo">ZOMBIES PRODUCT</div><div class="info"><div class="tag">ZOMBIES</div><div class="name">Latest Zombies Collection</div><div class="price">Lihat detail</div><button class="order" onclick="order('ZOMBIES')">ORDER</button></div></article>
+<article class="card" data-brand="TRIDATU BALI"><div class="photo">TRIDATU BALI PRODUCT</div><div class="info"><div class="tag">TRIDATU BALI</div><div class="name">Latest Tridatu Bali Collection</div><div class="price">Lihat detail</div><button class="order" onclick="order('TRIDATU BALI')">ORDER</button></div></article>
+<article class="card" data-brand="JUICEMATIC"><div class="photo">JUICEMATIC PRODUCT</div><div class="info"><div class="tag">JUICEMATIC</div><div class="name">Latest Juicematic Collection</div><div class="price">Lihat detail</div><button class="order" onclick="order('JUICEMATIC')">ORDER</button></div></article>
+</div></section>
+<div class="info-box"><strong>Belanja &amp; Ritel</strong><br>The Biggest Outlet Surfing in Asia<br><br>📍 Bali<br>Find us: Open 09:00 pagi–10:00 malam<br>Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia</div>
+</main>
+<section class="section" id="cart"><div class="section-head"><h2>Cart</h2></div><div class="info-box">Keranjang masih kosong.</div></section>
+<section class="section" id="about"><div class="section-head"><h2>About WBF</h2></div><div class="info-box">WBF Kuta-Bali • World Brand Factory</div></section>
+<footer>WBF Kuta-Bali • World Brand Factory<br><small>Katalog &amp; order online • Stok dikonfirmasi admin sebelum pembayaran</small></footer>
+<script>function openBrands(){document.getElementById('brandsModal').classList.add('show');document.getElementById('brandsModal').setAttribute('aria-hidden','false')}function closeBrands(){document.getElementById('brandsModal').classList.remove('show');document.getElementById('brandsModal').setAttribute('aria-hidden','true')}function order(brand){alert('ORDER WBF\n\nBrand: '+brand+'\n\nBerikutnya kita akan buat pilihan produk, size, warna, jumlah, alamat, pengecekan stok admin, QRIS dan pembayaran.');}</script>
+</body></html>
