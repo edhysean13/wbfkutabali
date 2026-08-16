@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WBF Kuta-Bali — World Brand Factory</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#08090a;color:#fff;font-family:Arial,Helvetica,sans-serif}
+header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:10px 6%;border-bottom:1px solid #222;background:#090a0b;position:sticky;top:0;z-index:10}
+.logo{height:52px;width:auto;border-radius:50%}.icons{display:flex;gap:14px}.icon{width:40px;height:40px;border:1px solid #333;border-radius:50%;display:grid;place-items:center;color:#10a9ff}
+.hero{margin:24px auto;max-width:1200px;padding:45px 6%;min-height:360px;border-radius:24px;background:linear-gradient(110deg,#111 15%,#17242c 55%,#071018);display:flex;align-items:center;overflow:hidden}
+.hero h1{font-size:48px;margin:0 0 10px;line-height:1}.hero h1 span{color:#09a8ff}.hero p{color:#bbb;font-size:18px;max-width:520px}.btn{display:inline-block;background:#08a7f7;color:#fff;padding:13px 22px;border-radius:8px;text-decoration:none;font-weight:700}
+.container{max-width:1200px;margin:auto;padding:0 6%}.section-title{display:flex;justify-content:space-between;align-items:center;margin:30px 0 15px}.section-title h2{margin:0}.muted{color:#888}
+.brands{display:flex;gap:10px;overflow:auto;padding-bottom:8px}.brand{background:#17191b;border:1px solid #292c2f;border-radius:12px;padding:13px 20px;white-space:nowrap}
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.card{background:#121416;border:1px solid #25282b;border-radius:14px;overflow:hidden}.photo{height:210px;background:#e9e9e9;display:grid;place-items:center;color:#111;font-weight:bold}.card-body{padding:14px}.tag{font-size:11px;color:#08a7f7;font-weight:bold}.name{margin:7px 0;font-weight:700}.price{font-size:17px;font-weight:700}.order{margin-top:12px;width:100%;border:0;background:#08a7f7;color:white;padding:11px;border-radius:8px;font-weight:bold}
+footer{margin-top:50px;padding:35px 6%;border-top:1px solid #222;color:#888;text-align:center}
+@media(max-width:800px){.products{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:36px}.hero{min-height:300px}.photo{height:170px}}
+@media(max-width:480px){.products{grid-template-columns:1fr 1fr}.hero{margin:12px;border-radius:16px;padding:30px 22px}.container{padding:0 14px}header{padding:8px 14px}}
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" src="assets/wbf-logo.jpeg" alt="WBF Kuta-Bali">
+  <div class="icons"><div class="icon">⌕</div><div class="icon">🛒</div><div class="icon">☰</div></div>
+</header>
+
+<section class="hero">
+  <div>
+    <div class="muted">WORLD BRAND FACTORY • KUTA-BALI</div>
+    <h1>DISCOVER<br><span>YOUR STYLE.</span></h1>
+    <p>Koleksi terbaru dari brand pilihan. Lihat produk, pilih yang kamu suka, lalu lakukan order. Stok akan dikonfirmasi oleh admin sebelum pembayaran.</p>
+    <a class="btn" href="#produk">LIHAT KOLEKSI</a>
+  </div>
+</section>
+
+<main class="container">
+  <div class="section-title"><h2>Brand Pilihan</h2><span class="muted">Lihat semua →</span></div>
+  <div class="brands">
+    <div class="brand">BILLABONG</div><div class="brand">QUIKSILVER</div><div class="brand">RVCA</div><div class="brand">ROXY</div><div class="brand">DC</div>
+  </div>
+
+  <div class="section-title" id="produk"><h2>New Arrival</h2><span class="muted">Terbaru</span></div>
+  <div class="products">
+    <div class="card"><div class="photo">PRODUCT PHOTO</div><div class="card-body"><div class="tag">NEW ARRIVAL</div><div class="name">Billabong T-Shirt</div><div class="price">Rp299.000</div><button class="order" onclick="order('Billabong T-Shirt')">ORDER</button></div></div>
+    <div class="card"><div class="photo">PRODUCT PHOTO</div><div class="card-body"><div class="tag">NEW ARRIVAL</div><div class="name">Quiksilver Tee</div><div class="price">Rp299.000</div><button class="order" onclick="order('Quiksilver Tee')">ORDER</button></div></div>
+    <div class="card"><div class="photo">PRODUCT PHOTO</div><div class="card-body"><div class="tag">BEST SELLER</div><div class="name">RVCA Hoodie</div><div class="price">Rp699.000</div><button class="order" onclick="order('RVCA Hoodie')">ORDER</button></div></div>
+    <div class="card"><div class="photo">PRODUCT PHOTO</div><div class="card-body"><div class="tag">NEW ARRIVAL</div><div class="name">Billabong Shorts</div><div class="price">Rp499.000</div><button class="order" onclick="order('Billabong Shorts')">ORDER</button></div></div>
+  </div>
+</main>
+
+<footer>WBF Kuta-Bali • World Brand Factory<br><small>Katalog & order online • Stok dikonfirmasi admin sebelum pembayaran</small></footer>
+
+<script>
+function order(product){
+  alert("Order: " + product + "\\n\\nTahap berikutnya: pilih warna & ukuran → jumlah → alamat → kirim order ke admin untuk konfirmasi stok.");
+}
+</script>
+</body>
+</html>
