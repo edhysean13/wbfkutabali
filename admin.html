@@ -22,126 +22,111 @@ button{width:100%;height:52px;margin-top:20px;border:0;border-radius:10px;backgr
 .logout{width:auto;margin:0;padding:0 22px;height:48px;background:#df1720;color:#fff;border:0;border-radius:10px;font-size:14px;font-weight:800;display:block;visibility:visible}
 .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
 .card{background:#121212;border:1px solid #292929;border-radius:14px;padding:20px}
+.card.clickable{cursor:pointer}
 .num{font-size:28px;font-weight:800}
 .muted{color:#888;font-size:12px}
-@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}}
+.page{margin-top:22px}
+.page-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #292929;padding-bottom:18px}
+.back{width:auto;margin:0;padding:0 18px;height:44px;font-size:14px}
+.brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
+.brand-card{background:#121212;border:1px solid #292929;border-radius:14px;padding:22px;text-align:center;font-size:18px;font-weight:800}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.brand-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
-
 <section id="login" class="wrap">
 <div class="box">
-  <div class="logo">WBF</div>
-  <h1>WBF ADMIN</h1>
-  <div class="sub">World Brand Factory · Admin Panel</div>
-
-  <label>Email Admin</label>
-  <input id="email" type="email" autocomplete="username" placeholder="Email Admin">
-
-  <label>Password</label>
-  <input id="password" type="password" autocomplete="current-password" placeholder="Password">
-
-  <button id="loginBtn" type="button">LOGIN</button>
-  <div id="status" class="status"></div>
+<div class="logo">WBF</div>
+<h1>WBF ADMIN</h1>
+<div class="sub">World Brand Factory · Admin Panel</div>
+<label>Email Admin</label>
+<input id="email" type="email" autocomplete="username" placeholder="Email Admin">
+<label>Password</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="Password">
+<button id="loginBtn" type="button">LOGIN</button>
+<div id="status" class="status"></div>
 </div>
 </section>
 
 <section id="dashboard" class="dashboard hidden">
-  <div class="top">
-    <div><div class="muted">WBF ADMIN</div><h1>Dashboard</h1></div>
-    <button class="logout" id="logoutBtn">LOGOUT</button>
-  </div>
-  <div class="cards">
-    <div class="card"><div class="num">6</div><div class="muted">BRANDS</div></div>
-    <div class="card"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
-    <div class="card"><div class="num">0</div><div class="muted">ORDERS</div></div>
-    <div class="card"><div class="num">0</div><div class="muted">PAYMENTS</div></div>
-  </div>
+<div class="top">
+<div><div class="muted">WBF ADMIN</div><h1>Dashboard</h1></div>
+<button class="logout" id="logoutBtn">LOGOUT</button>
+</div>
+
+<div class="cards" id="dashboardCards">
+<div class="card clickable" id="brandsCard"><div class="num">6</div><div class="muted">BRANDS</div></div>
+<div class="card"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
+<div class="card"><div class="num">0</div><div class="muted">ORDERS</div></div>
+<div class="card"><div class="num">0</div><div class="muted">PAYMENTS</div></div>
+</div>
+
+<section id="brandsPage" class="page hidden">
+<div class="page-head">
+<div><div class="muted">WBF ADMIN</div><h1>BRANDS</h1></div>
+<button class="back" id="backBtn">BACK</button>
+</div>
+<div class="brand-grid">
+<div class="brand-card">VOLCOM</div>
+<div class="brand-card">RIPCURL</div>
+<div class="brand-card">MAE BALI</div>
+<div class="brand-card">ZOMBIES</div>
+<div class="brand-card">TRIDATU BALI</div>
+<div class="brand-card">JUICEMATIC</div>
+</div>
+</section>
 </section>
 
 <script>
-const URL = "https://wjeyyklbcrqxawoxlphk.supabase.co";
-const KEY = "sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
+const URL="https://wjeyyklbcrqxawoxlphk.supabase.co";
+const KEY="sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
+const login=document.getElementById("login");
+const dash=document.getElementById("dashboard");
+const status=document.getElementById("status");
+const btn=document.getElementById("loginBtn");
+const cards=document.getElementById("dashboardCards");
+const brandsPage=document.getElementById("brandsPage");
 
-const login = document.getElementById("login");
-const dash = document.getElementById("dashboard");
-const status = document.getElementById("status");
-const btn = document.getElementById("loginBtn");
-
-function showError(text){ status.textContent = text; }
+function showError(text){status.textContent=text}
 
 async function loginAdmin(){
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  if(!email || !password){
-    showError("Email dan password wajib diisi.");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "MEMERIKSA...";
-  showError("");
-
-  try{
-    const r = await fetch(URL + "/auth/v1/token?grant_type=password", {
-      method:"POST",
-      headers:{
-        "apikey":KEY,
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({email,password})
-    });
-
-    const data = await r.json();
-
-    if(!r.ok){
-      showError("LOGIN GAGAL: " + (data.msg || data.error_description || data.message || "Email/password tidak cocok."));
-      return;
-    }
-
-    const rpc = await fetch(URL + "/rest/v1/rpc/wbf_is_admin", {
-      method:"POST",
-      headers:{
-        "apikey":KEY,
-        "Authorization":"Bearer " + data.access_token,
-        "Content-Type":"application/json"
-      },
-      body:"{}"
-    });
-
-    const isAdmin = await rpc.json();
-
-    if(!rpc.ok){
-      showError("Login berhasil, tetapi pengecekan Admin gagal: " + JSON.stringify(isAdmin));
-      return;
-    }
-
-    if(isAdmin !== true){
-      showError("Login berhasil, tetapi akun ini belum terdaftar sebagai Admin WBF.");
-      return;
-    }
-
-    sessionStorage.setItem("wbf_access_token", data.access_token);
-    login.classList.add("hidden");
-    dash.classList.remove("hidden");
-  }catch(e){
-    showError("Koneksi gagal: " + e.message);
-  }finally{
-    btn.disabled = false;
-    btn.textContent = "LOGIN";
-  }
+const email=document.getElementById("email").value.trim();
+const password=document.getElementById("password").value;
+if(!email||!password){showError("Email dan password wajib diisi.");return}
+btn.disabled=true;btn.textContent="MEMERIKSA...";showError("");
+try{
+const r=await fetch(URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+const data=await r.json();
+if(!r.ok){showError("LOGIN GAGAL: "+(data.msg||data.error_description||data.message||"Email/password tidak cocok."));return}
+const rpc=await fetch(URL+"/rest/v1/rpc/wbf_is_admin",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+data.access_token,"Content-Type":"application/json"},body:"{}"});
+const isAdmin=await rpc.json();
+if(!rpc.ok){showError("Login berhasil, tetapi pengecekan Admin gagal: "+JSON.stringify(isAdmin));return}
+if(isAdmin!==true){showError("Login berhasil, tetapi akun ini belum terdaftar sebagai Admin WBF.");return}
+sessionStorage.setItem("wbf_access_token",data.access_token);
+login.classList.add("hidden");dash.classList.remove("hidden");
+}catch(e){showError("Koneksi gagal: "+e.message)}
+finally{btn.disabled=false;btn.textContent="LOGIN"}
 }
 
-btn.addEventListener("click", loginAdmin);
-document.getElementById("password").addEventListener("keydown", e => {
-  if(e.key === "Enter") loginAdmin();
+btn.addEventListener("click",loginAdmin);
+document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter")loginAdmin()});
+
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+sessionStorage.removeItem("wbf_access_token");
+brandsPage.classList.add("hidden");
+cards.classList.remove("hidden");
+dash.classList.add("hidden");
+login.classList.remove("hidden");
 });
 
-document.getElementById("logoutBtn").addEventListener("click", ()=>{
-  sessionStorage.removeItem("wbf_access_token");
-  dash.classList.add("hidden");
-  login.classList.remove("hidden");
+document.getElementById("brandsCard").addEventListener("click",()=>{
+cards.classList.add("hidden");
+brandsPage.classList.remove("hidden");
+});
+
+document.getElementById("backBtn").addEventListener("click",()=>{
+brandsPage.classList.add("hidden");
+cards.classList.remove("hidden");
 });
 </script>
 </body>
