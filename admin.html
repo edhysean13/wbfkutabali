@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WBF Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#070707;color:#fff;font-family:Arial,sans-serif;min-height:100vh}
+.wrap{max-width:520px;margin:auto;padding:28px 18px}
+.box{margin-top:8vh;background:#121212;border:1px solid #303030;border-radius:22px;padding:30px 24px}
+.logo{width:72px;height:72px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;color:#08a8ef;font-weight:800;font-size:24px;border:2px solid #333}
+h1{font-size:30px;margin:18px 0 5px}
+.sub{color:#999;margin-bottom:28px}
+label{display:block;color:#aaa;font-size:14px;margin:16px 0 7px}
+input{width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px}
+button{width:100%;height:52px;margin-top:20px;border:0;border-radius:10px;background:#df1720;color:#fff;font-size:16px;font-weight:800}
+.status{min-height:22px;margin-top:14px;font-size:13px;color:#ffb3b3;line-height:1.4}
+.hidden{display:none}
+.dashboard{max-width:900px;margin:0 auto;padding:28px 18px}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #292929;padding-bottom:18px}
+.logout{width:auto;margin:0;padding:0 18px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
+.card{background:#121212;border:1px solid #292929;border-radius:14px;padding:20px}
+.num{font-size:28px;font-weight:800}
+.muted{color:#888;font-size:12px}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<section id="login" class="wrap">
+<div class="box">
+  <div class="logo">WBF</div>
+  <h1>WBF ADMIN</h1>
+  <div class="sub">World Brand Factory · Admin Panel</div>
+
+  <label>Email Admin</label>
+  <input id="email" type="email" autocomplete="username" placeholder="Email Admin">
+
+  <label>Password</label>
+  <input id="password" type="password" autocomplete="current-password" placeholder="Password">
+
+  <button id="loginBtn" type="button">LOGIN</button>
+  <div id="status" class="status"></div>
+</div>
+</section>
+
+<section id="dashboard" class="dashboard hidden">
+  <div class="top">
+    <div><div class="muted">WBF ADMIN</div><h1>Dashboard</h1></div>
+    <button class="logout" id="logoutBtn">LOGOUT</button>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="num">6</div><div class="muted">BRANDS</div></div>
+    <div class="card"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
+    <div class="card"><div class="num">0</div><div class="muted">ORDERS</div></div>
+    <div class="card"><div class="num">0</div><div class="muted">PAYMENTS</div></div>
+  </div>
+</section>
+
+<script>
+const URL = "https://wjeyyklbcrqxawoxlphk.supabase.co";
+const KEY = "sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
+
+const login = document.getElementById("login");
+const dash = document.getElementById("dashboard");
+const status = document.getElementById("status");
+const btn = document.getElementById("loginBtn");
+
+function showError(text){ status.textContent = text; }
+
+async function loginAdmin(){
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    showError("Email dan password wajib diisi.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "MEMERIKSA...";
+  showError("");
+
+  try{
+    const r = await fetch(URL + "/auth/v1/token?grant_type=password", {
+      method:"POST",
+      headers:{
+        "apikey":KEY,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({email,password})
+    });
+
+    const data = await r.json();
+
+    if(!r.ok){
+      showError("LOGIN GAGAL: " + (data.msg || data.error_description || data.message || "Email/password tidak cocok."));
+      return;
+    }
+
+    const rpc = await fetch(URL + "/rest/v1/rpc/wbf_is_admin", {
+      method:"POST",
+      headers:{
+        "apikey":KEY,
+        "Authorization":"Bearer " + data.access_token,
+        "Content-Type":"application/json"
+      },
+      body:"{}"
+    });
+
+    const isAdmin = await rpc.json();
+
+    if(!rpc.ok){
+      showError("Login berhasil, tetapi pengecekan Admin gagal: " + JSON.stringify(isAdmin));
+      return;
+    }
+
+    if(isAdmin !== true){
+      showError("Login berhasil, tetapi akun ini belum terdaftar sebagai Admin WBF.");
+      return;
+    }
+
+    sessionStorage.setItem("wbf_access_token", data.access_token);
+    login.classList.add("hidden");
+    dash.classList.remove("hidden");
+  }catch(e){
+    showError("Koneksi gagal: " + e.message);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "LOGIN";
+  }
+}
+
+btn.addEventListener("click", loginAdmin);
+document.getElementById("password").addEventListener("keydown", e => {
+  if(e.key === "Enter") loginAdmin();
+});
+
+document.getElementById("logoutBtn").addEventListener("click", ()=>{
+  sessionStorage.removeItem("wbf_access_token");
+  dash.classList.add("hidden");
+  login.classList.remove("hidden");
+});
+</script>
+</body>
+</html>
