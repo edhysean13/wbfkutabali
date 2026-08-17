@@ -36,6 +36,15 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 .main-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap;margin-top:18px}
 .main-buttons a{display:block;flex:1;min-width:0;text-align:center;padding:12px 10px;border-radius:8px;background:#e21b23;color:#fff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.6px}
 .main-buttons a:hover{background:#b9141b}
+
+/* Clear Home / Brands page separation */
+#brands{display:none}
+#catalog-section{display:block}
+.page-back{display:inline-flex;align-items:center;justify-content:center;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 13px;font-weight:700;font-size:11px;text-decoration:none}
+.brands-page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.brands-page-grid button{border:1px solid #333;background:#151515;color:#fff;border-radius:10px;padding:15px 8px;font-weight:800;font-size:13px}
+@media(max-width:800px){.brands-page-grid{grid-template-columns:repeat(2,1fr)}}
+
 </style>
 </head>
 <body>
@@ -58,15 +67,18 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
   </div>
 </section>
 <section class="main-buttons container" id="main-navigation">
-  <a href="#home">HOME</a>
-  <a href="#brands">BRANDS</a>
+  <a href="#home" onclick="showHome();return false;">HOME</a>
+  <a href="#brands" onclick="showBrands();return false;">BRANDS</a>
   <a href="#cart">CART</a>
   <a href="#about">ABOUT</a>
 </section>
 
 <section class="section" id="brands">
-  <div class="section-head"><h2>Brands</h2><span class="muted">Pilih brand</span></div>
-  <div class="brand-grid">
+  <div class="section-head">
+    <h2>Brands</h2>
+    <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
+  </div>
+  <div class="brands-page-grid">
     <button type="button" onclick="filterBrand('VOLCOM')">VOLCOM</button>
     <button type="button" onclick="filterBrand('RIPCURL')">RIP CURL</button>
     <button type="button" onclick="filterBrand('MAE BALI')">MAE BALI</button>
@@ -80,7 +92,7 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 
 
 <section class="section" id="catalog-section">
-  <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span></div>
+  <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="page-back" onclick="showBrands();return false;" style="display:none">BRANDS</a></div>
   <div class="category-nav" id="category-nav" style="display:none">
     <button data-category="ALL" class="active">SEMUA</button>
     <button data-category="ATASAN">ATASAN</button>
@@ -178,6 +190,7 @@ function renderCatalog(){
     : "New Arrival";
   document.getElementById("catalog-title").textContent=title;
   count.textContent=products.length+" Produk";
+  document.getElementById("back-to-brands").style.display=selectedBrand?"inline-flex":"none";
 
   if(!products.length){
     catalog.innerHTML='<div class="catalog-status">Belum ada produk pada pilihan ini.</div>';
@@ -213,9 +226,33 @@ function renderCatalog(){
   }).join("");
 }
 
+
+function showHome(){
+  document.querySelector(".hero").style.display="block";
+  document.getElementById("main-navigation").style.display="flex";
+  document.getElementById("brands").style.display="none";
+  document.getElementById("catalog-section").style.display="block";
+  selectedBrand="";
+  selectedCategory="ALL";
+  renderCatalog();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showBrands(){
+  document.querySelector(".hero").style.display="none";
+  document.getElementById("main-navigation").style.display="none";
+  document.getElementById("brands").style.display="block";
+  document.getElementById("catalog-section").style.display="none";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
 function filterBrand(brand){
   selectedBrand=brand;
   selectedCategory="ALL";
+  document.querySelector(".hero").style.display="none";
+  document.getElementById("main-navigation").style.display="none";
+  document.getElementById("brands").style.display="none";
+  document.getElementById("catalog-section").style.display="block";
   document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
   renderCatalog();
   document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
@@ -235,6 +272,7 @@ function orderProduct(productId){
   alert("ORDER WBF\n\n"+(p.name||"Product")+"\nSKU: "+(p.sku||"-")+"\n\nAlur checkout dan pengecekan stok admin akan kita sambungkan berikutnya.");
 }
 
+showHome();
 loadCustomerProducts();
 </script>
 </body>
