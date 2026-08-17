@@ -638,6 +638,20 @@ html, body {
 .wbf-sales-row span:last-child{font-weight:800}
 @media(max-width:700px){.wbf-sales-summary{grid-template-columns:1fr 1fr}.wbf-sales-summary .wbf-sales-box:last-child{grid-column:1/-1}}
 </style>
+
+<style id="wbf-admin-events-css">
+.wbf-admin-event-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wbf-admin-event-card{background:#121212;border:1px solid #292929;border-radius:14px;padding:12px}
+.wbf-admin-event-card .event-slot{font-size:12px;font-weight:800;margin-bottom:9px}
+.wbf-admin-event-preview{width:100%;aspect-ratio:16/9;border-radius:10px;background:#080808;border:1px solid #292929;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#666;font-size:11px;text-align:center;margin-bottom:9px}
+.wbf-admin-event-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.wbf-admin-event-card label{display:block;margin:7px 0 5px}
+.wbf-admin-event-card input[type=text],.wbf-admin-event-card textarea{width:100%;box-sizing:border-box}
+.wbf-admin-event-card textarea{min-height:78px;resize:vertical}
+.wbf-admin-event-actions{display:flex;gap:7px;margin-top:9px}
+.wbf-admin-event-actions button{flex:1}
+@media(max-width:650px){.wbf-admin-event-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.wbf-admin-event-card{padding:8px}.wbf-admin-event-card label{font-size:10px}.wbf-admin-event-card input[type=text],.wbf-admin-event-card textarea{font-size:12px}.wbf-admin-event-card textarea{min-height:64px}.wbf-admin-event-actions{display:block}.wbf-admin-event-actions button{width:100%;margin-top:5px}}
+</style>
 </head>
 <body>
 <section id="login" class="wrap">
@@ -668,6 +682,7 @@ html, body {
 <div class="card clickable" id="paymentsCard"><div class="num" id="paymentsCount">0</div><div class="muted">PAYMENT</div></div>
 <div class="card clickable" id="waitingPaymentCard"><div class="num" id="waitingPaymentCount">0</div><div class="muted">MENUNGGU PEMBAYARAN</div></div>
 <div class="card clickable" id="storeBankCard"><div class="num" style="font-size:18px">—</div><div class="muted">REKENING TOKO</div></div>
+<div class="card clickable" id="eventsCard"><div class="num" id="eventCount">0</div><div class="muted">EVENT / PROMO</div></div>
 </div>
 <section id="wbfSalesReport" class="wbf-sales-report">
   <div class="wbf-sales-title">LAPORAN PENJUALAN</div>
@@ -712,6 +727,16 @@ html, body {
 <button type="button" id="storeBankSaveBtn" style="margin-top:14px">SIMPAN REKENING</button>
 <div id="storeBankStatus" class="muted" style="margin-top:8px"></div>
 </div>
+</section>
+
+
+<section id="eventsPage" class="page hidden">
+<div class="page-head">
+<div><div class="muted">WBF ADMIN</div><h1>EVENT / PROMO</h1></div>
+<button class="back" id="eventsBackBtn">BACK</button>
+</div>
+<div class="muted" style="margin-top:8px">Isi promo/event yang sedang berjalan. Maksimal 6 banner, 2 kolom di layar customer.</div>
+<div id="adminEventsGrid" class="wbf-admin-event-grid" style="margin-top:14px"></div>
 </section>
 
 <section id="brandsPage" class="page hidden">
@@ -896,6 +921,10 @@ function restoreView(){
     dashboardHome.classList.add("hidden");
     paymentPage.classList.remove("hidden");
     setTimeout(()=>loadPayments(),0);
+  } else if(view==="events"){
+    dashboardHome.classList.add("hidden");
+    eventsPage.classList.remove("hidden");
+    setTimeout(()=>loadAdminEvents(),0);
   }
 }
 
@@ -928,6 +957,7 @@ const status=document.getElementById("status");
 const btn=document.getElementById("loginBtn");
 const dashboardHome=document.getElementById("dashboardHome");
 const brandsPage=document.getElementById("brandsPage");
+const eventsPage=document.getElementById("eventsPage");
 
 function showError(text){status.textContent=text}
 
@@ -995,6 +1025,13 @@ async function loadStoreBankForm(){
     storeBankStatus.textContent="Gagal memuat rekening: "+e.message;
   }
 }
+document.getElementById("eventsCard").addEventListener("click",async()=>{
+  dashboardHome.classList.add("hidden");
+  eventsPage.classList.remove("hidden");
+  saveView("events");
+  await loadAdminEvents();
+});
+
 storeBankCard.addEventListener("click",()=>{
   dashboardHome.classList.add("hidden");
   storeBankPage.classList.remove("hidden");
@@ -1033,6 +1070,82 @@ storeBankSaveBtn.addEventListener("click",async()=>{
 
 let brandRecords=[];
 
+
+function adminEventCard(slot,event){
+  const e=event||{};
+  const image=e.image_url?`<img src="${escapeHtml(e.image_url)}" alt="Event ${slot}">`:`<div>EVENT ${slot}<br>FOTO / BANNER</div>`;
+  return `<div class="wbf-admin-event-card" data-slot="${slot}">
+    <div class="event-slot">EVENT ${slot}</div>
+    <div class="wbf-admin-event-preview" id="eventPreview-${slot}">${image}</div>
+    <label>FOTO / BANNER</label>
+    <input id="eventImage-${slot}" type="file" accept="image/*">
+    <label>JUDUL PROMO / EVENT</label>
+    <input id="eventTitle-${slot}" type="text" placeholder="Contoh: BIG SALE" value="${escapeHtml(e.title||"")}">
+    <label>KETERANGAN</label>
+    <textarea id="eventDesc-${slot}" placeholder="Keterangan promo / event">${escapeHtml(e.description||"")}</textarea>
+    <div class="wbf-admin-event-actions">
+      <button type="button" onclick="saveAdminEvent(${slot})">SIMPAN</button>
+      <button type="button" class="back" onclick="deleteAdminEvent(${slot})">HAPUS</button>
+    </div>
+    <div class="muted" id="eventStatus-${slot}" style="margin-top:6px"></div>
+  </div>`;
+}
+
+async function loadAdminEvents(){
+  const grid=document.getElementById("adminEventsGrid");
+  if(!grid) return;
+  grid.innerHTML=Array.from({length:6},(_,i)=>adminEventCard(i+1,null)).join("");
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_events",{method:"POST",headers:wbfHeaders(authToken(),true),body:"{}"});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal memuat event.");
+    window.__wbfAdminEvents=Array.isArray(data)?data:[];
+    const bySlot={}; window.__wbfAdminEvents.forEach(e=>bySlot[Number(e.slot)]=e);
+    grid.innerHTML=Array.from({length:6},(_,i)=>adminEventCard(i+1,bySlot[i+1])).join("");
+  }catch(e){
+    grid.innerHTML='<div class="brand-card" style="grid-column:1/-1">Gagal memuat event: '+escapeHtml(e.message)+'</div>';
+  }
+  const c=document.getElementById("eventCount"); if(c) c.textContent=Array.isArray(window.__wbfAdminEvents)?window.__wbfAdminEvents.length:0;
+}
+
+async function saveAdminEvent(slot){
+  const statusEl=document.getElementById("eventStatus-"+slot);
+  const title=document.getElementById("eventTitle-"+slot).value.trim();
+  const desc=document.getElementById("eventDesc-"+slot).value.trim();
+  const file=document.getElementById("eventImage-"+slot).files[0];
+  const btn=document.querySelector(`[data-slot="${slot}"] button`);
+  if(!title && !desc && !file){alert("Isi foto/banner atau keterangan promo terlebih dahulu.");return;}
+  if(statusEl) statusEl.textContent="MENYIMPAN...";
+  try{
+    let imageUrl="";
+    if(file){
+      const safe=file.name.toLowerCase().replace(/[^a-z0-9._-]+/g,"-");
+      const path="admin/"+crypto.randomUUID()+"-"+safe;
+      const up=await fetch(URL+"/storage/v1/object/event-photos/"+path,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+authToken(),"Content-Type":file.type||"application/octet-stream","x-upsert":"true"},body:file});
+      if(!up.ok){const er=await up.json().catch(()=>({}));throw new Error(er.message||er.error||"Gagal upload banner event.");}
+      imageUrl=URL+"/storage/v1/object/public/event-photos/"+path;
+    }else{
+      const current=await fetch(URL+"/rest/v1/rpc/wbf_admin_events",{method:"POST",headers:wbfHeaders(authToken(),true),body:"{}"});
+      const rows=await current.json(); const old=(Array.isArray(rows)?rows:[]).find(e=>Number(e.slot)===slot); imageUrl=old?.image_url||"";
+    }
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_upsert_event",{method:"POST",headers:wbfHeaders(authToken(),true),body:JSON.stringify({p_slot:slot,p_title:title,p_description:desc,p_image_url:imageUrl,p_is_active:true})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal menyimpan event.");
+    if(statusEl) statusEl.textContent="TERSIMPAN";
+    await loadAdminEvents();
+  }catch(e){if(statusEl) statusEl.textContent="Gagal: "+e.message; else alert(e.message);}
+}
+
+async function deleteAdminEvent(slot){
+  if(!confirm("Hapus event ini dari tampilan customer?")) return;
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_delete_event",{method:"POST",headers:wbfHeaders(authToken(),true),body:JSON.stringify({p_slot:slot})});
+    const data=await res.json().catch(()=>null);
+    if(!res.ok) throw new Error(data?.message||data?.details||"Gagal menghapus event.");
+    await loadAdminEvents();
+  }catch(e){alert("Gagal menghapus event: "+e.message);}
+}
+
 async function loadBrands(){
  const list=document.getElementById("brandsList"); if(!list)return;
  list.innerHTML='<div class="muted">MEMUAT BRAND...</div>';
@@ -1055,9 +1168,9 @@ function renderBrands(){
   list.innerHTML='<div class="brand-card" style="text-align:left">Belum ada brand.</div>';return;
  }
  list.innerHTML=brandRecords.map(b=>{
-  const logo=b.logo_url?'<img class="brand-logo" src="'+escapeHtml(b.logo_url)+'" alt="'+escapeHtml(b.name)+'">':'<div class="brand-logo-empty">BRAND</div>';
   return '<div class="brand-card brand-item clickable-brand" data-brand="'+escapeHtml(b.name)+'">'+
-   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+logo+
+   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+
+   '<div class="brand-logo-empty">BRAND</div>'+
    '<div class="brand-name">'+escapeHtml(b.name)+'</div></div>';
  }).join("");
  list.querySelectorAll(".clickable-brand").forEach(el=>el.addEventListener("click",e=>{
@@ -1087,21 +1200,11 @@ function openBrandEditor(id){
  document.getElementById("brandEditId").value=b.id;
  document.getElementById("brandNameInput").value=b.name||"";
  document.getElementById("brandLogoInput").value="";
- document.getElementById("brandLogoPreview").innerHTML=b.logo_url?'<img src="'+escapeHtml(b.logo_url)+'" style="width:70px;height:70px;object-fit:contain;border-radius:9px;background:#fff"><div class="muted">Logo saat ini</div>':"Belum ada logo.";
+ document.getElementById("brandLogoPreview").innerHTML="Logo brand akan ditambahkan setelah storage logo disiapkan.";
  document.getElementById("brandFormStatus").textContent="";
  document.getElementById("saveBrandBtn").textContent="UPDATE BRAND";
  document.getElementById("brandForm").classList.remove("hidden");
  document.getElementById("brandForm").scrollIntoView({behavior:"smooth",block:"start"});
-}
-
-function previewBrandLogo(){
- const input=document.getElementById("brandLogoInput");
- const preview=document.getElementById("brandLogoPreview");
- const file=input.files&&input.files[0];
- if(!file){preview.innerHTML="";return;}
- if(!file.type.startsWith("image/")){preview.textContent="File logo harus berupa gambar.";input.value="";return;}
- const url=URL.createObjectURL(file);
- preview.innerHTML='<img src="'+url+'" style="width:70px;height:70px;object-fit:contain;border-radius:9px;background:#fff"><div class="muted">Preview logo</div>';
 }
 
 function resetBrandForm(){
@@ -1114,19 +1217,6 @@ function resetBrandForm(){
  document.getElementById("brandForm").classList.add("hidden");
 }
 
-async function uploadBrandLogo(file,brandId){
- const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
- const path="brands/"+brandId+"."+ext;
- const res=await fetch(URL+"/storage/v1/object/brand-logos/"+path,{
-  method:"POST",
-  headers:{"apikey":KEY,"Authorization":"Bearer "+authToken(),"Content-Type":file.type||"image/jpeg","x-upsert":"true","cache-control":"3600"},
-  body:file
- });
- const data=await res.json().catch(()=>({}));
- if(!res.ok)throw new Error(data.message||data.error||data.statusCode||"Upload logo gagal.");
- return URL+"/storage/v1/object/public/brand-logos/"+path+"?v="+Date.now();
-}
-
 async function saveBrand(){
  const id=document.getElementById("brandEditId").value.trim();
  const name=document.getElementById("brandNameInput").value.trim();
@@ -1135,7 +1225,9 @@ async function saveBrand(){
  if(!name){st.textContent="Nama brand wajib diisi.";return}
  btn.disabled=true;btn.textContent=id?"MENYIMPAN...":"MENAMBAH...";st.textContent="";
  try{
-  let brandId=id;
+  if(file){
+   st.textContent="Logo belum disimpan karena tabel brand saat ini belum memiliki kolom logo. Nama brand tetap bisa disimpan.";
+  }
   if(!id){
    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_create_brand",{
     method:"POST",headers:wbfHeaders(authToken(),true),
@@ -1143,8 +1235,6 @@ async function saveBrand(){
    });
    const data=await res.json();
    if(!res.ok)throw new Error(data.message||data.details||"Gagal menambah brand.");
-   brandId=data?.id||data?.[0]?.id||data;
-   if(!brandId)throw new Error("ID brand baru tidak ditemukan.");
   }else{
    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_brand",{
     method:"POST",headers:wbfHeaders(authToken(),true),
@@ -1153,19 +1243,9 @@ async function saveBrand(){
    const data=await res.json();
    if(!res.ok)throw new Error(data.message||data.details||"Gagal mengubah brand.");
   }
-  if(file){
-   st.textContent="Mengupload logo...";
-   const logoUrl=await uploadBrandLogo(file,brandId);
-   const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_set_brand_logo",{
-    method:"POST",headers:wbfHeaders(authToken(),true),
-    body:JSON.stringify({p_brand_id:brandId,p_logo_url:logoUrl})
-   });
-   const data=await res.json().catch(()=>({}));
-   if(!res.ok)throw new Error(data.message||data.details||"Gagal menyimpan logo brand.");
-  }
   await loadBrands();
-  st.textContent=file?"Brand dan logo berhasil disimpan.":(id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.");
-  setTimeout(resetBrandForm,700);
+  st.textContent=id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.";
+  setTimeout(resetBrandForm,600);
  }catch(e){
   st.textContent="Gagal: "+e.message;
  }finally{
@@ -1181,7 +1261,6 @@ document.getElementById("addBrandBtn").addEventListener("click",()=>{
 });
 document.getElementById("cancelBrandBtn").addEventListener("click",resetBrandForm);
 document.getElementById("saveBrandBtn").addEventListener("click",saveBrand);
-document.getElementById("brandLogoInput").addEventListener("change",previewBrandLogo);
 
 document.getElementById("brandsCard").addEventListener("click",()=>{
 dashboardHome.classList.add("hidden");
@@ -1258,6 +1337,7 @@ saveView("dashboard");
 
 paymentsCard.addEventListener("click",async()=>{ dashboardHome.classList.add("hidden"); paymentPage.classList.remove("hidden"); saveView("payment"); await loadPayments(); });
 document.getElementById("paymentBackBtn").addEventListener("click",()=>{ paymentPage.classList.add("hidden"); dashboardHome.classList.remove("hidden"); saveView("dashboard"); });
+document.getElementById("eventsBackBtn").addEventListener("click",()=>{ eventsPage.classList.add("hidden"); dashboardHome.classList.remove("hidden"); saveView("dashboard"); });
 
 
 
