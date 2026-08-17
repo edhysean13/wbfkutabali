@@ -419,7 +419,7 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 <div class="card clickable" id="productsCard"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
 <div class="card clickable" id="ordersCard"><div class="num" id="ordersCount">0</div><div class="muted">ORDERS BARU</div></div>
 <div class="card clickable" id="paymentsCard"><div class="num" id="paymentsCount">0</div><div class="muted">PAYMENT</div></div>
-<div class="card"><div class="num" id="waitingPaymentCount">0</div><div class="muted">MENUNGGU PEMBAYARAN</div></div>
+<div class="card clickable" id="waitingPaymentCard"><div class="num" id="waitingPaymentCount">0</div><div class="muted">MENUNGGU PEMBAYARAN</div></div>
 </div>
 </div>
 
@@ -568,6 +568,10 @@ function restoreView(){
   } else if(view==="products"){
     dashboardHome.classList.add("hidden");
     productsPage.classList.remove("hidden");
+  } else if(view==="waiting-payment"){
+    dashboardHome.classList.add("hidden");
+    ordersPage.classList.remove("hidden");
+    setTimeout(()=>loadWaitingPayments(),0);
   } else if(view==="orders"){
     dashboardHome.classList.add("hidden");
     ordersPage.classList.remove("hidden");
@@ -712,6 +716,7 @@ const ordersPage=document.getElementById("ordersPage");
 const ordersCard=document.getElementById("ordersCard");
 const paymentPage=document.getElementById("paymentPage");
 const paymentsCard=document.getElementById("paymentsCard");
+const waitingPaymentCard=document.getElementById("waitingPaymentCard");
 
 
 document.getElementById("ordersBackBtn").addEventListener("click",()=>{
@@ -1074,9 +1079,45 @@ async function updateOrderStatus(orderId,statusValue,silent=false){
 }
 window.updateOrderStatus=updateOrderStatus;
 
+
+async function loadWaitingPayments(){
+  const list=document.getElementById("ordersList"), totalEl=document.getElementById("wbfTotalOrders"), pendingEl=document.getElementById("wbfPendingOrders");
+  if(!list)return;
+  list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">MEMUAT PESANAN MENUNGGU PEMBAYARAN...</div></div>';
+  try{
+    const all=await fetchAllOrders();
+    updateDashboardOrderCounts(all);
+    const rows=all.filter(o=>o.status==="confirmed");
+    if(totalEl)totalEl.textContent=rows.length;
+    if(pendingEl)pendingEl.textContent=rows.length;
+    const title=document.querySelector("#ordersPage .page-head h1");
+    if(title)title.textContent="MENUNGGU PEMBAYARAN";
+    if(!rows.length){
+      list.innerHTML='<div class="brand-card" style="text-align:left"><b>TIDAK ADA PESANAN MENUNGGU PEMBAYARAN</b></div>';
+      return;
+    }
+    list.innerHTML=rows.map(o=>{
+      const items=Array.isArray(o.items)?o.items:[];
+      const itemHtml=items.map(i=>`<div class="order-item"><b>${escapeHtml(i.product_name||"-")}</b><br>SKU: ${escapeHtml(i.sku||"-")} · Size: ${escapeHtml(i.size||"-")} · Qty: ${Number(i.quantity||0)}<br>Rp ${(Number(i.unit_price||0)*Number(i.quantity||0)).toLocaleString("id-ID")}</div>`).join("");
+      const total=orderTotal(items)+Number(o.shipping_fee||0);
+      return `<div class="order-card"><div class="order-head"><div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div><div class="order-status">MENUNGGU PEMBAYARAN</div></div><div class="order-customer"><b>${escapeHtml(o.customer_name||"-")}</b><br>WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>Alamat: ${escapeHtml(o.customer_address||"-")}<br><span class="muted">${orderDate(o.created_at)}</span></div><div class="order-items">${itemHtml}</div><div class="order-payment-total">TOTAL BARANG: Rp ${orderTotal(items).toLocaleString("id-ID")}<br>ONGKIR: Rp ${Number(o.shipping_fee||0).toLocaleString("id-ID")}<br>TOTAL BAYAR: Rp ${total.toLocaleString("id-ID")}</div><div class="order-actions"><button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','paid')">PEMBAYARAN VALID</button><button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">BATALKAN</button></div></div>`;
+    }).join("");
+  }catch(e){
+    list.innerHTML='<div class="brand-card" style="text-align:left"><b>GAGAL MEMUAT PESANAN</b><div class="muted" style="margin-top:6px">'+escapeHtml(e.message)+'</div></div>';
+  }
+}
+
 const _oldRefreshOrdersBtn=document.getElementById("refreshOrdersBtn");
 if(_oldRefreshOrdersBtn)_oldRefreshOrdersBtn.addEventListener("click",loadOrders);
 const _refreshPaymentsBtn=document.getElementById("refreshPaymentsBtn"); if(_refreshPaymentsBtn)_refreshPaymentsBtn.addEventListener("click",loadPayments);
+
+
+if(waitingPaymentCard) waitingPaymentCard.addEventListener("click",async()=>{
+  dashboardHome.classList.add("hidden");
+  ordersPage.classList.remove("hidden");
+  saveView("waiting-payment");
+  await loadWaitingPayments();
+});
 
 const _oldOrdersCard=document.getElementById("ordersCard");
 if(_oldOrdersCard)_oldOrdersCard.addEventListener("click",async()=>{
@@ -1089,6 +1130,7 @@ const _oldOrdersBackBtn=document.getElementById("ordersBackBtn");
 if(_oldOrdersBackBtn)_oldOrdersBackBtn.addEventListener("click",async()=>{
   ordersPage.classList.add("hidden");
   dashboardHome.classList.remove("hidden");
+  const title=document.querySelector("#ordersPage .page-head h1"); if(title)title.textContent="ORDERS";
   saveView("dashboard");
   await refreshOrderCount();
 });
