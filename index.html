@@ -310,6 +310,19 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
 }
 .wbf-delete-order:active{opacity:.85;}
 </style>
+
+<style id="wbf-event-customer-css">
+.wbf-event-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.wbf-event-card{background:#121212;border:1px solid #292929;border-radius:16px;overflow:hidden}
+.wbf-event-photo{width:100%;aspect-ratio:16/9;background:#080808;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.wbf-event-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.wbf-event-placeholder{color:#666;font-size:12px;letter-spacing:.6px;text-align:center;padding:20px}
+.wbf-event-copy{padding:13px 14px 16px}
+.wbf-event-copy h3{margin:0 0 7px;font-size:16px;line-height:1.2}
+.wbf-event-copy p{margin:0;color:#aaa;font-size:13px;line-height:1.45;white-space:pre-line}
+.wbf-event-empty{grid-column:1/-1;padding:28px 18px;text-align:center;color:#777;border:1px solid #292929;border-radius:16px;background:#121212}
+@media(max-width:650px){.wbf-event-grid{gap:10px}.wbf-event-copy{padding:10px}.wbf-event-copy h3{font-size:14px}.wbf-event-copy p{font-size:12px}}
+</style>
 </head>
 <body>
 
@@ -335,7 +348,7 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
   <a href="#brands" onclick="showBrands();return false;">BRANDS</a>
   <a href="#cart" onclick="openCart();return false;">CART<span id="wbfCartBadge">0</span></a>
   <a href="#orders" onclick="openMyOrders();return false;">PESANAN SAYA<span id="wbfOrderBadge" style="display:none"></span></a>
-  <a href="#about">ABOUT</a>
+  <a href="#events" onclick="showEvents();return false;">EVENT</a>
 </section>
 
 <section class="section" id="brands">
@@ -386,6 +399,15 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
   </div>
   <div id="myOrdersList"></div>
 </section>
+
+<section class="section" id="events" style="display:none">
+  <div class="section-head">
+    <h2>EVENT</h2>
+    <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
+  </div>
+  <div class="wbf-event-grid" id="customer-events-grid"></div>
+</section>
+
 <section class="section" id="about">
   <div class="section-head"><h2>About WBF</h2></div>
   <div class="info-box">WBF Kuta-Bali • World Brand Factory</div>
@@ -594,6 +616,7 @@ function showHome(){
   document.querySelector(".hero").style.display="block";
   document.getElementById("main-navigation").style.display="flex";
   document.getElementById("brands").style.display="none";
+  document.getElementById("events").style.display="none";
   document.getElementById("catalog-section").style.display="block";
   selectedBrand="";
   selectedCategory="ALL";
@@ -605,8 +628,43 @@ function showBrands(){
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
   document.getElementById("brands").style.display="block";
+  document.getElementById("events").style.display="none";
   document.getElementById("catalog-section").style.display="none";
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+
+async function showEvents(){
+  document.querySelector(".hero").style.display="none";
+  document.getElementById("main-navigation").style.display="none";
+  document.getElementById("brands").style.display="none";
+  document.getElementById("events").style.display="block";
+  document.getElementById("catalog-section").style.display="none";
+  window.scrollTo({top:0,behavior:"smooth"});
+  await loadCustomerEvents();
+}
+
+async function loadCustomerEvents(){
+  const grid=document.getElementById("customer-events-grid");
+  if(!grid) return;
+  grid.innerHTML=Array.from({length:6},(_,i)=>`<article class="wbf-event-card"><div class="wbf-event-photo"><div class="wbf-event-placeholder">EVENT ${i+1}</div></div><div class="wbf-event-copy"><h3>Promo / Event</h3><p>Informasi event akan tampil di sini.</p></div></article>`).join("");
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_public_events",{method:"POST",headers:{"apikey":KEY,"Content-Type":"application/json"},body:"{}"});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||"Gagal memuat event.");
+    const bySlot={};
+    (Array.isArray(data)?data:[]).forEach(e=>{bySlot[Number(e.slot)]=e;});
+    grid.innerHTML=Array.from({length:6},(_,i)=>{
+      const slot=i+1, e=bySlot[slot];
+      if(!e) return `<article class="wbf-event-card"><div class="wbf-event-photo"><div class="wbf-event-placeholder">EVENT ${slot}<br>BELUM ADA PROMO</div></div><div class="wbf-event-copy"><h3>Event / Promo</h3><p>Promo yang aktif akan tampil di sini.</p></div></article>`;
+      const title=esc(e.title||"Event / Promo");
+      const desc=esc(e.description||"");
+      const photo=e.image_url?`<img src="${esc(e.image_url)}" alt="${title}" loading="lazy">`:`<div class="wbf-event-placeholder">EVENT ${slot}<br>FOTO / BANNER BELUM DIISI</div>`;
+      return `<article class="wbf-event-card"><div class="wbf-event-photo">${photo}</div><div class="wbf-event-copy"><h3>${title}</h3><p>${desc}</p></div></article>`;
+    }).join("");
+  }catch(e){
+    grid.innerHTML='<div class="wbf-event-empty">Gagal memuat event.</div>';
+  }
 }
 
 function filterBrand(brand){
@@ -615,6 +673,7 @@ function filterBrand(brand){
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
   document.getElementById("brands").style.display="none";
+  document.getElementById("events").style.display="none";
   document.getElementById("catalog-section").style.display="block";
   document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
   renderCatalog();
