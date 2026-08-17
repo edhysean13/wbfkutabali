@@ -485,8 +485,27 @@ html, body {
 <div class="card clickable" id="ordersCard"><div class="num" id="ordersCount">0</div><div class="muted">ORDERS BARU</div></div>
 <div class="card clickable" id="paymentsCard"><div class="num" id="paymentsCount">0</div><div class="muted">PAYMENT</div></div>
 <div class="card clickable" id="waitingPaymentCard"><div class="num" id="waitingPaymentCount">0</div><div class="muted">MENUNGGU PEMBAYARAN</div></div>
+<div class="card clickable" id="storeBankCard"><div class="num" style="font-size:18px">—</div><div class="muted">REKENING TOKO</div></div>
 </div>
 </div>
+
+<section id="storeBankPage" class="page hidden">
+<div class="page-head">
+<div><div class="muted">WBF ADMIN</div><h1>REKENING TOKO</h1></div>
+<button class="back" id="storeBankBackBtn">BACK</button>
+</div>
+<div class="brand-card" style="text-align:left;margin-top:12px">
+<div class="muted" style="margin-bottom:14px">Form rekening toko. Untuk sementara dibiarkan kosong.</div>
+<label>BANK</label>
+<input id="storeBankName" type="text" placeholder="Contoh: BCA">
+<label>NOMOR REKENING</label>
+<input id="storeBankAccount" type="text" inputmode="numeric" placeholder="Nomor rekening">
+<label>NAMA PEMILIK / PENERIMA</label>
+<input id="storeBankOwner" type="text" placeholder="Nama pemilik rekening">
+<button type="button" id="storeBankSaveBtn" style="margin-top:14px">SIMPAN REKENING</button>
+<div id="storeBankStatus" class="muted" style="margin-top:8px"></div>
+</div>
+</section>
 
 <section id="brandsPage" class="page hidden">
 <div class="page-head">
@@ -619,6 +638,11 @@ function restoreView(){
   refreshOrderCount();
   const view=localStorage.getItem("wbf_admin_view")||"dashboard";
   if(view==="brands"){dashboardHome.classList.add("hidden");brandsPage.classList.remove("hidden");refreshProductCount();}
+  else if(view==="store-bank"){
+    dashboardHome.classList.add("hidden");
+    storeBankPage.classList.remove("hidden");
+    setTimeout(()=>loadStoreBankForm(),0);
+  }
   else if(view==="brand"){
     selectedBrand=localStorage.getItem("wbf_admin_brand")||"VOLCOM";
     selectedCategory=localStorage.getItem("wbf_admin_category")||"";
@@ -714,9 +738,45 @@ brandsPage.classList.add("hidden");
 brandDetailPage.classList.add("hidden");
 productsPage.classList.add("hidden");
 ordersPage.classList.add("hidden");
+storeBankPage.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
 dash.classList.add("hidden");
 login.classList.remove("hidden");
+});
+
+const storeBankPage=document.getElementById("storeBankPage");
+const storeBankCard=document.getElementById("storeBankCard");
+const storeBankBackBtn=document.getElementById("storeBankBackBtn");
+const storeBankSaveBtn=document.getElementById("storeBankSaveBtn");
+const storeBankStatus=document.getElementById("storeBankStatus");
+
+function loadStoreBankForm(){
+  let data={};
+  try{data=JSON.parse(localStorage.getItem("wbf_store_bank")||"{}")}catch(e){}
+  document.getElementById("storeBankName").value=data.bank||"";
+  document.getElementById("storeBankAccount").value=data.account||"";
+  document.getElementById("storeBankOwner").value=data.owner||"";
+  storeBankStatus.textContent="";
+}
+storeBankCard.addEventListener("click",()=>{
+  dashboardHome.classList.add("hidden");
+  storeBankPage.classList.remove("hidden");
+  saveView("store-bank");
+  loadStoreBankForm();
+});
+storeBankBackBtn.addEventListener("click",()=>{
+  storeBankPage.classList.add("hidden");
+  dashboardHome.classList.remove("hidden");
+  saveView("dashboard");
+});
+storeBankSaveBtn.addEventListener("click",()=>{
+  const data={
+    bank:document.getElementById("storeBankName").value.trim(),
+    account:document.getElementById("storeBankAccount").value.trim(),
+    owner:document.getElementById("storeBankOwner").value.trim()
+  };
+  localStorage.setItem("wbf_store_bank",JSON.stringify(data));
+  storeBankStatus.textContent="Data rekening tersimpan.";
 });
 
 document.getElementById("brandsCard").addEventListener("click",()=>{
