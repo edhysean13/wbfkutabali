@@ -197,6 +197,20 @@ function restoreView(){
 }
 
 const KEY="sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
+const API=URL+"/rest/v1";
+function wbfHeaders(token,content=false){
+  const h={
+    "apikey":KEY,
+    "Authorization":"Bearer "+token,
+    "Accept-Profile":"wbf",
+    "Content-Profile":"wbf"
+  };
+  if(content) h["Content-Type"]="application/json";
+  return h;
+}
+function authToken(){
+  return localStorage.getItem("wbf_access_token")||"";
+}
 const login=document.getElementById("login");
 const dash=document.getElementById("dashboard");
 const status=document.getElementById("status");
