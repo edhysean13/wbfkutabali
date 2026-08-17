@@ -590,6 +590,24 @@ html, body {
 }
 </style>
 
+
+<style id="wbf-payment-lookup-style">
+.wbf-payment-lookup{margin:14px 0;padding:12px;border:1px solid #292929;border-radius:10px;background:#111}
+.wbf-payment-lookup-title{font-size:13px;font-weight:800}
+.wbf-payment-lookup-sub{font-size:11px;color:#888;margin-top:4px}
+.wbf-payment-lookup-row{display:flex;gap:8px;margin-top:9px}
+.wbf-payment-lookup-row input{flex:1;min-width:0;height:42px;font-size:16px!important}
+.wbf-payment-lookup-row button{width:auto!important;min-width:72px;height:42px;margin:0!important;padding:0 14px!important;font-size:13px!important}
+#wbfPaymentLookupResult{margin-top:10px}
+.wbf-lookup-card{border-top:1px solid #292929;padding:10px 0;font-size:12px}
+.wbf-lookup-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.wbf-lookup-id{font-weight:800}
+.wbf-lookup-status{font-size:10px;font-weight:800;padding:4px 6px;border-radius:6px;background:#292929;white-space:nowrap}
+.wbf-lookup-line{margin-top:5px;color:#bbb}
+.wbf-lookup-total{margin-top:7px;font-weight:800}
+.wbf-lookup-proof{margin-top:8px}
+.wbf-lookup-proof img{display:block;width:100%;max-height:180px;object-fit:contain;border-radius:7px;background:#050505;border:1px solid #292929}
+</style>
 </head>
 <body>
 <section id="login" class="wrap">
@@ -741,6 +759,16 @@ html, body {
 
 <div style="display:flex;justify-content:flex-end;margin-top:12px">
 <button type="button" id="refreshOrdersBtn" style="width:auto;padding:0 16px;margin:0">REFRESH</button>
+</div>
+
+<div id="wbfPaymentLookup" class="wbf-payment-lookup">
+  <div class="wbf-payment-lookup-title">CEK PESANAN CUSTOMER</div>
+  <div class="wbf-payment-lookup-sub">Masukkan nomor WhatsApp untuk mengecek ulang riwayat order customer.</div>
+  <div class="wbf-payment-lookup-row">
+    <input id="wbfPaymentLookupPhone" type="tel" inputmode="tel" placeholder="08xxxxxxxxxx">
+    <button type="button" id="wbfPaymentLookupBtn">CEK</button>
+  </div>
+  <div id="wbfPaymentLookupResult"></div>
 </div>
 <div id="ordersList" style="margin-top:12px">
 <div class="brand-card" style="text-align:left">
@@ -1505,4 +1533,43 @@ if(_oldOrdersBackBtn)_oldOrdersBackBtn.addEventListener("click",async()=>{
   await refreshOrderCount();
 });
 
+
+async function wbfLookupPaymentCustomer(){
+  const phone=document.getElementById("wbfPaymentLookupPhone").value.trim();
+  const out=document.getElementById("wbfPaymentLookupResult");
+  const btn=document.getElementById("wbfPaymentLookupBtn");
+  if(!phone){out.innerHTML='<div class="muted">Masukkan nomor WhatsApp.</div>';return;}
+  btn.disabled=true; btn.textContent="...";
+  out.innerHTML='<div class="muted">MENCARI...</div>';
+  try{
+    const all=await fetchAllOrders();
+    const normalized=phone.replace(/[^0-9]/g,"");
+    const rows=all.filter(o=>String(o.customer_phone||"").replace(/[^0-9]/g,"")===normalized);
+    if(!rows.length){out.innerHTML='<div class="muted">Tidak ada order untuk nomor WhatsApp tersebut.</div>';return;}
+    out.innerHTML=rows.map(o=>{
+      const items=Array.isArray(o.items)?o.items:[];
+      const total=items.reduce((n,i)=>n+Number(i.unit_price||0)*Number(i.quantity||0),0)+Number(o.shipping_fee||0);
+      const proof=o.payment?.customer_proof_url||o.customer_proof_url;
+      const proofHtml=proof
+        ? '<div class="wbf-lookup-proof"><div class="muted">BUKTI PEMBAYARAN</div><img src="'+escapeHtml(proof)+'" alt="Bukti pembayaran"></div>'
+        : '';
+      const label=({
+        pending:"MENUNGGU CEK STOK",
+        confirmed:"MENUNGGU PEMBAYARAN",
+        paid:"SIAP DIKIRIM",
+        shipped:"PROSES PENGIRIMAN",
+        completed:"PROSES SELESAI",
+        rejected:"STOK TIDAK TERSEDIA",
+        cancelled:"DIBATALKAN"
+      })[o.status]||o.status||"-";
+      return '<div class="wbf-lookup-card"><div class="wbf-lookup-head"><div class="wbf-lookup-id">'+escapeHtml(o.id)+'</div><div class="wbf-lookup-status">'+escapeHtml(label)+'</div></div><div class="wbf-lookup-line">'+escapeHtml(o.customer_name||"-")+'</div><div class="wbf-lookup-line">'+items.map(i=>escapeHtml(i.product_name||"-")+" × "+Number(i.quantity||0)).join("<br>")+'</div><div class="wbf-lookup-total">TOTAL: Rp '+total.toLocaleString("id-ID")+'</div>'+proofHtml+'</div>';
+    }).join("");
+  }catch(e){
+    out.innerHTML='<div style="color:#ffb3b3">Gagal mencari: '+escapeHtml(e.message)+'</div>';
+  }finally{
+    btn.disabled=false; btn.textContent="CEK";
+  }
+}
+document.getElementById("wbfPaymentLookupBtn")?.addEventListener("click",wbfLookupPaymentCustomer);
+document.getElementById("wbfPaymentLookupPhone")?.addEventListener("keydown",e=>{if(e.key==="Enter")wbfLookupPaymentCustomer();});
 </script>
