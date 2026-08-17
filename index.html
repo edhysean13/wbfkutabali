@@ -557,6 +557,43 @@ function renderCatalog(){
     catNav.style.display="flex";
   }else{
     catNav.style.display="none";
+
+    // HOME = hanya product yang dipilih sebagai NEW ARRIVAL.
+    // Mendukung beberapa nama field agar tetap kompatibel dengan RPC lama/baru.
+    const hasNewArrivalField=allProducts.some(p =>
+      Object.prototype.hasOwnProperty.call(p,"is_new_arrival") ||
+      Object.prototype.hasOwnProperty.call(p,"new_arrival") ||
+      Object.prototype.hasOwnProperty.call(p,"isNewArrival") ||
+      Object.prototype.hasOwnProperty.call(p,"newArrival")
+    );
+
+    if(hasNewArrivalField){
+      products=allProducts.filter(p =>
+        p.is_new_arrival===true ||
+        p.is_new_arrival===1 ||
+        p.is_new_arrival==="true" ||
+        p.new_arrival===true ||
+        p.new_arrival===1 ||
+        p.new_arrival==="true" ||
+        p.isNewArrival===true ||
+        p.isNewArrival===1 ||
+        p.isNewArrival==="true" ||
+        p.newArrival===true ||
+        p.newArrival===1 ||
+        p.newArrival==="true"
+      );
+    }else{
+      // Fallback aman untuk RPC yang belum mengirim flag:
+      // tampilkan product terbaru, tanpa mengubah halaman Brand Collection.
+      const hasDate=allProducts.some(p=>p.created_at||p.createdAt||p.updated_at||p.updatedAt);
+      if(hasDate){
+        products=[...allProducts].sort((a,b)=>{
+          const da=new Date(a.created_at||a.createdAt||a.updated_at||a.updatedAt||0).getTime();
+          const db=new Date(b.created_at||b.createdAt||b.updated_at||b.updatedAt||0).getTime();
+          return db-da;
+        }).slice(0,6);
+      }
+    }
   }
   if(selectedCategory!=="ALL"){
     products=products.filter(p=>(p.category||"").toUpperCase()===selectedCategory);
@@ -586,7 +623,7 @@ function renderCatalog(){
     const colors=(p.colors||[]).join(" / ");
     return '<article class="card">'+image+
       '<div class="info">'+
-      '<div class="tag">'+esc(selectedBrand||"PRODUCT")+'</div>'+
+      '<div class="tag">'+esc(selectedBrand||"NEW ARRIVAL")+'</div>'+
       '<div class="name">'+esc(p.name||"Product")+'</div>'+
       '<div class="sku">SKU: '+esc(p.sku||"-")+'</div>'+
       '<div class="meta">'+
