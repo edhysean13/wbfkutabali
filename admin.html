@@ -57,6 +57,115 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:100%; }
 </style>
 
+
+<style id="wbf-compact-orders">
+.wbf-compact-order-card{
+  padding:0!important;
+  overflow:hidden;
+}
+.wbf-order-summary{
+  min-height:64px;
+  padding:13px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  cursor:pointer;
+  user-select:none;
+}
+.wbf-order-summary-main{
+  min-width:0;
+  flex:1 1 auto;
+}
+.wbf-order-summary-label{
+  font-size:11px;
+  font-weight:800;
+  color:#aaa;
+  letter-spacing:.4px;
+}
+.wbf-order-summary-id{
+  margin-top:4px;
+  font-size:13px;
+  line-height:1.25;
+  color:#eee;
+  word-break:break-all;
+}
+.wbf-order-summary-right{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.wbf-order-chevron{
+  font-size:18px;
+  color:#aaa;
+  transition:transform .15s ease;
+}
+.order-card.open .wbf-order-chevron{
+  transform:rotate(180deg);
+}
+.wbf-order-details{
+  border-top:1px solid #292929;
+  padding:13px 14px 14px;
+}
+.wbf-order-customer{
+  line-height:1.55;
+  font-size:13px;
+  margin-bottom:12px;
+}
+.wbf-order-products{
+  border-top:1px solid #292929;
+  border-bottom:1px solid #292929;
+  padding:10px 0 4px;
+}
+.wbf-order-item-detail{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.wbf-order-product-photo,
+.wbf-order-product-no-photo{
+  width:68px;
+  height:68px;
+  flex:0 0 68px;
+  border-radius:8px;
+  object-fit:cover;
+  background:#181818;
+  border:1px solid #292929;
+}
+.wbf-order-product-no-photo{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#777;
+  font-size:9px;
+  text-align:center;
+}
+.wbf-order-item-info{
+  min-width:0;
+  font-size:12px;
+  line-height:1.45;
+}
+.wbf-order-item-info b{
+  display:block;
+  font-size:14px;
+  margin-bottom:2px;
+}
+.wbf-order-total{
+  font-weight:800;
+  margin:11px 0;
+  font-size:14px;
+}
+.wbf-order-actions-stack{
+  display:flex!important;
+  flex-direction:column;
+  gap:8px!important;
+}
+.wbf-order-actions-stack button{
+  width:100%!important;
+}
+</style>
 <style id="wbf-compact-refinement">
 *{box-sizing:border-box}
 body{font-size:13px!important}
@@ -1150,19 +1259,89 @@ function updateDashboardOrderCounts(all){
 }
 async function refreshOrderCount(){try{const all=await fetchAllOrders();updateDashboardOrderCounts(all);}catch(e){}}
 async function loadOrders(){
-  const list=document.getElementById("ordersList"), totalEl=document.getElementById("wbfTotalOrders"), pendingEl=document.getElementById("wbfPendingOrders"); if(!list)return;
+  const list=document.getElementById("ordersList"), totalEl=document.getElementById("wbfTotalOrders"), pendingEl=document.getElementById("wbfPendingOrders");
+  if(!list)return;
   list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">MEMUAT ORDER...</div></div>';
   try{
-    const all=await fetchAllOrders(); updateDashboardOrderCounts(all);
+    const all=await fetchAllOrders();
+    updateDashboardOrderCounts(all);
     const orders=all.filter(o=>o.status==="pending");
-    if(totalEl)totalEl.textContent=orders.length; if(pendingEl)pendingEl.textContent=orders.length;
-    if(!orders.length){list.innerHTML='<div class="brand-card" style="text-align:left"><b>TIDAK ADA ORDER BARU</b><div class="muted" style="margin-top:6px">Order yang sudah diproses tidak lagi tampil di daftar ini.</div></div>';return;}
+    if(totalEl)totalEl.textContent=orders.length;
+    if(pendingEl)pendingEl.textContent=orders.length;
+
+    if(!orders.length){
+      list.innerHTML='<div class="brand-card" style="text-align:left"><b>TIDAK ADA ORDER BARU</b><div class="muted" style="margin-top:6px">Order yang sudah diproses tidak lagi tampil di daftar ini.</div></div>';
+      return;
+    }
+
     list.innerHTML=orders.map(o=>{
       const items=Array.isArray(o.items)?o.items:[];
-      const itemHtml=items.map(i=>`<div class="order-item"><b>${escapeHtml(i.product_name||"-")}</b><br>SKU: ${escapeHtml(i.sku||"-")} · Size: ${escapeHtml(i.size||"-")} · Qty: ${Number(i.quantity||0)}<br>Rp ${(Number(i.unit_price||0)*Number(i.quantity||0)).toLocaleString("id-ID")}</div>`).join("");
-      return `<div class="order-card"><div class="order-head"><div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div><div class="order-status">MENUNGGU CEK STOK</div></div><div class="order-customer"><b>${escapeHtml(o.customer_name||"-")}</b><br>WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>Alamat: ${escapeHtml(o.customer_address||"-")}<br><span class="muted">${orderDate(o.created_at)}</span></div><div class="order-items">${itemHtml}</div><div style="font-weight:800;margin-top:10px">TOTAL: Rp ${orderTotal(items).toLocaleString("id-ID")}</div><textarea class="order-note" id="note-${o.id}" placeholder="Catatan admin...">${escapeHtml(o.admin_note||"")}</textarea><div class="order-shipping-box"><label>BIAYA ONGKIR</label><input id="shipping-${o.id}" type="number" min="0" step="1000" inputmode="numeric" placeholder="Contoh: 25000"></div><div class="order-actions"><button type="button" onclick="confirmStockWithShipping('${o.id}')">STOK TERSEDIA</button><button type="button" class="danger" onclick="updateOrderStatus('${o.id}','rejected')">STOK TIDAK ADA</button></div></div>`;
+      const itemHtml=items.map(i=>{
+        const image=i.image_url
+          ? `<img class="wbf-order-product-photo" src="${escapeHtml(i.image_url)}" alt="${escapeHtml(i.product_name||"Product")}" loading="lazy">`
+          : `<div class="wbf-order-product-no-photo">NO PHOTO</div>`;
+        return `<div class="wbf-order-item-detail">
+          ${image}
+          <div class="wbf-order-item-info">
+            <b>${escapeHtml(i.product_name||"-")}</b>
+            <div>SKU: ${escapeHtml(i.sku||"-")}</div>
+            <div>Size: ${escapeHtml(i.size||"-")} · Qty: ${Number(i.quantity||0)}</div>
+            ${i.color?`<div>Color: ${escapeHtml(i.color)}</div>`:""}
+            <div style="font-weight:800;margin-top:3px">Rp ${(Number(i.unit_price||0)*Number(i.quantity||0)).toLocaleString("id-ID")}</div>
+          </div>
+        </div>`;
+      }).join("");
+
+      const total=orderTotal(items);
+      return `<div class="order-card wbf-compact-order-card">
+        <div class="wbf-order-summary" onclick="toggleOrderCard(this.parentElement)" role="button" tabindex="0" aria-label="Buka detail order ${escapeHtml(o.id)}">
+          <div class="wbf-order-summary-main">
+            <div class="wbf-order-summary-label">ORDER</div>
+            <div class="wbf-order-summary-id">${escapeHtml(o.id)}</div>
+          </div>
+          <div class="wbf-order-summary-right">
+            <div class="order-status">MENUNGGU CEK STOK</div>
+            <div class="wbf-order-chevron">⌄</div>
+          </div>
+        </div>
+
+        <div class="order-details wbf-order-details">
+          <div class="wbf-order-customer">
+            <b>${escapeHtml(o.customer_name||"-")}</b>
+            <div>WhatsApp: ${escapeHtml(o.customer_phone||"-")}</div>
+            <div>Alamat: ${escapeHtml(o.customer_address||"-")}</div>
+            <div class="muted">${orderDate(o.created_at)}</div>
+          </div>
+
+          <div class="wbf-order-products">
+            ${itemHtml}
+          </div>
+
+          <div class="wbf-order-total">TOTAL: Rp ${total.toLocaleString("id-ID")}</div>
+
+          <textarea class="order-note" id="note-${o.id}" placeholder="Catatan admin..." onclick="event.stopPropagation()">${escapeHtml(o.admin_note||"")}</textarea>
+
+          <div class="order-shipping-box">
+            <label>BIAYA ONGKIR</label>
+            <input id="shipping-${o.id}" type="number" min="0" step="1000" inputmode="numeric" placeholder="Contoh: 25000" onclick="event.stopPropagation()">
+          </div>
+
+          <div class="order-actions wbf-order-actions-stack">
+            <button type="button" onclick="event.stopPropagation();confirmStockWithShipping('${o.id}')">STOK TERSEDIA</button>
+            <button type="button" class="danger" onclick="event.stopPropagation();updateOrderStatus('${o.id}','rejected')">STOK TIDAK ADA</button>
+          </div>
+        </div>
+      </div>`;
     }).join("");
-  }catch(e){list.innerHTML='<div class="brand-card" style="text-align:left"><b>GAGAL MEMUAT ORDER</b><div class="muted" style="margin-top:6px">'+escapeHtml(e.message)+'</div></div>';}
+
+    list.querySelectorAll(".wbf-order-summary").forEach(el=>{
+      el.addEventListener("keydown",e=>{
+        if(e.key==="Enter"||e.key===" "){e.preventDefault();el.click();}
+      });
+    });
+  }catch(e){
+    list.innerHTML='<div class="brand-card" style="text-align:left"><b>GAGAL MEMUAT ORDER</b><div class="muted" style="margin-top:6px">'+escapeHtml(e.message)+'</div></div>';
+  }
 }
 async function loadPayments(){
   const list=document.getElementById("paymentsList"); if(!list)return; list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">MEMUAT PAYMENT...</div></div>';
