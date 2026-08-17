@@ -524,6 +524,7 @@ function restoreView(){
   if(!token) return;
   login.classList.add("hidden");
   dash.classList.remove("hidden");
+  refreshOrderCount();
   const view=localStorage.getItem("wbf_admin_view")||"dashboard";
   if(view==="brands"){dashboardHome.classList.add("hidden");brandsPage.classList.remove("hidden");refreshProductCount();}
   else if(view==="brand"){
@@ -598,6 +599,7 @@ localStorage.setItem("wbf_access_token",data.access_token);
 localStorage.setItem("wbf_admin_view","dashboard");
 login.classList.add("hidden");dash.classList.remove("hidden");
 await refreshProductCount();
+await refreshOrderCount();
 }catch(e){showError("Koneksi gagal: "+e.message)}
 finally{btn.disabled=false;btn.textContent="LOGIN"}
 }
@@ -1052,6 +1054,25 @@ function orderDate(v){
   try{return new Date(v).toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
   catch(e){return v||""}
 }
+
+async function refreshOrderCount(){
+  const el=document.querySelector("#ordersCard .num");
+  if(!el) return;
+  try{
+    const token=authToken();
+    if(!token) return;
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_orders",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:"{}"
+    });
+    const data=await res.json();
+    if(!res.ok) return;
+    const orders=Array.isArray(data)?data:[];
+    el.textContent=orders.length;
+  }catch(e){}
+}
+
 async function loadOrders(){
   const list=document.getElementById("ordersList");
   const totalEl=document.getElementById("wbfTotalOrders");
@@ -1133,6 +1154,7 @@ async function updateOrderStatus(orderId,statusValue){
     const data=await res.json();
     if(!res.ok) throw new Error(data.message||data.details||"Gagal memperbarui order.");
     await loadOrders();
+    await refreshOrderCount();
     alert("Status order diperbarui: "+orderStatusLabel(statusValue));
   }catch(e){
     alert("Gagal memperbarui order: "+e.message);
@@ -1151,10 +1173,11 @@ if(_oldOrdersCard)_oldOrdersCard.addEventListener("click",async()=>{
   await loadOrders();
 });
 const _oldOrdersBackBtn=document.getElementById("ordersBackBtn");
-if(_oldOrdersBackBtn)_oldOrdersBackBtn.addEventListener("click",()=>{
+if(_oldOrdersBackBtn)_oldOrdersBackBtn.addEventListener("click",async()=>{
   ordersPage.classList.add("hidden");
   dashboardHome.classList.remove("hidden");
   saveView("dashboard");
+  await refreshOrderCount();
 });
 
 </script>
