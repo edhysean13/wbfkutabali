@@ -187,6 +187,51 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
   padding:0 !important;
 }
 
+
+/* Customer order form */
+#wbfOrderModal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:none;align-items:center;justify-content:center;padding:18px}
+#wbfOrderModal.show{display:flex}
+.wbf-order-box{width:min(520px,100%);max-height:90vh;overflow:auto;background:#111;border:1px solid #333;border-radius:16px;padding:18px}
+.wbf-order-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.wbf-order-head h3{margin:0;font-size:22px}
+.wbf-close{background:transparent!important;border:0!important;color:#fff!important;font-size:25px!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important}
+.wbf-order-product{display:flex;gap:12px;padding:10px;border:1px solid #2d2d2d;border-radius:10px;margin-bottom:12px}
+.wbf-order-product img{width:72px;height:72px;object-fit:cover;border-radius:8px}
+.wbf-order-product .no-photo{width:72px;height:72px;display:flex;align-items:center;justify-content:center;background:#1b1b1b;border-radius:8px;font-size:10px;color:#999}
+.wbf-order-field{margin-top:10px}
+.wbf-order-field label{display:block;font-size:12px;color:#aaa;margin-bottom:5px}
+.wbf-order-field input,.wbf-order-field select,.wbf-order-field textarea{width:100%;background:#080808;color:#fff;border:1px solid #383838;border-radius:8px;padding:10px;font-size:14px}
+.wbf-order-field textarea{min-height:72px;resize:vertical}
+.wbf-order-submit{width:100%;margin-top:14px;background:#df1720!important;color:#fff;border:0;border-radius:9px;padding:12px;font-size:14px;font-weight:800}
+.wbf-order-note{font-size:11px;color:#999;margin-top:8px;line-height:1.4}
+.wbf-order-success{display:none;text-align:center;padding:20px 8px}
+.wbf-order-success h3{margin:0 0 8px;font-size:22px}
+
+
+/* WBF Cart */
+#wbfCartPanel{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:10000;display:none;align-items:flex-end;justify-content:center}
+#wbfCartPanel.show{display:flex}
+.wbf-cart-box{width:min(620px,100%);max-height:88vh;overflow:auto;background:#111;border:1px solid #333;border-bottom:0;border-radius:18px 18px 0 0;padding:16px}
+.wbf-cart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.wbf-cart-head h3{margin:0;font-size:21px}
+.wbf-cart-close{background:transparent!important;border:0!important;color:#fff!important;font-size:25px!important;padding:0!important;width:auto!important}
+.wbf-cart-item{display:flex;gap:10px;border:1px solid #2b2b2b;border-radius:10px;padding:9px;margin-bottom:8px;align-items:center}
+.wbf-cart-item img,.wbf-cart-noimg{width:64px;height:64px;object-fit:cover;border-radius:8px;flex:none}
+.wbf-cart-noimg{display:flex;align-items:center;justify-content:center;background:#1b1b1b;color:#999;font-size:9px}
+.wbf-cart-info{flex:1;min-width:0}
+.wbf-cart-name{font-weight:800;font-size:13px}
+.wbf-cart-meta{font-size:10px;color:#999;margin-top:3px}
+.wbf-cart-price{font-weight:800;font-size:12px;margin-top:5px}
+.wbf-cart-qty{display:flex;align-items:center;gap:6px;margin-top:7px}
+.wbf-cart-qty button{width:27px!important;height:27px!important;min-width:27px!important;padding:0!important;margin:0!important;border-radius:6px!important}
+.wbf-cart-qty span{min-width:20px;text-align:center;font-size:12px}
+.wbf-cart-remove{background:transparent!important;border:0!important;color:#e21b23!important;padding:3px!important;font-size:11px!important;width:auto!important}
+.wbf-cart-total{border-top:1px solid #333;padding-top:12px;margin-top:10px;display:flex;justify-content:space-between;font-weight:800;font-size:16px}
+.wbf-cart-checkout{width:100%!important;margin-top:12px!important;background:#df1720!important;color:#fff!important;border:0!important;border-radius:9px!important;padding:12px!important;font-weight:800}
+.wbf-cart-empty{text-align:center;color:#999;padding:25px 10px}
+#wbfCartBadge{display:none;position:absolute;top:-6px;right:-8px;background:#e21b23;color:#fff;border-radius:20px;min-width:18px;height:18px;align-items:center;justify-content:center;font-size:9px;font-weight:800;padding:0 4px}
+#main-navigation a{position:relative}
+
 </style>
 </head>
 <body>
@@ -211,7 +256,7 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 <section class="main-buttons container" id="main-navigation">
   <a href="#home" onclick="showHome();return false;">HOME</a>
   <a href="#brands" onclick="showBrands();return false;">BRANDS</a>
-  <a href="#cart">CART</a>
+  <a href="#cart" onclick="openCart();return false;">CART<span id="wbfCartBadge">0</span></a>
   <a href="#about">ABOUT</a>
 </section>
 
@@ -266,6 +311,68 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
   <div class="info-box">WBF Kuta-Bali • World Brand Factory</div>
 </section>
 <footer>WBF Kuta-Bali • World Brand Factory<br><small>Katalog &amp; order online • Stok dikonfirmasi admin sebelum pembayaran</small></footer>
+
+
+
+<div id="wbfCartPanel">
+  <div class="wbf-cart-box">
+    <div class="wbf-cart-head">
+      <h3>SHOPPING CART <span id="wbfCartCountTitle" style="font-size:11px;color:#999"></span></h3>
+      <button class="wbf-cart-close" type="button" onclick="closeCart()">×</button>
+    </div>
+    <div id="wbfCartItems"></div>
+    <div id="wbfCartSummary" style="display:none">
+      <div class="wbf-cart-total"><span>TOTAL</span><span id="wbfCartTotal">Rp 0</span></div>
+      <button class="wbf-cart-checkout" type="button" onclick="checkoutWbfCart()">CHECKOUT</button>
+    </div>
+  </div>
+</div>
+
+<div id="wbfOrderModal">
+  <div class="wbf-order-box">
+    <div class="wbf-order-head">
+      <h3>ORDER PRODUCT</h3>
+      <button class="wbf-close" type="button" onclick="closeOrderModal()">×</button>
+    </div>
+
+    <div id="wbfOrderFormWrap">
+      <div id="wbfOrderProduct" class="wbf-order-product"></div>
+
+      <div class="wbf-order-field">
+        <label>Nama</label>
+        <input id="wbfCustomerName" type="text" placeholder="Nama lengkap">
+      </div>
+      <div class="wbf-order-field">
+        <label>No. WhatsApp / Telepon</label>
+        <input id="wbfCustomerPhone" type="tel" placeholder="08xxxxxxxxxx">
+      </div>
+      <div class="wbf-order-field">
+        <label>Alamat</label>
+        <textarea id="wbfCustomerAddress" placeholder="Alamat pengiriman / alamat yang mudah dihubungi"></textarea>
+      </div>
+      <div class="wbf-order-field" id="wbfSizeField" style="display:none">
+        <label>Size</label>
+        <select id="wbfOrderSize"></select>
+      </div>
+      <div class="wbf-order-field" id="wbfColorField" style="display:none">
+        <label>Color</label>
+        <select id="wbfOrderColor"></select>
+      </div>
+      <div class="wbf-order-field">
+        <label>Jumlah</label>
+        <input id="wbfOrderQty" type="number" min="1" value="1">
+      </div>
+      <button id="wbfOrderSubmit" class="wbf-order-submit" type="button" onclick="submitWbfOrder()">KIRIM ORDER</button>
+      <div class="wbf-order-note">Order masuk ke admin untuk pengecekan stok fisik terlebih dahulu. Pembayaran belum dilakukan pada tahap ini.</div>
+    </div>
+
+    <div id="wbfOrderSuccess" class="wbf-order-success">
+      <h3>ORDER TERKIRIM</h3>
+      <div id="wbfOrderSuccessText"></div>
+      <button class="wbf-order-submit" type="button" onclick="closeOrderModal()">TUTUP</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const WBF_SUPABASE_URL="https://wjeyyklbcrqxawoxlphk.supabase.co";
@@ -363,7 +470,7 @@ function renderCatalog(){
         '<span class="sale-price">Rp '+money(sale)+'</span>'+
         (discount>0?' <small>('+discount+'% OFF)</small>':'')+
       '</div>'+
-      '<button class="order" onclick="orderProduct(\''+esc(p.id)+'\')">ORDER</button>'+
+      '<button class="order" onclick="addToCart(\''+esc(p.id)+'\')">ORDER</button>'+
       '</div></article>';
   }).join("");
 }
@@ -408,13 +515,334 @@ document.querySelectorAll(".category-nav button").forEach(btn=>{
   });
 });
 
+
+let wbfCart=JSON.parse(localStorage.getItem("wbf_cart")||"[]");
+
+function saveWbfCart(){
+  localStorage.setItem("wbf_cart",JSON.stringify(wbfCart));
+  updateCartBadge();
+}
+
+function cartKey(p,size,color){
+  return [p.id,size||"",color||""].join("|");
+}
+
+function addToCart(productId){
+  const p=allProducts.find(x=>String(x.id)===String(productId));
+  if(!p)return;
+
+  const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
+  const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
+  let size=sizes.length?sizes[0]:null;
+  let color=colors.length?colors[0]:null;
+
+  // If variants exist, choose them in the same order form before adding.
+  if(sizes.length||colors.length){
+    openAddToCartVariant(p);
+    return;
+  }
+
+  addCartLine(p,1,size,color);
+}
+
+function openAddToCartVariant(p){
+  wbfSelectedOrderProduct=p;
+  const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
+  const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
+  const image=p.image_url
+    ? '<img src="'+esc(p.image_url)+'" alt="'+esc(p.name||"Product")+'">'
+    : '<div class="no-photo">NO PHOTO</div>';
+
+  document.getElementById("wbfOrderProduct").innerHTML=
+    image+'<div><b>'+esc(p.name||"Product")+'</b><div style="font-size:12px;color:#aaa;margin-top:4px">Pilih varian sebelum masuk Cart</div></div>';
+
+  const sf=document.getElementById("wbfSizeField");
+  const cf=document.getElementById("wbfColorField");
+  const ss=document.getElementById("wbfOrderSize");
+  const cs=document.getElementById("wbfOrderColor");
+
+  if(sizes.length){
+    ss.innerHTML=sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    sf.style.display="block";
+  }else{sf.style.display="none";}
+  if(colors.length){
+    cs.innerHTML=colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    cf.style.display="block";
+  }else{cf.style.display="none";}
+
+  document.getElementById("wbfCustomerName").parentElement.style.display="none";
+  document.getElementById("wbfCustomerPhone").parentElement.style.display="none";
+  document.getElementById("wbfCustomerAddress").parentElement.style.display="none";
+  document.getElementById("wbfOrderQty").value="1";
+  document.getElementById("wbfOrderQty").parentElement.style.display="";
+  document.getElementById("wbfOrderFormWrap").style.display="block";
+  document.getElementById("wbfOrderSuccess").style.display="none";
+
+  const submit=document.getElementById("wbfOrderSubmit");
+  submit.textContent="TAMBAH KE CART";
+  submit.onclick=()=>{
+    const size=document.getElementById("wbfOrderSize").value||null;
+    const color=document.getElementById("wbfOrderColor").value||null;
+    const qty=Math.max(1,Number(document.getElementById("wbfOrderQty").value||1));
+    addCartLine(p,qty,size,color);
+    closeOrderModal();
+    document.getElementById("wbfCustomerName").parentElement.style.display="";
+    document.getElementById("wbfCustomerPhone").parentElement.style.display="";
+    document.getElementById("wbfCustomerAddress").parentElement.style.display="";
+    submit.textContent="KIRIM ORDER";
+    submit.onclick=submitWbfOrder;
+    openCart();
+  };
+  document.getElementById("wbfOrderModal").classList.add("show");
+}
+
+function addCartLine(p,qty,size,color){
+  const key=cartKey(p,size,color);
+  const existing=wbfCart.find(x=>x.key===key);
+  const unit=Number(p.price||0)*(1-Number(p.discount||0)/100);
+  if(existing){
+    existing.quantity+=qty;
+  }else{
+    wbfCart.push({
+      key,
+      product_id:p.id,
+      sku:p.sku||"",
+      name:p.name||"Product",
+      image_url:p.image_url||"",
+      unit_price:unit,
+      quantity:qty,
+      size:size||null,
+      color:color||null
+    });
+  }
+  saveWbfCart();
+  alert((p.name||"Product")+" ditambahkan ke Cart.");
+}
+
+function updateCartBadge(){
+  const count=wbfCart.reduce((s,x)=>s+Number(x.quantity||0),0);
+  const badge=document.getElementById("wbfCartBadge");
+  if(!badge)return;
+  badge.textContent=count;
+  badge.style.display=count?"inline-flex":"none";
+  const title=document.getElementById("wbfCartCountTitle");
+  if(title)title.textContent=count?count+" pcs":"";
+}
+
+function renderCart(){
+  const box=document.getElementById("wbfCartItems");
+  const summary=document.getElementById("wbfCartSummary");
+  if(!wbfCart.length){
+    box.innerHTML='<div class="wbf-cart-empty">Cart masih kosong.</div>';
+    summary.style.display="none";
+    updateCartBadge();
+    return;
+  }
+  let total=0;
+  box.innerHTML=wbfCart.map((x,i)=>{
+    total+=Number(x.unit_price)*Number(x.quantity);
+    const img=x.image_url
+      ? '<img src="'+esc(x.image_url)+'" alt="'+esc(x.name)+'">'
+      : '<div class="wbf-cart-noimg">NO PHOTO</div>';
+    return '<div class="wbf-cart-item">'+img+
+      '<div class="wbf-cart-info"><div class="wbf-cart-name">'+esc(x.name)+'</div>'+
+      '<div class="wbf-cart-meta">SKU: '+esc(x.sku)+(x.size?' · Size '+esc(x.size):"")+(x.color?' · '+esc(x.color):"")+'</div>'+
+      '<div class="wbf-cart-price">Rp '+money(x.unit_price)+'</div>'+
+      '<div class="wbf-cart-qty"><button onclick="changeCartQty('+i+',-1)">−</button><span>'+x.quantity+'</span><button onclick="changeCartQty('+i+',1)">+</button><button class="wbf-cart-remove" onclick="removeCartLine('+i+')">HAPUS</button></div></div></div>';
+  }).join("");
+  document.getElementById("wbfCartTotal").textContent="Rp "+money(total);
+  summary.style.display="block";
+  updateCartBadge();
+}
+
+function changeCartQty(i,delta){
+  if(!wbfCart[i])return;
+  wbfCart[i].quantity=Math.max(0,Number(wbfCart[i].quantity)+delta);
+  if(!wbfCart[i].quantity)wbfCart.splice(i,1);
+  saveWbfCart();
+  renderCart();
+}
+
+function removeCartLine(i){
+  wbfCart.splice(i,1);
+  saveWbfCart();
+  renderCart();
+}
+
+function openCart(){
+  renderCart();
+  document.getElementById("wbfCartPanel").classList.add("show");
+}
+function closeCart(){
+  document.getElementById("wbfCartPanel").classList.remove("show");
+}
+
+function checkoutWbfCart(){
+  if(!wbfCart.length)return;
+  closeCart();
+
+  document.getElementById("wbfOrderProduct").innerHTML=
+    '<div><b>'+wbfCart.length+' jenis produk</b><div style="font-size:12px;color:#aaa;margin-top:4px">'+
+    wbfCart.reduce((s,x)=>s+Number(x.quantity),0)+' pcs dalam 1 transaksi</div></div>';
+
+  document.getElementById("wbfCustomerName").parentElement.style.display="";
+  document.getElementById("wbfCustomerPhone").parentElement.style.display="";
+  document.getElementById("wbfCustomerAddress").parentElement.style.display="";
+  document.getElementById("wbfSizeField").style.display="none";
+  document.getElementById("wbfColorField").style.display="none";
+  document.getElementById("wbfOrderQty").parentElement.style.display="none";
+  document.getElementById("wbfOrderSubmit").textContent="KIRIM 1 ORDER";
+  document.getElementById("wbfOrderSubmit").onclick=submitWbfCart;
+  document.getElementById("wbfOrderFormWrap").style.display="block";
+  document.getElementById("wbfOrderSuccess").style.display="none";
+  document.getElementById("wbfOrderModal").classList.add("show");
+}
+
+async function submitWbfCart(){
+  const name=document.getElementById("wbfCustomerName").value.trim();
+  const phone=document.getElementById("wbfCustomerPhone").value.trim();
+  const address=document.getElementById("wbfCustomerAddress").value.trim();
+  const btn=document.getElementById("wbfOrderSubmit");
+  if(!name||!phone||!address){
+    alert("Nama, nomor telepon dan alamat wajib diisi.");
+    return;
+  }
+  btn.disabled=true;
+  btn.textContent="MENGIRIM...";
+  try{
+    const res=await fetch(
+      WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_create_order",
+      {method:"POST",headers:apiHeaders(),body:JSON.stringify({
+        p_customer_name:name,p_customer_phone:phone,p_customer_address:address,
+        p_items:wbfCart.map(x=>({product_id:x.product_id,quantity:x.quantity,size:x.size,color:x.color}))
+      })}
+    );
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.message||data.details||"Order gagal dikirim.");
+    wbfCart=[];
+    saveWbfCart();
+    document.getElementById("wbfOrderFormWrap").style.display="none";
+    document.getElementById("wbfOrderSuccess").style.display="block";
+    document.getElementById("wbfOrderSuccessText").innerHTML=
+      'Nomor order: <b>'+esc(data.id)+'</b><br><br>Semua barang masuk dalam <b>1 transaksi</b> dan menunggu pengecekan stok admin.';
+  }catch(e){
+    alert("Gagal mengirim order: "+e.message);
+  }finally{
+    btn.disabled=false;
+    btn.textContent="KIRIM 1 ORDER";
+  }
+}
+
+let wbfSelectedOrderProduct=null;
+
 function orderProduct(productId){
   const p=allProducts.find(x=>String(x.id)===String(productId));
   if(!p)return;
-  alert("ORDER WBF\n\n"+(p.name||"Product")+"\nSKU: "+(p.sku||"-")+"\n\nAlur checkout dan pengecekan stok admin akan kita sambungkan berikutnya.");
+  wbfSelectedOrderProduct=p;
+
+  const image=p.image_url
+    ? '<img src="'+esc(p.image_url)+'" alt="'+esc(p.name||"Product")+'">'
+    : '<div class="no-photo">NO PHOTO</div>';
+
+  const discount=Number(p.discount||0);
+  const sale=Math.max(0,Number(p.price||0)*(1-discount/100));
+  document.getElementById("wbfOrderProduct").innerHTML=
+    image+
+    '<div><b>'+esc(p.name||"Product")+'</b><div style="font-size:12px;color:#aaa;margin-top:4px">SKU: '+esc(p.sku||"-")+'</div><div style="margin-top:5px;font-weight:800">Rp '+money(sale)+'</div></div>';
+
+  const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
+  const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
+  const sf=document.getElementById("wbfSizeField");
+  const cf=document.getElementById("wbfColorField");
+  const ss=document.getElementById("wbfOrderSize");
+  const cs=document.getElementById("wbfOrderColor");
+
+  if(sizes.length){
+    ss.innerHTML=sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    sf.style.display="block";
+  }else{
+    ss.innerHTML="";
+    sf.style.display="none";
+  }
+  if(colors.length){
+    cs.innerHTML=colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    cf.style.display="block";
+  }else{
+    cs.innerHTML="";
+    cf.style.display="none";
+  }
+
+  document.getElementById("wbfCustomerName").value="";
+  document.getElementById("wbfCustomerPhone").value="";
+  document.getElementById("wbfCustomerAddress").value="";
+  document.getElementById("wbfOrderQty").value="1";
+  document.getElementById("wbfOrderFormWrap").style.display="block";
+  document.getElementById("wbfOrderSuccess").style.display="none";
+  document.getElementById("wbfOrderModal").classList.add("show");
+}
+
+function closeOrderModal(){
+  document.getElementById("wbfOrderModal").classList.remove("show");
+}
+
+async function submitWbfOrder(){
+  if(!wbfSelectedOrderProduct)return;
+
+  const name=document.getElementById("wbfCustomerName").value.trim();
+  const phone=document.getElementById("wbfCustomerPhone").value.trim();
+  const address=document.getElementById("wbfCustomerAddress").value.trim();
+  const quantity=Math.max(1,Number(document.getElementById("wbfOrderQty").value||1));
+  const size=document.getElementById("wbfOrderSize").value||null;
+  const color=document.getElementById("wbfOrderColor").value||null;
+  const btn=document.getElementById("wbfOrderSubmit");
+
+  if(!name||!phone||!address){
+    alert("Nama, nomor telepon dan alamat wajib diisi.");
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent="MENGIRIM...";
+  try{
+    const res=await fetch(
+      WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_create_order",
+      {
+        method:"POST",
+        headers:apiHeaders(),
+        body:JSON.stringify({
+          p_customer_name:name,
+          p_customer_phone:phone,
+          p_customer_address:address,
+          p_items:[{
+            product_id:wbfSelectedOrderProduct.id,
+            quantity,
+            size,
+            color
+          }]
+        })
+      }
+    );
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Order gagal dikirim.");
+
+    localStorage.setItem("wbf_last_order_id",data.id);
+    localStorage.setItem("wbf_last_order_status",data.status||"pending");
+
+    document.getElementById("wbfOrderFormWrap").style.display="none";
+    document.getElementById("wbfOrderSuccess").style.display="block";
+    document.getElementById("wbfOrderSuccessText").innerHTML=
+      'Nomor order: <b>'+esc(data.id)+'</b><br><br>'+
+      'Order sudah masuk ke admin dan sedang menunggu pengecekan stok.';
+  }catch(e){
+    alert("Gagal mengirim order: "+e.message);
+  }finally{
+    btn.disabled=false;
+    btn.textContent="KIRIM ORDER";
+  }
 }
 
 showHome();
+updateCartBadge();
 loadCustomerProducts();
 </script>
 </body>

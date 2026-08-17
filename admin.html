@@ -32,6 +32,16 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 .brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
 .brand-card{background:#121212;border:1px solid #292929;border-radius:12px;padding:18px 12px;text-align:center;font-size:16px;font-weight:800}
 @media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.brand-grid{grid-template-columns:repeat(3,1fr)}}
+
+.wbf-order-card{background:#121212;border:1px solid #292929;border-radius:10px;padding:13px;text-align:left}
+.wbf-order-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.wbf-order-status{font-size:11px;font-weight:800;padding:5px 7px;border-radius:6px;background:#222}
+.wbf-order-items{margin-top:9px;border-top:1px solid #292929;padding-top:8px}
+.wbf-order-item{font-size:12px;line-height:1.5;margin-bottom:6px}
+.wbf-order-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.wbf-order-actions button{margin:0!important;width:auto!important;min-width:110px}
+.wbf-order-muted{color:#999;font-size:11px}
+
 </style>
 
 <style id="wbf-compact-refinement">
@@ -460,8 +470,8 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 </div>
 
 <div class="brand-grid" style="grid-template-columns:repeat(2,1fr)">
-<div class="brand-card" style="text-align:left"><div class="muted">TOTAL ORDERS</div><div class="num">0</div></div>
-<div class="brand-card" style="text-align:left"><div class="muted">MENUNGGU CEK STOK</div><div class="num">0</div></div>
+<div class="brand-card" style="text-align:left"><div class="muted">TOTAL ORDERS</div><div class="num" id="wbfTotalOrders">0</div></div>
+<div class="brand-card" style="text-align:left"><div class="muted">MENUNGGU CEK STOK</div><div class="num" id="wbfPendingOrders">0</div></div>
 </div>
 
 <div style="display:grid;gap:10px;margin-top:16px">
@@ -469,9 +479,9 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 <b>ALUR ORDER</b>
 <div class="muted" style="margin-top:8px">1. Customer melakukan order</div>
 <div class="muted">2. Admin cek stok fisik di toko</div>
-<div class="muted">3. Konfirmasi ketersediaan ke customer</div>
-<div class="muted">4. Menunggu pembayaran</div>
-<div class="muted">5. Sudah dibayar → diproses</div>
+<div class="muted">3. Jika tersedia → konfirmasi ke customer</div>
+<div class="muted">4. Customer melakukan pembayaran</div>
+<div class="muted">5. Admin verifikasi pembayaran → proses</div>
 <div class="muted">6. Selesai</div>
 </div>
 </div>
@@ -657,6 +667,8 @@ ordersCard.addEventListener("click",()=>{
 dashboardHome.classList.add("hidden");
 ordersPage.classList.remove("hidden");
 saveView("orders");
+loadWbfOrders();
+loadWbfOrders();
 });
 
 document.getElementById("ordersBackBtn").addEventListener("click",()=>{
@@ -664,6 +676,102 @@ ordersPage.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
 saveView("dashboard");
 });
+
+
+function wbfOrderStatusLabel(status){
+  return ({
+    pending:"MENUNGGU CEK STOK",
+    confirmed:"STOK TERSEDIA / TERKONFIRMASI",
+    rejected:"STOK TIDAK TERSEDIA",
+    paid:"SUDAH DIBAYAR",
+    shipped:"DIPROSES / DIKIRIM",
+    completed:"SELESAI",
+    cancelled:"DIBATALKAN"
+  })[status]||status;
+}
+
+function wbfOrderMoney(v){return Number(v||0).toLocaleString("id-ID");}
+
+async function loadWbfOrders(){
+  const list=document.getElementById("ordersList");
+  list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">MEMUAT ORDER...</div></div>';
+  try{
+    const token=authToken();
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_orders",{
+      method:"POST",
+      headers:wbfHeaders(token,true),
+      body:"{}"
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal memuat order.");
+
+    const orders=Array.isArray(data)?data:[];
+    document.getElementById("wbfTotalOrders").textContent=orders.length;
+    document.getElementById("wbfPendingOrders").textContent=orders.filter(o=>o.status==="pending").length;
+
+    if(!orders.length){
+      list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">BELUM ADA ORDER</div><div style="margin-top:6px;font-size:14px">Order customer akan muncul di sini.</div></div>';
+      return;
+    }
+
+    list.innerHTML=orders.map(o=>{
+      const items=Array.isArray(o.items)?o.items:[];
+      const total=items.reduce((s,i)=>s+Number(i.unit_price||0)*Number(i.quantity||1),0);
+      const itemHtml=items.map(i=>
+        '<div class="wbf-order-item"><b>'+escapeHtml(i.product_name||"Product")+'</b> · SKU '+escapeHtml(i.sku||"-")+
+        ' · Qty '+Number(i.quantity||1)+
+        (i.size?' · Size '+escapeHtml(i.size):"")+
+        (i.color?' · '+escapeHtml(i.color):"")+
+        '<br>Rp '+wbfOrderMoney(i.unit_price)+'</div>'
+      ).join("");
+
+      let actions="";
+      if(o.status==="pending"){
+        actions=
+          `<button type="button" onclick="wbfUpdateOrder('${o.id}','confirmed')">STOK TERSEDIA</button>`+
+          `<button type="button" onclick="wbfUpdateOrder('${o.id}','rejected')">STOK TIDAK ADA</button>`;
+      }else if(o.status==="confirmed"){
+        actions=`<button type="button" onclick="wbfUpdateOrder('${o.id}','confirmed',true)">KONFIRMASI KE CUSTOMER</button>`;
+      }else if(o.status==="paid"){
+        actions=`<button type="button" onclick="wbfUpdateOrder('${o.id}','shipped')">PROSES ORDER</button>`;
+      }else if(o.status==="shipped"){
+        actions=`<button type="button" onclick="wbfUpdateOrder('${o.id}','completed')">SELESAI</button>`;
+      }
+
+      return '<div class="wbf-order-card">'+
+        '<div class="wbf-order-top"><div><b>ORDER #'+escapeHtml(String(o.id).slice(0,8))+'</b><div class="wbf-order-muted">'+new Date(o.created_at).toLocaleString("id-ID")+'</div></div><div class="wbf-order-status">'+wbfOrderStatusLabel(o.status)+'</div></div>'+
+        '<div style="margin-top:9px;font-size:13px"><b>'+escapeHtml(o.customer_name)+'</b><br>'+escapeHtml(o.customer_phone)+'<br>'+escapeHtml(o.customer_address)+'</div>'+
+        '<div class="wbf-order-items">'+itemHtml+'<b>Total: Rp '+wbfOrderMoney(total)+'</b></div>'+
+        (o.admin_note?'<div class="wbf-order-muted" style="margin-top:7px">Catatan: '+escapeHtml(o.admin_note)+'</div>':'')+
+        (actions?'<div class="wbf-order-actions">'+actions+'</div>':'')+
+      '</div>';
+    }).join("");
+  }catch(e){
+    list.innerHTML='<div class="brand-card" style="text-align:left;color:#ffb3b3">Gagal memuat order: '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+async function wbfUpdateOrder(orderId,status,confirmOnly=false){
+  let note=null;
+  if(status==="confirmed" && confirmOnly){
+    note="Stok sudah dicek admin dan produk tersedia.";
+  }else if(status==="rejected"){
+    note="Stok fisik tidak tersedia.";
+  }
+  try{
+    const token=authToken();
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_order",{
+      method:"POST",
+      headers:wbfHeaders(token,true),
+      body:JSON.stringify({p_order_id:orderId,p_status:status,p_admin_note:note})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal mengubah status order.");
+    await loadWbfOrders();
+  }catch(e){
+    alert("Gagal mengubah order: "+e.message);
+  }
+}
 
 const productsPage=document.getElementById("productsPage");
 const productsCard=document.getElementById("productsCard");
