@@ -533,8 +533,8 @@ function addToCart(productId){
 
   const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
   const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
-  let size=sizes.length?sizes[0]:null;
-  let color=colors.length?colors[0]:null;
+  let size=null;
+  let color=null;
 
   // If variants exist, choose them in the same order form before adding.
   if(sizes.length||colors.length){
@@ -562,11 +562,11 @@ function openAddToCartVariant(p){
   const cs=document.getElementById("wbfOrderColor");
 
   if(sizes.length){
-    ss.innerHTML=sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    ss.innerHTML='<option value="">Pilih size</option>'+sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     sf.style.display="block";
   }else{sf.style.display="none";}
   if(colors.length){
-    cs.innerHTML=colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    cs.innerHTML='<option value="">Pilih warna</option>'+colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     cf.style.display="block";
   }else{cf.style.display="none";}
 
@@ -584,6 +584,8 @@ function openAddToCartVariant(p){
     const size=document.getElementById("wbfOrderSize").value||null;
     const color=document.getElementById("wbfOrderColor").value||null;
     const qty=Math.max(1,Number(document.getElementById("wbfOrderQty").value||1));
+    if(sizes.length && !size){ alert("Pilih size terlebih dahulu."); return; }
+    if(colors.length && !color){ alert("Pilih warna terlebih dahulu."); return; }
     addCartLine(p,qty,size,color);
     closeOrderModal();
     document.getElementById("wbfCustomerName").parentElement.style.display="";
@@ -691,6 +693,7 @@ function checkoutWbfCart(){
   document.getElementById("wbfSizeField").style.display="none";
   document.getElementById("wbfColorField").style.display="none";
   document.getElementById("wbfOrderQty").parentElement.style.display="none";
+  document.getElementById("wbfOrderQty").value="1";
   document.getElementById("wbfOrderSubmit").textContent="KIRIM 1 ORDER";
   document.getElementById("wbfOrderSubmit").onclick=submitWbfCart;
   document.getElementById("wbfOrderFormWrap").style.display="block";
@@ -758,14 +761,14 @@ function orderProduct(productId){
   const cs=document.getElementById("wbfOrderColor");
 
   if(sizes.length){
-    ss.innerHTML=sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    ss.innerHTML='<option value="">Pilih size</option>'+sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     sf.style.display="block";
   }else{
     ss.innerHTML="";
     sf.style.display="none";
   }
   if(colors.length){
-    cs.innerHTML=colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    cs.innerHTML='<option value="">Pilih warna</option>'+colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     cf.style.display="block";
   }else{
     cs.innerHTML="";
