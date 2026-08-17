@@ -55,6 +55,18 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 
 /* iPhone Safari: cegah auto-zoom saat field disentuh */
 input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:100%; }
+
+/* BRAND MANAGEMENT */
+.brand-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:9px}
+.brand-action-btn{margin:0!important;width:100%!important;height:38px!important;min-height:38px!important}
+.brand-card.brand-item{position:relative;padding:10px!important;min-height:74px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:6px!important}
+.brand-logo{width:42px;height:42px;border-radius:9px;object-fit:contain;background:#fff;border:1px solid #333}
+.brand-logo-empty{width:42px;height:42px;border-radius:9px;background:#1a1a1a;border:1px solid #333;display:flex;align-items:center;justify-content:center;color:#777;font-size:9px}
+.brand-name{font-size:11px;font-weight:800;line-height:1.1}
+.brand-edit-btn{position:absolute;right:5px;top:5px;width:auto!important;min-width:0!important;height:25px!important;min-height:25px!important;margin:0!important;padding:3px 7px!important;font-size:9px!important;background:#292929!important}
+.brand-form{margin-top:10px;background:#121212;border:1px solid #292929;border-radius:10px;padding:12px}
+.brand-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.brand-form-actions button{margin:0!important}
 </style>
 
 
@@ -707,14 +719,23 @@ html, body {
 <div><div class="muted">WBF ADMIN</div><h1>BRANDS</h1></div>
 <button class="back" id="backBtn">BACK</button>
 </div>
-<div class="brand-grid">
-<div class="brand-card clickable-brand" data-brand="VOLCOM">VOLCOM</div>
-<div class="brand-card clickable-brand" data-brand="RIPCURL">RIPCURL</div>
-<div class="brand-card clickable-brand" data-brand="MAE BALI">MAE BALI</div>
-<div class="brand-card clickable-brand" data-brand="ZOMBIES">ZOMBIES</div>
-<div class="brand-card clickable-brand" data-brand="TRIDATU BALI">TRIDATU BALI</div>
-<div class="brand-card clickable-brand" data-brand="JUICEMATIC">JUICEMATIC</div>
+<div class="brand-actions">
+<button type="button" class="brand-action-btn" id="addBrandBtn">+ TAMBAH BRAND</button>
 </div>
+<div id="brandForm" class="brand-form hidden">
+<label>NAMA BRAND</label>
+<input id="brandNameInput" type="text" placeholder="Nama brand">
+<label>LOGO BRAND</label>
+<input id="brandLogoInput" type="file" accept="image/*">
+<div id="brandLogoPreview" class="muted" style="margin-top:7px"></div>
+<input id="brandEditId" type="hidden" value="">
+<div class="brand-form-actions">
+<button type="button" id="saveBrandBtn">SIMPAN BRAND</button>
+<button type="button" id="cancelBrandBtn" class="back">BATAL</button>
+</div>
+<div id="brandFormStatus" class="muted" style="margin-top:7px"></div>
+</div>
+<div id="brandsList" class="brand-grid"></div>
 </section>
 
 <section id="brandDetailPage" class="page hidden">
@@ -748,8 +769,6 @@ html, body {
 <label>Brand</label>
 <select id="productBrand" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
 <option value="">Pilih Brand</option>
-<option>VOLCOM</option><option>RIPCURL</option><option>MAE BALI</option>
-<option>ZOMBIES</option><option>TRIDATU BALI</option><option>JUICEMATIC</option>
 </select>
 <label>SKU</label><input id="productSku" type="text" placeholder="SKU">
 <label>Product Name</label><input id="productName" type="text" placeholder="Nama produk">
@@ -845,7 +864,7 @@ function restoreView(){
   dash.classList.remove("hidden");
   refreshOrderCount();
   const view=localStorage.getItem("wbf_admin_view")||"dashboard";
-  if(view==="brands"){dashboardHome.classList.add("hidden");brandsPage.classList.remove("hidden");refreshProductCount();}
+  if(view==="brands"){dashboardHome.classList.add("hidden");brandsPage.classList.remove("hidden");loadBrands();refreshProductCount();}
   else if(view==="store-bank"){
     dashboardHome.classList.add("hidden");
     storeBankPage.classList.remove("hidden");
@@ -1011,9 +1030,118 @@ storeBankSaveBtn.addEventListener("click",async()=>{
   }
 });
 
+
+let brandRecords=[];
+
+async function loadBrands(){
+ const list=document.getElementById("brandsList"); if(!list)return;
+ list.innerHTML='<div class="muted">MEMUAT BRAND...</div>';
+ try{
+  const res=await fetch(URL+"/rest/v1/brands?select=id,name,slug,is_active,logo_url&order=name.asc",{headers:wbfHeaders(authToken())});
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.message||data.details||"Gagal memuat brand.");
+  brandRecords=Array.isArray(data)?data:[];
+  renderBrands(); syncBrandSelectors();
+ }catch(e){list.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat brand: '+escapeHtml(e.message)+'</div>'}
+}
+
+function renderBrands(){
+ const list=document.getElementById("brandsList");
+ if(!brandRecords.length){list.innerHTML='<div class="brand-card" style="text-align:left">Belum ada brand.</div>';return}
+ list.innerHTML=brandRecords.map(b=>{
+  const logo=b.logo_url?'<img class="brand-logo" src="'+escapeHtml(b.logo_url)+'" alt="'+escapeHtml(b.name)+'">':'<div class="brand-logo-empty">NO LOGO</div>';
+  return '<div class="brand-card brand-item clickable-brand" data-brand="'+escapeHtml(b.name)+'">'+
+   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+logo+
+   '<div class="brand-name">'+escapeHtml(b.name)+'</div></div>';
+ }).join("");
+ list.querySelectorAll(".clickable-brand").forEach(el=>el.addEventListener("click",e=>{
+  if(e.target.closest(".brand-edit-btn"))return; openBrand(el.dataset.brand);
+ }));
+ list.querySelectorAll(".brand-edit-btn").forEach(el=>el.addEventListener("click",e=>{
+  e.stopPropagation();openBrandEditor(el.dataset.editBrand);
+ }));
+}
+
+function syncBrandSelectors(){
+ const select=document.getElementById("productBrand");
+ if(select){
+  const current=select.value;
+  select.innerHTML='<option value="">Pilih Brand</option>'+brandRecords.filter(b=>b.is_active!==false).map(b=>'<option value="'+escapeHtml(b.name)+'">'+escapeHtml(b.name)+'</option>').join("");
+  if(current)select.value=current;
+ }
+ const sales=document.getElementById("wbfSalesBrand");
+ if(sales)sales.innerHTML='<option value="ALL">SEMUA BRAND</option>'+brandRecords.filter(b=>b.is_active!==false).map(b=>'<option value="'+escapeHtml(b.name)+'">'+escapeHtml(b.name)+'</option>').join("");
+}
+
+function openBrandEditor(id){
+ const b=brandRecords.find(x=>String(x.id)===String(id));if(!b)return;
+ document.getElementById("brandEditId").value=b.id;
+ document.getElementById("brandNameInput").value=b.name||"";
+ document.getElementById("brandLogoInput").value="";
+ document.getElementById("brandLogoPreview").innerHTML=b.logo_url?'<img src="'+escapeHtml(b.logo_url)+'" style="width:70px;height:70px;object-fit:contain;border-radius:9px;background:#fff"><div class="muted">Logo saat ini</div>':"Belum ada logo.";
+ document.getElementById("brandFormStatus").textContent="";
+ document.getElementById("saveBrandBtn").textContent="UPDATE BRAND";
+ document.getElementById("brandForm").classList.remove("hidden");
+ document.getElementById("brandForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function resetBrandForm(){
+ document.getElementById("brandEditId").value="";
+ document.getElementById("brandNameInput").value="";
+ document.getElementById("brandLogoInput").value="";
+ document.getElementById("brandLogoPreview").innerHTML="";
+ document.getElementById("brandFormStatus").textContent="";
+ document.getElementById("saveBrandBtn").textContent="SIMPAN BRAND";
+ document.getElementById("brandForm").classList.add("hidden");
+}
+
+async function uploadBrandLogo(file,brandId){
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+ const path="brands/"+brandId+"."+ext;
+ const res=await fetch(URL+"/storage/v1/object/brand-logos/"+path,{
+  method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+authToken(),"Content-Type":file.type||"image/jpeg","x-upsert":"true"},body:file
+ });
+ if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||"Upload logo gagal.")}
+ return URL+"/storage/v1/object/public/brand-logos/"+path;
+}
+
+async function saveBrand(){
+ const id=document.getElementById("brandEditId").value.trim();
+ const name=document.getElementById("brandNameInput").value.trim();
+ const file=document.getElementById("brandLogoInput").files[0];
+ const st=document.getElementById("brandFormStatus"),btn=document.getElementById("saveBrandBtn");
+ if(!name){st.textContent="Nama brand wajib diisi.";return}
+ btn.disabled=true;btn.textContent=id?"MENYIMPAN...":"MENAMBAH...";st.textContent="";
+ try{
+  let brandId=id;
+  const slug=name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  if(!id){
+   const res=await fetch(URL+"/rest/v1/brands",{method:"POST",headers:{...wbfHeaders(authToken(),true),"Prefer":"return=representation"},body:JSON.stringify({name,slug,is_active:true})});
+   const data=await res.json();if(!res.ok)throw new Error(data.message||data.details||"Gagal menambah brand.");
+   brandId=data[0]?.id||data.id;
+  }else{
+   const res=await fetch(URL+"/rest/v1/brands?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{...wbfHeaders(authToken(),true),"Prefer":"return=minimal"},body:JSON.stringify({name,slug})});
+   if(!res.ok){const d=await res.json();throw new Error(d.message||d.details||"Gagal mengubah brand.")}
+  }
+  if(file){
+   const logoUrl=await uploadBrandLogo(file,brandId);
+   const res=await fetch(URL+"/rest/v1/brands?id=eq."+encodeURIComponent(brandId),{method:"PATCH",headers:{...wbfHeaders(authToken(),true),"Prefer":"return=minimal"},body:JSON.stringify({logo_url:logoUrl})});
+   if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.details||"Gagal menyimpan logo.")}
+  }
+  st.textContent=id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.";
+  await loadBrands();setTimeout(resetBrandForm,500);
+ }catch(e){st.textContent="Gagal: "+e.message}
+ finally{btn.disabled=false;btn.textContent=document.getElementById("brandEditId").value?"UPDATE BRAND":"SIMPAN BRAND"}
+}
+
+document.getElementById("addBrandBtn").addEventListener("click",()=>{resetBrandForm();document.getElementById("brandForm").classList.remove("hidden");document.getElementById("brandNameInput").focus()});
+document.getElementById("cancelBrandBtn").addEventListener("click",resetBrandForm);
+document.getElementById("saveBrandBtn").addEventListener("click",saveBrand);
+
 document.getElementById("brandsCard").addEventListener("click",()=>{
 dashboardHome.classList.add("hidden");
 brandsPage.classList.remove("hidden");
+loadBrands();
 saveView("brands");
 });
 
@@ -1057,6 +1185,7 @@ loadBrandProducts();
 document.getElementById("brandDetailBackBtn").addEventListener("click",()=>{
 brandDetailPage.classList.add("hidden");
 brandsPage.classList.remove("hidden");
+loadBrands();
 saveView("brands");
 });
 
