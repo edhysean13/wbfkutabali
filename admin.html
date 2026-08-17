@@ -185,6 +185,12 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
   border-radius:8px!important;
 }
 </style>
+
+<style id="wbf-admin-payment-proof">
+.wbf-admin-proof{margin-top:10px;padding:10px;border:1px solid #292929;border-radius:8px;background:#0d0d0d}
+.wbf-admin-proof.waiting{color:#bbb}
+.wbf-admin-proof img{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:7px;background:#050505;border:1px solid #292929}
+</style>
 <style id="wbf-compact-refinement">
 *{box-sizing:border-box}
 body{font-size:13px!important}
@@ -878,13 +884,23 @@ const storeBankBackBtn=document.getElementById("storeBankBackBtn");
 const storeBankSaveBtn=document.getElementById("storeBankSaveBtn");
 const storeBankStatus=document.getElementById("storeBankStatus");
 
-function loadStoreBankForm(){
-  let data={};
-  try{data=JSON.parse(localStorage.getItem("wbf_store_bank")||"{}")}catch(e){}
-  document.getElementById("storeBankName").value=data.bank||"";
-  document.getElementById("storeBankAccount").value=data.account||"";
-  document.getElementById("storeBankOwner").value=data.owner||"";
-  storeBankStatus.textContent="";
+async function loadStoreBankForm(){
+  storeBankStatus.textContent="MEMUAT...";
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_public_store_bank",{
+      method:"POST",
+      headers:wbfHeaders(authToken(),true),
+      body:"{}"
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal memuat rekening.");
+    document.getElementById("storeBankName").value=data.bank_name||"";
+    document.getElementById("storeBankAccount").value=data.account_number||"";
+    document.getElementById("storeBankOwner").value=data.account_name||"";
+    storeBankStatus.textContent="";
+  }catch(e){
+    storeBankStatus.textContent="Gagal memuat rekening: "+e.message;
+  }
 }
 storeBankCard.addEventListener("click",()=>{
   dashboardHome.classList.add("hidden");
@@ -897,14 +913,28 @@ storeBankBackBtn.addEventListener("click",()=>{
   dashboardHome.classList.remove("hidden");
   saveView("dashboard");
 });
-storeBankSaveBtn.addEventListener("click",()=>{
-  const data={
-    bank:document.getElementById("storeBankName").value.trim(),
-    account:document.getElementById("storeBankAccount").value.trim(),
-    owner:document.getElementById("storeBankOwner").value.trim()
-  };
-  localStorage.setItem("wbf_store_bank",JSON.stringify(data));
-  storeBankStatus.textContent="Data rekening tersimpan.";
+storeBankSaveBtn.addEventListener("click",async()=>{
+  const bank=document.getElementById("storeBankName").value.trim();
+  const account=document.getElementById("storeBankAccount").value.trim();
+  const owner=document.getElementById("storeBankOwner").value.trim();
+  storeBankSaveBtn.disabled=true;
+  storeBankSaveBtn.textContent="MENYIMPAN...";
+  storeBankStatus.textContent="";
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_save_store_bank",{
+      method:"POST",
+      headers:wbfHeaders(authToken(),true),
+      body:JSON.stringify({p_bank_name:bank,p_account_number:account,p_account_name:owner})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal menyimpan rekening.");
+    storeBankStatus.textContent="Data rekening tersimpan.";
+  }catch(e){
+    storeBankStatus.textContent="Gagal menyimpan rekening: "+e.message;
+  }finally{
+    storeBankSaveBtn.disabled=false;
+    storeBankSaveBtn.textContent="SIMPAN REKENING";
+  }
 });
 
 document.getElementById("brandsCard").addEventListener("click",()=>{
@@ -1413,7 +1443,6 @@ async function loadWaitingPayments(){
     const rows=all.filter(o=>o.status==="confirmed");
     if(totalEl)totalEl.textContent=rows.length;
     if(pendingEl)pendingEl.textContent=rows.length;
-    const summaryCards=document.querySelectorAll("#ordersPage .stat-card, #ordersPage .card");
     const statLabels=document.querySelectorAll("#ordersPage .stat-card .muted, #ordersPage .card .muted");
     if(statLabels.length>=2){
       statLabels[0].textContent="TOTAL MENUNGGU PEMBAYARAN";
@@ -1427,15 +1456,22 @@ async function loadWaitingPayments(){
     }
     list.innerHTML=rows.map(o=>{
       const items=Array.isArray(o.items)?o.items:[];
+      const payment=o.payment||{};
       const itemHtml=items.map(i=>`<div class="order-item"><b>${escapeHtml(i.product_name||"-")}</b><br>SKU: ${escapeHtml(i.sku||"-")} · Size: ${escapeHtml(i.size||"-")} · Qty: ${Number(i.quantity||0)}<br>Rp ${(Number(i.unit_price||0)*Number(i.quantity||0)).toLocaleString("id-ID")}</div>`).join("");
       const total=orderTotal(items)+Number(o.shipping_fee||0);
-      return `<div class="order-card"><div class="order-head"><div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div><div class="order-status">MENUNGGU PEMBAYARAN</div></div><div class="order-customer"><b>${escapeHtml(o.customer_name||"-")}</b><br>WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>Alamat: ${escapeHtml(o.customer_address||"-")}<br><span class="muted">${orderDate(o.created_at)}</span></div><div class="order-items">${itemHtml}</div><div class="order-payment-total">TOTAL BARANG: Rp ${orderTotal(items).toLocaleString("id-ID")}<br>ONGKIR: Rp ${Number(o.shipping_fee||0).toLocaleString("id-ID")}<br>TOTAL BAYAR: Rp ${total.toLocaleString("id-ID")}</div><div class="order-actions"><button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','paid')">PEMBAYARAN VALID</button><button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">BATALKAN</button></div></div>`;
+      const hasProof=payment.status==="paid" && !!payment.customer_proof_url;
+      const proofHtml=hasProof
+        ? `<div class="wbf-admin-proof"><div style="font-weight:800;margin-bottom:7px">BUKTI TRANSFER</div><img src="${escapeHtml(payment.customer_proof_url)}" alt="Bukti pembayaran customer"><div class="muted" style="margin-top:5px">Bukti sudah diupload customer. Silakan cocokkan dengan mutasi rekening.</div></div>`
+        : `<div class="wbf-admin-proof waiting"><b>MENUNGGU BUKTI PEMBAYARAN</b><div class="muted" style="margin-top:5px">Customer belum mengupload screenshot transfer.</div></div>`;
+      const actionHtml=hasProof
+        ? `<button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','paid')">PEMBAYARAN VALID</button>`
+        : `<button type="button" disabled style="opacity:.45;cursor:not-allowed">MENUNGGU BUKTI TRANSFER</button>`;
+      return `<div class="order-card"><div class="order-head"><div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div><div class="order-status">${hasProof?"BUKTI DITERIMA":"MENUNGGU PEMBAYARAN"}</div></div><div class="order-customer"><b>${escapeHtml(o.customer_name||"-")}</b><br>WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>Alamat: ${escapeHtml(o.customer_address||"-")}<br><span class="muted">${orderDate(o.created_at)}</span></div><div class="order-items">${itemHtml}</div><div class="order-payment-total">TOTAL BARANG: Rp ${orderTotal(items).toLocaleString("id-ID")}<br>ONGKIR: Rp ${Number(o.shipping_fee||0).toLocaleString("id-ID")}<br>TOTAL BAYAR: Rp ${total.toLocaleString("id-ID")}</div>${proofHtml}<div class="order-actions">${actionHtml}<button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">BATALKAN</button></div></div>`;
     }).join("");
   }catch(e){
     list.innerHTML='<div class="brand-card" style="text-align:left"><b>GAGAL MEMUAT PESANAN</b><div class="muted" style="margin-top:6px">'+escapeHtml(e.message)+'</div></div>';
   }
 }
-
 const _oldRefreshOrdersBtn=document.getElementById("refreshOrdersBtn");
 if(_oldRefreshOrdersBtn)_oldRefreshOrdersBtn.addEventListener("click",loadOrders);
 const _refreshPaymentsBtn=document.getElementById("refreshPaymentsBtn"); if(_refreshPaymentsBtn)_refreshPaymentsBtn.addEventListener("click",loadPayments);
