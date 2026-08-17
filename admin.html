@@ -7,30 +7,30 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#070707;color:#fff;font-family:Arial,sans-serif;min-height:100vh}
-.wrap{max-width:520px;margin:auto;padding:28px 18px}
-.box{margin-top:8vh;background:#121212;border:1px solid #303030;border-radius:22px;padding:30px 24px}
-.logo{width:72px;height:72px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;color:#08a8ef;font-weight:800;font-size:24px;border:2px solid #333}
-h1{font-size:30px;margin:18px 0 5px}
-.sub{color:#999;margin-bottom:28px}
-label{display:block;color:#aaa;font-size:14px;margin:16px 0 7px}
-input{width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px}
-button{width:100%;height:52px;margin-top:20px;border:0;border-radius:10px;background:#df1720;color:#fff;font-size:16px;font-weight:800}
-.status{min-height:22px;margin-top:14px;font-size:13px;color:#ffb3b3;line-height:1.4}
+.wrap{max-width:520px;margin:auto;padding:20px 14px}
+.box{margin-top:7vh;background:#121212;border:1px solid #303030;border-radius:18px;padding:24px 20px}
+.logo{width:64px;height:64px;border-radius:50%;background:#222;display:flex;align-items:center;justify-content:center;color:#08a8ef;font-weight:800;font-size:22px;border:2px solid #333}
+h1{font-size:28px;margin:14px 0 4px}
+.sub{color:#999;margin-bottom:20px}
+label{display:block;color:#aaa;font-size:14px;margin:13px 0 6px}
+input,select{width:100%;height:48px;border:1px solid #383838;border-radius:9px;background:#080808;color:#fff;padding:0 13px;font-size:16px}
+button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;background:#df1720;color:#fff;font-size:15px;font-weight:800}
+.status{min-height:20px;margin-top:10px;font-size:13px;color:#ffb3b3;line-height:1.35}
 .hidden{display:none}
-.dashboard{max-width:900px;margin:0 auto;padding:28px 18px}
-.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #292929;padding-bottom:18px}
-.logout{width:auto;margin:0;padding:0 22px;height:48px;background:#df1720;color:#fff;border:0;border-radius:10px;font-size:14px;font-weight:800;display:block;visibility:visible}
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
-.card{background:#121212;border:1px solid #292929;border-radius:14px;padding:20px}
+.dashboard{max-width:900px;margin:0 auto;padding:20px 14px}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #292929;padding-bottom:14px}
+.logout{width:auto;margin:0;padding:0 18px;height:44px;background:#df1720;color:#fff;border:0;border-radius:9px;font-size:13px;font-weight:800}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+.card{background:#121212;border:1px solid #292929;border-radius:12px;padding:16px}
 .card.clickable{cursor:pointer}
-.num{font-size:28px;font-weight:800}
+.num{font-size:25px;font-weight:800}
 .muted{color:#888;font-size:12px}
-.page{margin-top:22px}
-.page-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #292929;padding-bottom:18px}
-.back{width:auto;margin:0;padding:0 18px;height:44px;font-size:14px}
-.brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
-.brand-card{background:#121212;border:1px solid #292929;border-radius:14px;padding:22px;text-align:center;font-size:18px;font-weight:800}
-select,input[type=file]{font-family:Arial,sans-serif}
+.page{margin-top:16px}
+.page-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #292929;padding-bottom:14px}
+.page-head h1{margin:4px 0 0;font-size:26px}
+.back{width:auto;margin:0;padding:0 16px;height:42px;font-size:13px}
+.brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+.brand-card{background:#121212;border:1px solid #292929;border-radius:12px;padding:18px 12px;text-align:center;font-size:16px;font-weight:800}
 @media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.brand-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -132,6 +132,33 @@ select,input[type=file]{font-family:Arial,sans-serif}
 
 <script>
 const URL="https://wjeyyklbcrqxawoxlphk.supabase.co";
+function saveView(view){
+  localStorage.setItem("wbf_admin_view",view);
+  if(selectedBrand) localStorage.setItem("wbf_admin_brand",selectedBrand);
+  if(selectedCategory) localStorage.setItem("wbf_admin_category",selectedCategory);
+}
+function restoreView(){
+  const token=localStorage.getItem("wbf_access_token");
+  if(!token) return;
+  login.classList.add("hidden");
+  dash.classList.remove("hidden");
+  const view=localStorage.getItem("wbf_admin_view")||"dashboard";
+  if(view==="brands"){dashboardHome.classList.add("hidden");brandsPage.classList.remove("hidden");}
+  else if(view==="brand"){
+    selectedBrand=localStorage.getItem("wbf_admin_brand")||"VOLCOM";
+    selectedCategory=localStorage.getItem("wbf_admin_category")||"";
+    brandDetailTitle.textContent=selectedBrand;
+    dashboardHome.classList.add("hidden");
+    brandDetailPage.classList.remove("hidden");
+    if(selectedCategory){
+      brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+selectedBrand+' · '+selectedCategory+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';
+    }
+  } else if(view==="products"){
+    dashboardHome.classList.add("hidden");
+    productsPage.classList.remove("hidden");
+  }
+}
+
 const KEY="sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
 const login=document.getElementById("login");
 const dash=document.getElementById("dashboard");
@@ -155,7 +182,8 @@ const rpc=await fetch(URL+"/rest/v1/rpc/wbf_is_admin",{method:"POST",headers:{"a
 const isAdmin=await rpc.json();
 if(!rpc.ok){showError("Login berhasil, tetapi pengecekan Admin gagal: "+JSON.stringify(isAdmin));return}
 if(isAdmin!==true){showError("Login berhasil, tetapi akun ini belum terdaftar sebagai Admin WBF.");return}
-sessionStorage.setItem("wbf_access_token",data.access_token);
+localStorage.setItem("wbf_access_token",data.access_token);
+localStorage.setItem("wbf_admin_view","dashboard");
 login.classList.add("hidden");dash.classList.remove("hidden");
 }catch(e){showError("Koneksi gagal: "+e.message)}
 finally{btn.disabled=false;btn.textContent="LOGIN"}
@@ -165,7 +193,10 @@ btn.addEventListener("click",loginAdmin);
 document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="Enter")loginAdmin()});
 
 document.getElementById("logoutBtn").addEventListener("click",()=>{
-sessionStorage.removeItem("wbf_access_token");
+localStorage.removeItem("wbf_access_token");
+localStorage.removeItem("wbf_admin_view");
+localStorage.removeItem("wbf_admin_brand");
+localStorage.removeItem("wbf_admin_category");
 brandsPage.classList.add("hidden");
 brandDetailPage.classList.add("hidden");
 productsPage.classList.add("hidden");
@@ -177,6 +208,7 @@ login.classList.remove("hidden");
 document.getElementById("brandsCard").addEventListener("click",()=>{
 dashboardHome.classList.add("hidden");
 brandsPage.classList.remove("hidden");
+saveView("brands");
 });
 
 document.getElementById("backBtn").addEventListener("click",()=>{
@@ -209,6 +241,8 @@ el.addEventListener("click",()=>openBrand(el.dataset.brand));
 document.querySelectorAll(".category-filter").forEach(el=>{
 el.addEventListener("click",()=>{
 selectedCategory=el.dataset.category;
+localStorage.setItem("wbf_admin_category",selectedCategory);
+saveView("brand");
 brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+selectedBrand+' · '+selectedCategory+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';
 });
 });
@@ -216,6 +250,7 @@ brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+s
 document.getElementById("brandDetailBackBtn").addEventListener("click",()=>{
 brandDetailPage.classList.add("hidden");
 brandsPage.classList.remove("hidden");
+saveView("brands");
 });
 
 document.getElementById("brandRegisterBtn").addEventListener("click",()=>{
@@ -236,12 +271,14 @@ const productPreview=document.getElementById("productPreview");
 productsCard.addEventListener("click",()=>{
 dashboardHome.classList.add("hidden");
 productsPage.classList.remove("hidden");
+saveView("products");
 });
 
 document.getElementById("productsBackBtn").addEventListener("click",()=>{
 productsPage.classList.add("hidden");
 productForm.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
+saveView("dashboard");
 });
 
 registerProductBtn.addEventListener("click",()=>{
@@ -274,3 +311,9 @@ productPreview.innerHTML=
 </script>
 </body>
 </html>
+<script>
+/* Restore the Admin session/view after a page refresh. */
+window.addEventListener("load",()=>{
+  try{ restoreView(); }catch(e){}
+});
+</script>
