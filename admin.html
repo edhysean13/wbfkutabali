@@ -810,6 +810,11 @@ html, body {
 <input id="productEditId" type="hidden" value="">
 <label>Price</label><input id="productPrice" type="number" placeholder="Harga">
 <label>Discount (%)</label><input id="productDiscount" type="number" min="0" max="100" placeholder="0">
+<label style="display:flex;align-items:center;gap:9px;margin-top:12px;color:#fff;cursor:pointer">
+  <input id="productNewArrival" type="checkbox" style="width:20px;height:20px;margin:0;accent-color:#df1720">
+  <span>TAMPILKAN DI NEW ARRIVAL</span>
+</label>
+<div class="muted" style="margin-top:5px">Centang jika produk ini ingin tampil di layar New Arrival customer.</div>
 <label>Photo Product</label><input id="productPhoto" type="file" accept="image/*"><div id="productPhotoPreview" class="muted" style="margin-top:8px"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
 <button id="saveProductBtn" type="button">SAVE PRODUCT</button>
@@ -1398,6 +1403,7 @@ async function loadBrandProducts(){
         '<div style="margin-top:8px">Harga: Rp '+Number(p.price).toLocaleString("id-ID")+'</div>'+
         '<div>Discount: '+Number(p.discount||0)+'%</div>'+
         '<div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div>'+
+        '<div style="margin-top:7px;font-size:10px;font-weight:800;color:'+(p.is_new_arrival?'#7ee787':'#888')+'">'+(p.is_new_arrival?'✓ NEW ARRIVAL':'— BUKAN NEW ARRIVAL')+'</div>'+
         '<button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:12px">EDIT SKU</button>'+
         '</div>';
     }).join("");
@@ -1435,6 +1441,7 @@ function openProductFormForRegister(){
   document.getElementById("cancelEditBtn").classList.add("hidden");
   document.getElementById("productBrand").disabled=false;
   document.getElementById("productSku").disabled=false;
+  document.getElementById("productNewArrival").checked=false;
 }
 
 function editProduct(productId, products){
@@ -1452,6 +1459,7 @@ function editProduct(productId, products){
   document.getElementById("productColor").value=(p.colors||[]).join(" / ");
   document.getElementById("productPrice").value=p.price??"";
   document.getElementById("productDiscount").value=p.discount??0;
+  document.getElementById("productNewArrival").checked=!!p.is_new_arrival;
   document.getElementById("productPhoto").value="";
   const photoPreview=document.getElementById("productPhotoPreview");
   if(photoPreview) photoPreview.innerHTML=p.image_url?'<img src="'+escapeHtml(p.image_url)+'" style="width:120px;height:120px;object-fit:cover;border-radius:10px"><div class="muted">Foto saat ini</div>':"";
@@ -1472,6 +1480,7 @@ function cancelEditProduct(){
   document.getElementById("saveProductBtn").textContent="SAVE PRODUCT";
   document.getElementById("productBrand").disabled=false;
   document.getElementById("productSku").disabled=false;
+  document.getElementById("productNewArrival").checked=false;
 }
 
 async function saveProductToDatabase(){
@@ -1483,6 +1492,7 @@ async function saveProductToDatabase(){
   const color=document.getElementById("productColor").value.trim();
   const price=Number(document.getElementById("productPrice").value);
   const discount=Number(document.getElementById("productDiscount").value||0);
+  const isNewArrival=document.getElementById("productNewArrival").checked;
   const photo=document.getElementById("productPhoto").files[0];
 
   if(!brand||!category||!sku||!name||!Number.isFinite(price)||price<0){
@@ -1546,6 +1556,16 @@ async function saveProductToDatabase(){
     const data=await res.json();
     if(!res.ok) throw new Error(data.message||data.details||"Gagal menyimpan product.");
 
+    const savedProductId=editingProductId || data?.id;
+    if(!savedProductId) throw new Error("Product tersimpan tetapi ID product tidak ditemukan.");
+    const arrivalRes=await fetch(URL+"/rest/v1/rpc/wbf_admin_set_product_new_arrival",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({p_product_id:savedProductId,p_is_new_arrival:isNewArrival})
+    });
+    const arrivalData=await arrivalRes.json().catch(()=>null);
+    if(!arrivalRes.ok) throw new Error(arrivalData?.message||arrivalData?.details||"Gagal mengatur New Arrival.");
+
     alert(editingProductId?"Perubahan product berhasil disimpan.":"Product berhasil disimpan.");
 
     editingProductId="";
@@ -1556,6 +1576,7 @@ async function saveProductToDatabase(){
     document.getElementById("cancelEditBtn").classList.add("hidden");
     document.getElementById("saveProductBtn").textContent="SAVE PRODUCT";
     ["productSku","productName","productSize","productColor","productPrice","productDiscount"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("productNewArrival").checked=false;
     document.getElementById("productPhoto").value="";
 
     await refreshProductCount();
