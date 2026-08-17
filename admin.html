@@ -36,88 +36,95 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 
 <style id="wbf-compact-refinement">
 *{box-sizing:border-box}
-body{font-size:12px!important}
-main,.page,.container{max-width:980px!important}
-.page-head{padding-bottom:7px!important;margin-bottom:7px!important}
-.page-head h1,h1{font-size:28px!important;line-height:1.05!important;margin:2px 0 7px!important}
-h2{font-size:21px!important;line-height:1.05!important;margin:4px 0 7px!important}
-h3{font-size:15px!important}
-label{font-size:11px!important;margin:4px 0 3px!important}
-button{min-height:34px!important;height:34px!important;padding:6px 10px!important;border-radius:7px!important;font-size:11px!important;line-height:1!important}
-.back{height:34px!important;padding:0 11px!important;font-size:10px!important}
-.brand-grid{gap:6px!important;margin-top:7px!important}
-.brand-card{padding:9px 7px!important;border-radius:7px!important;font-size:11px!important;line-height:1.1!important}
-.stat-card{padding:10px!important;min-height:70px!important;border-radius:8px!important}
-.stat-card .value,.stat-card strong{font-size:22px!important}
-input,select{height:38px!important;min-height:38px!important;padding:0 9px!important;border-radius:7px!important;font-size:12px!important}
-.cards{gap:7px!important}
+body{font-size:13px!important}
+h1{font-size:30px!important;line-height:1.05!important;margin:4px 0 8px!important}
+h2{font-size:23px!important;line-height:1.08!important;margin:5px 0 8px!important}
+h3{font-size:16px!important}
+label{font-size:12px!important;margin:5px 0 3px!important}
+button{min-height:36px!important;height:36px!important;padding:7px 11px!important;border-radius:8px!important;font-size:12px!important}
+.brand-grid{gap:7px!important}
+.brand-card{padding:10px!important;border-radius:8px!important}
+input,select{height:40px!important;padding:0 10px!important;border-radius:8px!important;font-size:13px!important}
 
-/* PRODUCT GRID: compact square cards, five across */
+/* Product cards: 3 columns like the reference image.
+   Image stays square and product details remain visible underneath. */
 #brandProductsList{
   display:grid!important;
-  grid-template-columns:repeat(5,minmax(0,1fr))!important;
-  gap:7px!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
   width:100%!important;
   align-items:start!important;
 }
 #brandProductsList>.brand-card{
-  margin:0!important;
-  min-width:0!important;
   width:100%!important;
-  aspect-ratio:1/1!important;
-  height:auto!important;
+  min-width:0!important;
+  margin:0!important;
   padding:6px!important;
   border-radius:8px!important;
-  font-size:9px!important;
-  line-height:1.12!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
-  justify-content:flex-start!important;
+  height:auto!important;
+  aspect-ratio:auto!important;
+  font-size:10px!important;
+  line-height:1.25!important;
 }
 #brandProductsList>.brand-card img{
   display:block!important;
   width:100%!important;
-  aspect-ratio:1/1!important;
   height:auto!important;
-  max-height:none!important;
+  aspect-ratio:1/1!important;
   object-fit:cover!important;
   border-radius:6px!important;
-  margin:0 0 4px!important;
-  flex:0 0 auto!important;
+  margin:0 0 6px!important;
+  flex:none!important;
 }
 #brandProductsList>.brand-card>div{
-  margin-top:1px!important;
-  line-height:1.12!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
+  margin-top:2px!important;
+  line-height:1.25!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:normal!important;
 }
-#brandProductsList>.brand-card>div:nth-child(2){font-size:8px!important}
-#brandProductsList>.brand-card>div:nth-child(3){font-size:11px!important;font-weight:800!important}
+#brandProductsList>.brand-card>div:nth-child(2){
+  font-size:9px!important;
+  color:#999!important;
+}
+#brandProductsList>.brand-card>div:nth-child(3){
+  font-size:14px!important;
+  font-weight:800!important;
+}
 #brandProductsList>.brand-card .edit-product-btn{
   width:100%!important;
-  min-height:25px!important;
-  height:25px!important;
-  padding:4px!important;
-  margin-top:auto!important;
-  font-size:8px!important;
-  border-radius:5px!important;
+  min-height:30px!important;
+  height:30px!important;
+  margin-top:7px!important;
+  padding:5px 7px!important;
+  font-size:10px!important;
+  border-radius:6px!important;
 }
-#brandProductsList>.brand-card .muted{font-size:8px!important}
-#brandProductsList>.brand-card:has(.muted:only-child){
-  justify-content:center!important;
-  text-align:center!important;
-}
+#brandProductsList>.brand-card .muted{font-size:9px!important}
 @media(max-width:700px){
-  .brand-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-  #brandProductsList{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important}
-  #brandProductsList>.brand-card{padding:4px!important;border-radius:6px!important;font-size:8px!important}
-  #brandProductsList>.brand-card img{border-radius:5px!important;margin-bottom:3px!important}
-  #brandProductsList>.brand-card>div:nth-child(2){font-size:7px!important}
-  #brandProductsList>.brand-card>div:nth-child(3){font-size:9px!important}
-  #brandProductsList>.brand-card .edit-product-btn{height:21px!important;min-height:21px!important;font-size:7px!important;padding:3px!important}
-  #brandProductsList>.brand-card .muted{font-size:7px!important}
+  #brandProductsList{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+  #brandProductsList>.brand-card{
+    padding:5px!important;
+    font-size:9px!important;
+  }
+  #brandProductsList>.brand-card img{
+    border-radius:5px!important;
+    margin-bottom:5px!important;
+  }
+  #brandProductsList>.brand-card>div:nth-child(2){font-size:8px!important}
+  #brandProductsList>.brand-card>div:nth-child(3){font-size:12px!important}
+  #brandProductsList>.brand-card .edit-product-btn{
+    height:27px!important;
+    min-height:27px!important;
+    font-size:9px!important;
+    margin-top:5px!important;
+  }
 }
 </style>
 
