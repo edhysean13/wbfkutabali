@@ -675,13 +675,19 @@ function checkoutWbfCart(){
     '<div><b>'+wbfCart.length+' jenis produk</b><div style="font-size:12px;color:#aaa;margin-top:4px">'+
     wbfCart.reduce((s,x)=>s+Number(x.quantity),0)+' pcs dalam 1 transaksi</div></div>';
 
+  document.getElementById("wbfCustomerName").value="";
+  document.getElementById("wbfCustomerPhone").value="";
+  document.getElementById("wbfCustomerAddress").value="";
+
   document.getElementById("wbfCustomerName").parentElement.style.display="";
   document.getElementById("wbfCustomerPhone").parentElement.style.display="";
   document.getElementById("wbfCustomerAddress").parentElement.style.display="";
+
+  // Size sudah dipilih saat produk masuk Cart; checkout hanya meminta data customer.
   document.getElementById("wbfSizeField").style.display="none";
-  document.getElementById("wbfColorField").style.display="none";
   document.getElementById("wbfOrderQty").parentElement.style.display="none";
   document.getElementById("wbfOrderQty").value="1";
+
   document.getElementById("wbfOrderSubmit").textContent="KIRIM 1 ORDER";
   document.getElementById("wbfOrderSubmit").onclick=submitWbfCart;
   document.getElementById("wbfOrderFormWrap").style.display="block";
@@ -835,129 +841,6 @@ async function submitWbfOrder(){
 showHome();
 updateCartBadge();
 loadCustomerProducts();
-</script>
-
-<div id="checkoutModal" class="modal-overlay" style="display:none;">
-  <div class="modal-card checkout-card">
-    <button type="button" class="modal-close" id="closeCheckout">×</button>
-    <h2>CHECKOUT</h2>
-
-    <div id="checkoutSummary" class="checkout-summary"></div>
-
-    <label for="checkoutName">Nama</label>
-    <input id="checkoutName" type="text" placeholder="Nama customer" autocomplete="name">
-
-    <label for="checkoutWhatsapp">Nomor WhatsApp</label>
-    <input id="checkoutWhatsapp" type="tel" placeholder="08xxxxxxxxxx" autocomplete="tel">
-
-    <label for="checkoutAddress">Alamat / Lokasi Pengiriman</label>
-    <textarea id="checkoutAddress" rows="3" placeholder="Alamat atau lokasi pengiriman"></textarea>
-
-    <label for="checkoutNote">Catatan <span style="opacity:.55">(opsional)</span></label>
-    <textarea id="checkoutNote" rows="2" placeholder="Catatan untuk admin"></textarea>
-
-    <button type="button" id="sendOrder" class="primary-btn">KIRIM ORDER</button>
-    <p class="checkout-note">Order akan dikirim ke admin untuk pengecekan stok fisik. Pembayaran belum dilakukan pada tahap ini.</p>
-  </div>
-</div>
-
-
-<script>
-(function () {
-  const modal = document.getElementById('checkoutModal');
-  const closeBtn = document.getElementById('closeCheckout');
-  const sendBtn = document.getElementById('sendOrder');
-  const summary = document.getElementById('checkoutSummary');
-
-  function getCartData() {
-    const keys = ['cart','shoppingCart','wbfCart'];
-    for (const key of keys) {
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const data = JSON.parse(raw);
-        if (Array.isArray(data) && data.length) return data;
-      } catch(e) {}
-    }
-    return [];
-  }
-
-  function renderSummary() {
-    const cart = getCartData();
-    if (!summary) return;
-    if (!cart.length) {
-      summary.innerHTML = '<div class="checkout-empty">Keranjang masih kosong.</div>';
-      return;
-    }
-    summary.innerHTML = cart.map((item, i) => {
-      const name = item.name || item.productName || 'Produk';
-      const sku = item.sku || '';
-      const size = item.size || '';
-      const qty = Number(item.quantity || item.qty || 1);
-      const price = Number(item.price || item.salePrice || item.finalPrice || 0);
-      const total = price * qty;
-      return `<div class="checkout-item">
-        <strong>${name}</strong>
-        ${sku ? `<span>SKU: ${sku}</span>` : ''}
-        ${size ? `<span>Size: ${size}</span>` : ''}
-        <span>Jumlah: ${qty}</span>
-        <strong>Rp ${total.toLocaleString('id-ID')}</strong>
-      </div>`;
-    }).join('');
-  }
-
-  function openCheckout() {
-    renderSummary();
-    if (modal) modal.style.display = 'flex';
-  }
-
-  function closeCheckout() {
-    if (modal) modal.style.display = 'none';
-  }
-
-  // Works with existing CHECKOUT buttons, regardless of their original markup.
-  document.addEventListener('click', function(e) {
-    const btn = e.target.closest('button, a');
-    if (!btn) return;
-    if ((btn.textContent || '').trim().toUpperCase() === 'CHECKOUT') {
-      e.preventDefault();
-      openCheckout();
-    }
-  });
-
-  if (closeBtn) closeBtn.addEventListener('click', closeCheckout);
-
-  if (sendBtn) {
-    sendBtn.addEventListener('click', function() {
-      const name = document.getElementById('checkoutName').value.trim();
-      const whatsapp = document.getElementById('checkoutWhatsapp').value.trim();
-      const address = document.getElementById('checkoutAddress').value.trim();
-      const note = document.getElementById('checkoutNote').value.trim();
-      const cart = getCartData();
-
-      if (!name || !whatsapp || !address) {
-        alert('Nama, nomor WhatsApp, dan alamat/lokasi wajib diisi.');
-        return;
-      }
-      if (!cart.length) {
-        alert('Keranjang masih kosong.');
-        return;
-      }
-
-      const order = {
-        id: 'WBF-' + Date.now(),
-        createdAt: new Date().toISOString(),
-        status: 'MENUNGGU CEK STOK',
-        customer: { name, whatsapp, address, note },
-        items: cart
-      };
-
-      localStorage.setItem('wbfPendingOrder', JSON.stringify(order));
-      alert('Order berhasil dikirim ke admin. Status: MENUNGGU CEK STOK.');
-      closeCheckout();
-    });
-  }
-})();
 </script>
 
 </body>
