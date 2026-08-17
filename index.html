@@ -979,10 +979,14 @@ async function loadMyOrders(){
           `</div>`;
       }
 
+      const customerStatus = (data.status==="confirmed" && payment.status==="paid" && payment.customer_proof_url)
+        ? "BUKTI PEMBAYARAN TERKIRIM • MENUNGGU VERIFIKASI"
+        : (MY_ORDER_STATUS[data.status]||data.status);
+
       return `<div class="my-order-card">`+
         `<div class="my-order-head">`+
           `<div><b>ORDER</b><div class="my-order-id">${esc(data.id)}</div></div>`+
-          `<div class="my-order-status">${esc(MY_ORDER_STATUS[data.status]||data.status)}</div>`+
+          `<div class="my-order-status">${esc(customerStatus)}</div>`+
         `</div>`+
         `<div style="margin-top:10px">${itemHtml}</div>`+
         `<div class="my-order-total">TOTAL BARANG: Rp ${itemTotal.toLocaleString("id-ID")}<br>ONGKIR: Rp ${shipping.toLocaleString("id-ID")}<br>TOTAL: Rp ${grand.toLocaleString("id-ID")}</div>`+
