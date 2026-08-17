@@ -608,6 +608,23 @@ html, body {
 .wbf-lookup-proof{margin-top:8px}
 .wbf-lookup-proof img{display:block;width:100%;max-height:180px;object-fit:contain;border-radius:7px;background:#050505;border:1px solid #292929}
 </style>
+
+<style id="wbf-sales-report-style">
+.wbf-sales-report{margin:18px 0;padding:14px;border:1px solid #292929;border-radius:12px;background:#111}
+.wbf-sales-title{font-size:20px;font-weight:900}
+.wbf-sales-sub{color:#999;margin:4px 0 12px;font-size:13px}
+.wbf-sales-filters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.wbf-sales-filters label{font-size:11px;font-weight:800;color:#aaa}
+.wbf-sales-filters input,.wbf-sales-filters select{display:block;width:100%;box-sizing:border-box;margin-top:5px;height:42px;border:1px solid #333;border-radius:8px;background:#080808;color:#fff;padding:0 9px;font-size:14px}
+.wbf-sales-filters button{grid-column:1/-1;height:44px;border:0;border-radius:8px;background:#ed1c24;color:#fff;font-weight:900;font-size:14px}
+.wbf-sales-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.wbf-sales-box{padding:10px;border:1px solid #292929;border-radius:8px;background:#0a0a0a}
+.wbf-sales-box small{display:block;color:#888;font-size:10px}
+.wbf-sales-box strong{display:block;margin-top:4px;font-size:17px}
+.wbf-sales-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #292929;font-size:12px}
+.wbf-sales-row span:last-child{font-weight:800}
+@media(max-width:700px){.wbf-sales-filters{grid-template-columns:1fr 1fr}.wbf-sales-filters label:nth-child(3){grid-column:1/-1}.wbf-sales-summary{grid-template-columns:1fr 1fr}.wbf-sales-summary .wbf-sales-box:last-child{grid-column:1/-1}}
+</style>
 </head>
 <body>
 <section id="login" class="wrap">
@@ -770,6 +787,32 @@ html, body {
   </div>
   <div id="wbfPaymentLookupResult"></div>
 </div>
+
+<section id="wbfSalesReport" class="wbf-sales-report">
+  <div class="wbf-sales-title">LAPORAN PENJUALAN</div>
+  <div class="wbf-sales-sub">Cek omzet berdasarkan periode dan brand.</div>
+
+  <div class="wbf-sales-filters">
+    <label>DARI TANGGAL
+      <input id="wbfSalesFrom" type="date">
+    </label>
+    <label>SAMPAI TANGGAL
+      <input id="wbfSalesTo" type="date">
+    </label>
+    <label>BRAND
+      <select id="wbfSalesBrand">
+        <option value="ALL">SEMUA BRAND</option>
+      </select>
+    </label>
+    <button type="button" id="wbfSalesCheck">CEK LAPORAN</button>
+  </div>
+
+  <div id="wbfSalesSummary" class="wbf-sales-summary">
+    <div class="muted">Pilih tanggal dan brand, lalu tekan CEK LAPORAN.</div>
+  </div>
+  <div id="wbfSalesRows"></div>
+</section>
+
 <div id="ordersList" style="margin-top:12px">
 <div class="brand-card" style="text-align:left">
 <div class="muted">MEMUAT ORDER...</div>
@@ -1273,6 +1316,103 @@ async function saveProductToDatabase(){
 }
 
 saveProductBtn.addEventListener("click",saveProductToDatabase);
+</script>
+
+<script id="wbf-sales-report-script">
+(function(){
+  const money = n => "Rp " + Number(n||0).toLocaleString("id-ID");
+  const norm = v => String(v||"").trim().toLowerCase();
+
+  async function loadSalesReport(){
+    const from = document.getElementById("wbfSalesFrom")?.value;
+    const to = document.getElementById("wbfSalesTo")?.value;
+    const brand = document.getElementById("wbfSalesBrand")?.value || "ALL";
+    const summary = document.getElementById("wbfSalesSummary");
+    const rows = document.getElementById("wbfSalesRows");
+    if(!from || !to){ summary.innerHTML='<div class="muted">Pilih tanggal mulai dan tanggal akhir.</div>'; rows.innerHTML=""; return; }
+    if(from > to){ summary.innerHTML='<div class="muted">Tanggal mulai tidak boleh setelah tanggal akhir.</div>'; rows.innerHTML=""; return; }
+
+    summary.innerHTML='<div class="muted">MEMUAT LAPORAN...</div>';
+    rows.innerHTML="";
+    try{
+      const all = await fetchAllOrders();
+      const validStatuses = new Set(["paid","shipped","completed"]);
+      const selected = all.filter(o=>{
+        if(!validStatuses.has(String(o.status||"").toLowerCase())) return false;
+        const d = String(o.created_at||o.createdAt||o.order_date||"").slice(0,10);
+        return d >= from && d <= to;
+      });
+
+      let pcs=0, omzet=0, shipping=0, transaksi=0;
+      const byBrand={};
+
+      selected.forEach(o=>{
+        const items=Array.isArray(o.items)?o.items:[];
+        const matchedItems = brand === "ALL"
+          ? items
+          : items.filter(i=>norm(i.brand||o.brand)===norm(brand));
+
+        // When filtering a specific brand, count only that brand's items.
+        if(brand !== "ALL" && !matchedItems.length) return;
+
+        transaksi++;
+        matchedItems.forEach(i=>{
+          const b=i.brand || o.brand || "Tanpa Brand";
+          const q=Number(i.quantity||0);
+          const line=Number(i.unit_price||i.price||0)*q;
+          pcs += q;
+          omzet += line;
+          if(!byBrand[b]) byBrand[b]={pcs:0,omzet:0};
+          byBrand[b].pcs += q;
+          byBrand[b].omzet += line;
+        });
+
+        // Ongkir belongs to the order. For a specific-brand report, include it
+        // because the report is still based on that customer's paid transaction.
+        shipping += Number(o.shipping_fee||0);
+      });
+
+      summary.innerHTML = `
+        <div class="wbf-sales-box"><small>TRANSAKSI</small><strong>${transaksi}</strong></div>
+        <div class="wbf-sales-box"><small>PCS TERJUAL</small><strong>${pcs}</strong></div>
+        <div class="wbf-sales-box"><small>PENJUALAN</small><strong>${money(omzet)}</strong></div>
+        <div class="wbf-sales-box"><small>ONGKIR</small><strong>${money(shipping)}</strong></div>
+        <div class="wbf-sales-box"><small>TOTAL DIBAYAR</small><strong>${money(omzet+shipping)}</strong></div>
+      `;
+
+      const entries = Object.entries(byBrand).sort((a,b)=>b[1].omzet-a[1].omzet);
+      rows.innerHTML = entries.length
+        ? '<div style="margin-top:12px;font-weight:900">RINGKASAN PER BRAND</div>' +
+          entries.map(([b,v])=>`<div class="wbf-sales-row"><span>${escapeHtml(b)} · ${v.pcs} pcs</span><span>${money(v.omzet)}</span></div>`).join("")
+        : '<div class="muted" style="margin-top:12px">Tidak ada penjualan pada filter tersebut.</div>';
+    }catch(e){
+      summary.innerHTML='<div style="color:#ffb3b3">Gagal memuat laporan: '+escapeHtml(e.message)+'</div>';
+      rows.innerHTML="";
+    }
+  }
+
+  async function populateSalesBrands(){
+    const sel=document.getElementById("wbfSalesBrand");
+    if(!sel || sel.dataset.loaded==="1") return;
+    try{
+      const all=await fetchAllOrders();
+      const brands=new Set();
+      all.forEach(o=>{
+        if(o.brand) brands.add(o.brand);
+        (Array.isArray(o.items)?o.items:[]).forEach(i=>{if(i.brand) brands.add(i.brand);});
+      });
+      [...brands].sort((a,b)=>String(a).localeCompare(String(b))).forEach(b=>{
+        const op=document.createElement("option");
+        op.value=b; op.textContent=b; sel.appendChild(op);
+      });
+      sel.dataset.loaded="1";
+    }catch(e){}
+  }
+
+  populateSalesBrands();
+
+  document.getElementById("wbfSalesCheck")?.addEventListener("click",loadSalesReport);
+})();
 </script>
 </body>
 </html>
