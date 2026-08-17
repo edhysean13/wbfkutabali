@@ -211,6 +211,16 @@ function wbfHeaders(token,content=false){
 function authToken(){
   return localStorage.getItem("wbf_access_token")||"";
 }
+const WBF_BRAND_IDS={
+  "JUICEMATIC":"58c2f116-5a4d-4be7-a6a7-73b6ace23981",
+  "MAE BALI":"c71cdd00-c291-4933-a237-778f35ae3b33",
+  "RIPCURL":"86491a6e-6e3e-4d07-a658-7a7078034d21",
+  "TRIDATU BALI":"6910b3d5-0899-4d17-ab52-6322f621c355",
+  "VOLCOM":"fc2b3b92-68d6-423e-b931-1870e08ac91d",
+  "ZOMBIES":"13ba8be4-abe4-4f29-9173-219c33fef936"
+};
+function getBrandId(name){return WBF_BRAND_IDS[name]||"";}
+
 const login=document.getElementById("login");
 const dash=document.getElementById("dashboard");
 const status=document.getElementById("status");
@@ -361,10 +371,8 @@ async function loadBrandProducts(){
   const token=authToken();
   brandProductsList.innerHTML='<div class="muted">Memuat SKU...</div>';
   try{
-    const brandRes=await fetch(API+"/brands?select=id,name&name=eq."+encodeURIComponent(selectedBrand),{headers:wbfHeaders(token)});
-    const brands=await brandRes.json();
-    if(!brandRes.ok || !brands.length) throw new Error("Brand tidak ditemukan.");
-    const brandId=brands[0].id;
+    const brandId=getBrandId(selectedBrand);
+    if(!brandId) throw new Error("Brand tidak ditemukan.");
     const res=await fetch(API+"/products?select=id,sku,name,price,discount,sizes,colors,image_url,category&brand_id=eq."+brandId+"&category=eq."+encodeURIComponent(selectedCategory)+"&is_active=eq.true&order=created_at.desc",{headers:wbfHeaders(token)});
     const products=await res.json();
     if(!res.ok) throw new Error(products.message||"Gagal mengambil produk.");
@@ -419,11 +427,10 @@ async function saveProductToDatabase(){
   saveProductBtn.disabled=true; saveProductBtn.textContent="MENYIMPAN...";
   try{
     const token=authToken();
-    const brandRes=await fetch(API+"/brands?select=id,name&name=eq."+encodeURIComponent(brand),{headers:wbfHeaders(token)});
-    const brands=await brandRes.json();
-    if(!brandRes.ok||!brands.length) throw new Error("Brand tidak ditemukan.");
+    const brandId=getBrandId(brand);
+    if(!brandId) throw new Error("Brand tidak ditemukan.");
     const body={
-      brand_id:brands[0].id, sku, name, price, category, discount,
+      brand_id:brandId, sku, name, price, category, discount,
       sizes:size?size.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
       colors:color?color.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
       is_active:true,is_new_arrival:false
