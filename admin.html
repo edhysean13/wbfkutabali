@@ -59,7 +59,7 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 <div class="cards" id="dashboardCards">
 <div class="card clickable" id="brandsCard"><div class="num">6</div><div class="muted">BRANDS</div></div>
 <div class="card clickable" id="productsCard"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
-<div class="card"><div class="num">0</div><div class="muted">ORDERS</div></div>
+<div class="card clickable" id="ordersCard"><div class="num">0</div><div class="muted">ORDERS</div></div>
 <div class="card"><div class="num">0</div><div class="muted">PAYMENTS</div></div>
 </div>
 </div>
@@ -128,6 +128,38 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 <div id="productPreview" style="margin-top:20px"></div>
 </section>
 </section>
+
+<section id="ordersPage" class="page hidden">
+<div class="page-head">
+<div><div class="muted">WBF ADMIN</div><h1>ORDERS</h1></div>
+<button class="back" id="ordersBackBtn">BACK</button>
+</div>
+
+<div class="brand-grid" style="grid-template-columns:repeat(2,1fr)">
+<div class="brand-card" style="text-align:left"><div class="muted">TOTAL ORDERS</div><div class="num">0</div></div>
+<div class="brand-card" style="text-align:left"><div class="muted">MENUNGGU CEK STOK</div><div class="num">0</div></div>
+</div>
+
+<div style="display:grid;gap:10px;margin-top:16px">
+<div class="brand-card" style="text-align:left;font-size:14px">
+<b>ALUR ORDER</b>
+<div class="muted" style="margin-top:8px">1. Customer melakukan order</div>
+<div class="muted">2. Admin cek stok fisik di toko</div>
+<div class="muted">3. Konfirmasi ketersediaan ke customer</div>
+<div class="muted">4. Menunggu pembayaran</div>
+<div class="muted">5. Sudah dibayar → diproses</div>
+<div class="muted">6. Selesai</div>
+</div>
+</div>
+
+<div id="ordersList" style="margin-top:16px">
+<div class="brand-card" style="text-align:left">
+<div class="muted">BELUM ADA ORDER</div>
+<div style="margin-top:6px;font-size:14px">Order customer akan muncul di sini.</div>
+</div>
+</div>
+</section>
+</section>
 </section>
 
 <script>
@@ -156,6 +188,9 @@ function restoreView(){
   } else if(view==="products"){
     dashboardHome.classList.add("hidden");
     productsPage.classList.remove("hidden");
+  } else if(view==="orders"){
+    dashboardHome.classList.add("hidden");
+    ordersPage.classList.remove("hidden");
   }
 }
 
@@ -200,6 +235,7 @@ localStorage.removeItem("wbf_admin_category");
 brandsPage.classList.add("hidden");
 brandDetailPage.classList.add("hidden");
 productsPage.classList.add("hidden");
+ordersPage.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
 dash.classList.add("hidden");
 login.classList.remove("hidden");
@@ -215,6 +251,7 @@ document.getElementById("backBtn").addEventListener("click",()=>{
 brandsPage.classList.add("hidden");
 brandDetailPage.classList.add("hidden");
 productsPage.classList.add("hidden");
+ordersPage.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
 });
 
@@ -259,6 +296,21 @@ brandDetailPage.classList.add("hidden");
 productForm.classList.remove("hidden");
 document.getElementById("productBrand").value=selectedBrand;
 if(selectedCategory) document.getElementById("productCategory").value=selectedCategory;
+});
+
+const ordersPage=document.getElementById("ordersPage");
+const ordersCard=document.getElementById("ordersCard");
+
+ordersCard.addEventListener("click",()=>{
+dashboardHome.classList.add("hidden");
+ordersPage.classList.remove("hidden");
+saveView("orders");
+});
+
+document.getElementById("ordersBackBtn").addEventListener("click",()=>{
+ordersPage.classList.add("hidden");
+dashboardHome.classList.remove("hidden");
+saveView("dashboard");
 });
 
 const productsPage=document.getElementById("productsPage");
