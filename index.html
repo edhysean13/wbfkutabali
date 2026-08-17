@@ -293,6 +293,23 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
 .wbf-cancel-order:active{opacity:.85;}
 </style>
 
+
+<style>
+.wbf-delete-order{
+  display:block;
+  width:100%;
+  margin-top:10px;
+  padding:14px 18px;
+  border:1px solid #333;
+  border-radius:14px;
+  background:#111;
+  color:#fff;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+.wbf-delete-order:active{opacity:.85;}
+</style>
 </head>
 <body>
 
@@ -943,6 +960,20 @@ async function cancelWbfOrder(orderId){
   }
 }
 
+function removeWbfOrderFromCustomer(orderId){
+  if(!confirm("Hapus pesanan ini dari daftar Pesanan Saya?")) return;
+  let ids=[];
+  try{ids=JSON.parse(localStorage.getItem("wbf_customer_orders")||"[]")}catch(e){}
+  ids=Array.isArray(ids)?ids.filter(Boolean):[];
+  ids=ids.filter(id=>String(id)!==String(orderId));
+  localStorage.setItem("wbf_customer_orders",JSON.stringify(ids.slice(0,20)));
+  if(String(localStorage.getItem("wbf_last_order_id"))===String(orderId)){
+    localStorage.removeItem("wbf_last_order_id");
+    localStorage.removeItem("wbf_last_order_status");
+  }
+  loadMyOrders();
+}
+
 function openMyOrders(){
   document.getElementById("orders-section").style.display="block";
   document.getElementById("hero")?.classList?.add("hidden");
@@ -1059,6 +1090,7 @@ async function loadMyOrders(){
         `<div class="my-order-total">TOTAL BARANG: Rp ${itemTotal.toLocaleString("id-ID")}<br>ONGKIR: Rp ${shipping.toLocaleString("id-ID")}<br>TOTAL: Rp ${grand.toLocaleString("id-ID")}</div>`+
         `${paymentHtml}`+
         `${((data.status==="pending") || (data.status==="confirmed" && payment.status!=="paid" && payment.status!=="verified")) ? `<button type="button" class="wbf-cancel-order" onclick="event.stopPropagation();cancelWbfOrder('${esc(data.id)}')">BATALKAN PESANAN</button>` : ""}`+
+        `${(["rejected","cancelled","completed"].includes(String(data.status||""))) ? `<button type="button" class="wbf-delete-order" onclick="event.stopPropagation();removeWbfOrderFromCustomer('${esc(data.id)}')">HAPUS PESANAN</button>` : ""}`+
       `</div>`;
     }).join("");
 
