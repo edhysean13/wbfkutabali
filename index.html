@@ -43,6 +43,9 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 .page-back{display:inline-flex;align-items:center;justify-content:center;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 13px;font-weight:700;font-size:11px;text-decoration:none}
 .brands-page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .brands-page-grid button{border:1px solid #333;background:#151515;color:#fff;border-radius:10px;padding:15px 8px;font-weight:800;font-size:13px}
+.brands-page-grid .brand-customer-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:150px}
+.brands-page-grid .brand-customer-logo{width:78px;height:78px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #333;padding:4px}
+.brands-page-grid .brand-customer-name{font-size:13px;font-weight:800;text-align:center}
 @media(max-width:800px){.brands-page-grid{grid-template-columns:repeat(2,1fr)}}
 
 
@@ -305,14 +308,7 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
     <h2>Brands</h2>
     <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
   </div>
-  <div class="brands-page-grid">
-    <button type="button" onclick="filterBrand('VOLCOM')">VOLCOM</button>
-    <button type="button" onclick="filterBrand('RIPCURL')">RIP CURL</button>
-    <button type="button" onclick="filterBrand('MAE BALI')">MAE BALI</button>
-    <button type="button" onclick="filterBrand('ZOMBIES')">ZOMBIES</button>
-    <button type="button" onclick="filterBrand('TRIDATU BALI')">TRIDATU BALI</button>
-    <button type="button" onclick="filterBrand('JUICEMATIC')">JUICEMATIC</button>
-  </div>
+  <div class="brands-page-grid" id="customer-brands-grid"></div>
 </section>
 
 <main class="container">
@@ -423,14 +419,8 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
 const WBF_SUPABASE_URL="https://wjeyyklbcrqxawoxlphk.supabase.co";
 const WBF_SUPABASE_KEY="sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
 
-const WBF_BRANDS={
-  "VOLCOM":"fc2b3b92-68d6-423e-b931-1870e08ac91d",
-  "RIPCURL":"86491a6e-6e3e-4d07-a658-7a7078034d21",
-  "MAE BALI":"c71cdd00-c291-4933-a237-778f35ae3b33",
-  "ZOMBIES":"13ba8be4-abe4-4f29-9173-219c33fef936",
-  "TRIDATU BALI":"6910b3d5-0899-4d17-ab52-6322f621c355",
-  "JUICEMATIC":"58c2f116-5a4d-4be7-a6a7-73b6ace23981"
-};
+let WBF_BRANDS={};
+let allBrands=[];
 
 let allProducts=[];
 let selectedBrand="";
@@ -442,6 +432,46 @@ function esc(v){
 function money(v){return Number(v||0).toLocaleString("id-ID")}
 function apiHeaders(){
   return {"apikey":WBF_SUPABASE_KEY,"Content-Type":"application/json"};
+}
+
+function renderCustomerBrands(){
+  const grid=document.getElementById("customer-brands-grid");
+  if(!grid)return;
+
+  if(!allBrands.length){
+    grid.innerHTML='<div class="catalog-status">Belum ada brand aktif.</div>';
+    return;
+  }
+
+  grid.innerHTML=allBrands.map(b=>{
+    const name=String(b.name||"").trim();
+    const logo=b.logo_url
+      ? '<img class="brand-customer-logo" src="'+esc(b.logo_url)+'" alt="'+esc(name)+'" loading="lazy">'
+      : '<div class="brand-customer-logo" style="display:flex;align-items:center;justify-content:center;color:#777;font-size:10px">BRAND</div>';
+    return '<button type="button" class="brand-customer-card" onclick="filterBrand(\''+esc(name).replace(/'/g,"\\\\'")+'\')">'+
+      logo+
+      '<span class="brand-customer-name">'+esc(name)+'</span>'+
+      '</button>';
+  }).join("");
+}
+
+async function loadCustomerBrands(){
+  try{
+    const res=await fetch(
+      WBF_SUPABASE_URL+"/rest/v1/rpc/get_public_brands",
+      {method:"POST",headers:apiHeaders(),body:"{}"}
+    );
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal mengambil brand.");
+    allBrands=Array.isArray(data)?data:[];
+    WBF_BRANDS={};
+    allBrands.forEach(b=>{ WBF_BRANDS[b.name]=b.id; });
+    renderCustomerBrands();
+  }catch(e){
+    const grid=document.getElementById("customer-brands-grid");
+    if(grid)grid.innerHTML='<div class="catalog-status">Brand belum dapat dimuat.</div>';
+    console.error("Brand customer gagal dimuat:",e);
+  }
 }
 
 async function loadCustomerProducts(){
@@ -1108,6 +1138,7 @@ setInterval(()=>{
 
 showHome();
 updateCartBadge();
+loadCustomerBrands();
 loadCustomerProducts();
 </script>
 </body>
