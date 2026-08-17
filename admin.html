@@ -381,6 +381,13 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 .order-note{width:100%;min-height:60px;background:#080808;color:#fff;border:1px solid #333;border-radius:9px;padding:9px;margin-top:9px;resize:vertical}
 </style>
 
+
+<style id="wbf-shipping-confirm">
+.order-shipping-box{margin-top:12px;padding:10px;border:1px solid #292929;border-radius:8px;background:#0d0d0d}
+.order-shipping-box label{display:block;color:#aaa;font-size:11px;margin:0 0 5px}
+.order-shipping-box input{height:38px!important;font-size:13px!important}
+.order-payment-total{margin-top:10px;padding-top:9px;border-top:1px solid #292929;font-weight:800}
+</style>
 </head>
 <body>
 <section id="login" class="wrap">
@@ -788,7 +795,9 @@ async function loadWbfOrders(){
           </div>
 
           <div class="order-items">${itemHtml}</div>
-          <div style="font-weight:800;margin-top:10px">TOTAL: Rp ${orderTotal(items).toLocaleString("id-ID")}</div>
+          <div style="font-weight:800;margin-top:10px">TOTAL BARANG: Rp ${itemTotal.toLocaleString("id-ID")}</div>
+        ${shippingFee>0 ? `<div class="wbf-order-muted" style="margin-top:4px">ONGKIR: Rp ${shippingFee.toLocaleString("id-ID")}</div>
+        <div style="font-weight:800;margin-top:4px">TOTAL PEMBAYARAN: Rp ${grandTotal.toLocaleString("id-ID")}</div>` : ""}
 
           <textarea class="order-note" id="note-${o.id}" onclick="event.stopPropagation()" placeholder="Catatan admin...">${escapeHtml(o.admin_note||"")}</textarea>
           <div class="order-actions">${actionHtml}</div>
@@ -1140,16 +1149,25 @@ async function loadOrders(){
       const canCheck=o.status==="pending";
       const canConfirm=o.status==="confirmed";
       const canPaid=o.status==="paid";
+      const itemTotal=orderTotal(items);
+      const shippingFee=Number(o.shipping_fee||0);
+      const grandTotal=itemTotal+shippingFee;
       const actionHtml = canCheck
-        ? `<button type="button" onclick="updateOrderStatus('${o.id}','confirmed')">STOK TERSEDIA</button>
-           <button type="button" class="danger" onclick="updateOrderStatus('${o.id}','rejected')">STOK TIDAK ADA</button>`
+        ? `<div class="order-shipping-box" onclick="event.stopPropagation()">
+             <label>BIAYA ONGKIR</label>
+             <input id="shipping-${o.id}" type="number" min="0" step="1000" inputmode="numeric" placeholder="Contoh: 25000" value="">
+           </div>
+           <button type="button" onclick="event.stopPropagation();confirmStockWithShipping('${o.id}')">STOK TERSEDIA</button>
+           <button type="button" class="danger" onclick="event.stopPropagation();updateOrderStatus('${o.id}','rejected')">STOK TIDAK ADA</button>`
         : canConfirm
-        ? `<button type="button" onclick="updateOrderStatus('${o.id}','paid')">SUDAH BAYAR</button>
-           <button type="button" class="secondary" onclick="updateOrderStatus('${o.id}','cancelled')">BATALKAN</button>`
+        ? `<div class="order-payment-total">TOTAL TAGIHAN: Rp ${grandTotal.toLocaleString("id-ID")}</div>
+           <div class="wbf-order-muted" style="margin-top:5px">Ongkir: Rp ${shippingFee.toLocaleString("id-ID")} · QRIS menunggu pembayaran customer.</div>
+           <button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','paid')">PEMBAYARAN VALID</button>
+           <button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">BATALKAN</button>`
         : canPaid
-        ? `<button type="button" onclick="updateOrderStatus('${o.id}','shipped')">PROSES / KIRIM</button>
-           <button type="button" class="secondary" onclick="updateOrderStatus('${o.id}','completed')">SELESAI</button>`
-        : `<button type="button" class="secondary" onclick="updateOrderStatus('${o.id}','completed')">TANDAI SELESAI</button>`;
+        ? `<button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','shipped')">PROSES / KIRIM</button>
+           <button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">SELESAI</button>`
+        : `<button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">TANDAI SELESAI</button>`;
       return `<div class="order-card">
         <div class="order-head">
           <div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div>
@@ -1177,6 +1195,29 @@ function toggleOrderCard(card){
 }
 window.toggleOrderCard=toggleOrderCard;
 
+async function confirmStockWithShipping(orderId){
+  const token=authToken();
+  const input=document.getElementById("shipping-"+orderId);
+  const fee=Math.max(0,Number(input?.value||0));
+  if(!Number.isFinite(fee)){ alert("Biaya ongkir tidak valid."); return; }
+  if(input && input.value.trim()===""){ alert("Isi biaya ongkir terlebih dahulu."); input.focus(); return; }
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_order",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({p_order_id:orderId,p_status:"confirmed",p_admin_note:"Stok tersedia. Tagihan dibuat untuk customer.",p_shipping_fee:fee})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal mengonfirmasi stok.");
+    await loadOrders();
+    await refreshOrderCount();
+    alert("Stok tersedia. Ongkir dan total pembayaran sudah dibuat.");
+  }catch(e){
+    alert("Gagal mengonfirmasi stok: "+e.message);
+  }
+}
+window.confirmStockWithShipping=confirmStockWithShipping;
+
 async function updateOrderStatus(orderId,statusValue){
   const token=authToken();
   const noteEl=document.getElementById("note-"+orderId);
@@ -1185,7 +1226,7 @@ async function updateOrderStatus(orderId,statusValue){
     const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_order",{
       method:"POST",
       headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
-      body:JSON.stringify({p_order_id:orderId,p_status:statusValue,p_admin_note:note||null})
+      body:JSON.stringify({p_order_id:orderId,p_status:statusValue,p_admin_note:note||null,p_shipping_fee:null})
     });
     const data=await res.json();
     if(!res.ok) throw new Error(data.message||data.details||"Gagal memperbarui order.");

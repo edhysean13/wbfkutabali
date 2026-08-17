@@ -245,6 +245,14 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 .checkout-note { color:#999; font-size:13px; line-height:1.45; }
 </style>
 
+<style id="wbf-customer-payment-flow">
+#wbfOrderStatusBox{border:1px solid #292929;border-radius:10px;padding:12px;background:#0d0d0d;color:#fff}
+.wbf-pay-line{display:flex;justify-content:space-between;gap:10px;padding:5px 0;color:#bbb}
+.wbf-pay-total{display:flex;justify-content:space-between;gap:10px;padding-top:9px;margin-top:7px;border-top:1px solid #292929;font-weight:800;color:#fff}
+.wbf-qris-wrap{margin-top:12px;text-align:center;padding-top:10px;border-top:1px solid #292929}
+.wbf-qris-wrap img{max-width:240px;width:100%;height:auto;border-radius:8px;background:#fff;padding:6px}
+.wbf-payment-note{color:#999;font-size:12px;line-height:1.45;margin-top:8px}
+</style>
 </head>
 <body>
 
@@ -377,6 +385,8 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
     <div id="wbfOrderSuccess" class="wbf-order-success">
       <h3>ORDER TERKIRIM</h3>
       <div id="wbfOrderSuccessText"></div>
+      <button id="wbfCheckOrderBtn" class="wbf-order-submit" type="button" onclick="checkWbfOrderStatus()">CEK STATUS ORDER</button>
+      <div id="wbfOrderStatusBox" style="display:none;margin-top:12px;text-align:left"></div>
       <button class="wbf-order-submit" type="button" onclick="closeOrderModal()">TUTUP</button>
     </div>
   </div>
@@ -716,6 +726,9 @@ async function submitWbfCart(){
     );
     const data=await res.json();
     if(!res.ok)throw new Error(data.message||data.details||"Order gagal dikirim.");
+    localStorage.setItem("wbf_last_order_id",data.id);
+    localStorage.setItem("wbf_last_order_status",data.status||"pending");
+    localStorage.setItem("wbf_last_order_phone",phone);
     wbfCart=[];
     saveWbfCart();
     document.getElementById("wbfOrderFormWrap").style.display="none";
@@ -729,6 +742,76 @@ async function submitWbfCart(){
     btn.textContent="KIRIM 1 ORDER";
   }
 }
+
+async function checkWbfOrderStatus(){
+  const orderId=localStorage.getItem("wbf_last_order_id")||"";
+  const phone=localStorage.getItem("wbf_last_order_phone")||"";
+  const box=document.getElementById("wbfOrderStatusBox");
+  const btn=document.getElementById("wbfCheckOrderBtn");
+  if(!orderId||!phone){
+    box.style.display="block";
+    box.innerHTML='<div style="color:#ffb3b3">Data order belum ditemukan di perangkat ini.</div>';
+    return;
+  }
+  btn.disabled=true;
+  btn.textContent="MEMERIKSA...";
+  try{
+    const res=await fetch(
+      WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_order_status",
+      {method:"POST",headers:apiHeaders(),body:JSON.stringify({p_order_id:orderId,p_customer_phone:phone})}
+    );
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal mengecek status.");
+    if(!data){
+      box.style.display="block";
+      box.innerHTML='<div style="color:#ffb3b3">Order tidak ditemukan. Pastikan nomor WhatsApp sama dengan saat order.</div>';
+      return;
+    }
+
+    const items=Array.isArray(data.items)?data.items:[];
+    const itemTotal=items.reduce((s,i)=>s+Number(i.unit_price||0)*Number(i.quantity||0),0);
+    const shipping=Number(data.shipping_fee||0);
+    const payment=data.payment||{};
+    const total=Number(payment.amount||itemTotal+shipping);
+
+    let html='<div style="font-weight:800;font-size:16px">STATUS: '+esc(orderStatusLabelCustomer(data.status))+'</div>';
+    html+='<div style="margin-top:8px;color:#aaa">Nomor order: '+esc(data.id)+'</div>';
+
+    if(data.status==="confirmed"){
+      html+='<div style="margin-top:12px"><div class="wbf-pay-line"><span>Total barang</span><span>Rp '+money(itemTotal)+'</span></div>';
+      html+='<div class="wbf-pay-line"><span>Ongkir</span><span>Rp '+money(shipping)+'</span></div>';
+      html+='<div class="wbf-pay-total"><span>TOTAL PEMBAYARAN</span><span>Rp '+money(total)+'</span></div></div>';
+      if(payment.qris_image_url){
+        html+='<div class="wbf-qris-wrap"><div style="font-weight:800;margin-bottom:8px">BAYAR DENGAN QRIS</div><img src="'+esc(payment.qris_image_url)+'" alt="QRIS pembayaran"><div class="wbf-payment-note">Scan QRIS lalu lakukan pembayaran sesuai total di atas.</div></div>';
+      }else{
+        html+='<div class="wbf-qris-wrap"><b>MENUNGGU QRIS</b><div class="wbf-payment-note">Stok sudah tersedia. Total pembayaran sudah ditentukan. QRIS akan ditampilkan setelah rekening QRIS toko disetel.</div></div>';
+      }
+    }else if(data.status==="pending"){
+      html+='<div class="wbf-payment-note" style="margin-top:10px">Order sedang dicek stok fisik oleh admin. Belum perlu melakukan pembayaran.</div>';
+    }else if(data.status==="rejected"){
+      html+='<div class="wbf-payment-note" style="margin-top:10px">Maaf, stok produk tidak tersedia.</div>';
+    }else if(data.status==="paid"){
+      html+='<div class="wbf-payment-note" style="margin-top:10px">Pembayaran sudah diterima dan order akan diproses.</div>';
+    }else if(data.status==="shipped"){
+      html+='<div class="wbf-payment-note" style="margin-top:10px">Order sedang diproses / dikirim.</div>';
+    }else if(data.status==="completed"){
+      html+='<div class="wbf-payment-note" style="margin-top:10px">Order selesai.</div>';
+    }
+
+    box.style.display="block";
+    box.innerHTML=html;
+  }catch(e){
+    box.style.display="block";
+    box.innerHTML='<div style="color:#ffb3b3">Gagal mengecek status: '+esc(e.message)+'</div>';
+  }finally{
+    btn.disabled=false;
+    btn.textContent="CEK STATUS ORDER";
+  }
+}
+function orderStatusLabelCustomer(status){
+  return ({pending:"MENUNGGU CEK STOK",confirmed:"STOK TERSEDIA — MENUNGGU PEMBAYARAN",rejected:"STOK TIDAK TERSEDIA",paid:"PEMBAYARAN DITERIMA",shipped:"DIPROSES / DIKIRIM",completed:"SELESAI",cancelled:"DIBATALKAN"})[status]||String(status||"").toUpperCase();
+}
+window.checkWbfOrderStatus=checkWbfOrderStatus;
 
 let wbfSelectedOrderProduct=null;
 
@@ -824,6 +907,7 @@ async function submitWbfOrder(){
 
     localStorage.setItem("wbf_last_order_id",data.id);
     localStorage.setItem("wbf_last_order_status",data.status||"pending");
+    localStorage.setItem("wbf_last_order_phone",phone);
 
     document.getElementById("wbfOrderFormWrap").style.display="none";
     document.getElementById("wbfOrderSuccess").style.display="block";
