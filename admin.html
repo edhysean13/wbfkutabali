@@ -1175,9 +1175,9 @@ function renderBrands(){
   list.innerHTML='<div class="brand-card" style="text-align:left">Belum ada brand.</div>';return;
  }
  list.innerHTML=brandRecords.map(b=>{
+  const logo=b.logo_url?'<img class="brand-logo" src="'+escapeHtml(b.logo_url)+'" alt="'+escapeHtml(b.name)+'">':'<div class="brand-logo-empty">BRAND</div>';
   return '<div class="brand-card brand-item clickable-brand" data-brand="'+escapeHtml(b.name)+'">'+
-   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+
-   '<div class="brand-logo-empty">BRAND</div>'+
+   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+logo+
    '<div class="brand-name">'+escapeHtml(b.name)+'</div></div>';
  }).join("");
  list.querySelectorAll(".clickable-brand").forEach(el=>el.addEventListener("click",e=>{
@@ -1207,11 +1207,21 @@ function openBrandEditor(id){
  document.getElementById("brandEditId").value=b.id;
  document.getElementById("brandNameInput").value=b.name||"";
  document.getElementById("brandLogoInput").value="";
- document.getElementById("brandLogoPreview").innerHTML="Logo brand akan ditambahkan setelah storage logo disiapkan.";
+ document.getElementById("brandLogoPreview").innerHTML=b.logo_url?'<img src="'+escapeHtml(b.logo_url)+'" style="width:70px;height:70px;object-fit:contain;border-radius:9px;background:#fff"><div class="muted">Logo saat ini</div>':"Belum ada logo.";
  document.getElementById("brandFormStatus").textContent="";
  document.getElementById("saveBrandBtn").textContent="UPDATE BRAND";
  document.getElementById("brandForm").classList.remove("hidden");
  document.getElementById("brandForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function previewBrandLogo(){
+ const input=document.getElementById("brandLogoInput");
+ const preview=document.getElementById("brandLogoPreview");
+ const file=input.files&&input.files[0];
+ if(!file){preview.innerHTML="";return;}
+ if(!file.type.startsWith("image/")){preview.textContent="File logo harus berupa gambar.";input.value="";return;}
+ const url=URL.createObjectURL(file);
+ preview.innerHTML='<img src="'+url+'" style="width:70px;height:70px;object-fit:contain;border-radius:9px;background:#fff"><div class="muted">Preview logo</div>';
 }
 
 function resetBrandForm(){
@@ -1224,6 +1234,19 @@ function resetBrandForm(){
  document.getElementById("brandForm").classList.add("hidden");
 }
 
+async function uploadBrandLogo(file,brandId){
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+ const path="brands/"+brandId+"."+ext;
+ const res=await fetch(URL+"/storage/v1/object/brand-logos/"+path,{
+  method:"POST",
+  headers:{"apikey":KEY,"Authorization":"Bearer "+authToken(),"Content-Type":file.type||"image/jpeg","x-upsert":"true","cache-control":"3600"},
+  body:file
+ });
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok)throw new Error(data.message||data.error||data.statusCode||"Upload logo gagal.");
+ return URL+"/storage/v1/object/public/brand-logos/"+path+"?v="+Date.now();
+}
+
 async function saveBrand(){
  const id=document.getElementById("brandEditId").value.trim();
  const name=document.getElementById("brandNameInput").value.trim();
@@ -1232,9 +1255,7 @@ async function saveBrand(){
  if(!name){st.textContent="Nama brand wajib diisi.";return}
  btn.disabled=true;btn.textContent=id?"MENYIMPAN...":"MENAMBAH...";st.textContent="";
  try{
-  if(file){
-   st.textContent="Logo belum disimpan karena tabel brand saat ini belum memiliki kolom logo. Nama brand tetap bisa disimpan.";
-  }
+  let brandId=id;
   if(!id){
    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_create_brand",{
     method:"POST",headers:wbfHeaders(authToken(),true),
@@ -1242,6 +1263,8 @@ async function saveBrand(){
    });
    const data=await res.json();
    if(!res.ok)throw new Error(data.message||data.details||"Gagal menambah brand.");
+   brandId=data?.id||data?.[0]?.id||data;
+   if(!brandId)throw new Error("ID brand baru tidak ditemukan.");
   }else{
    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_brand",{
     method:"POST",headers:wbfHeaders(authToken(),true),
@@ -1250,9 +1273,19 @@ async function saveBrand(){
    const data=await res.json();
    if(!res.ok)throw new Error(data.message||data.details||"Gagal mengubah brand.");
   }
+  if(file){
+   st.textContent="Mengupload logo...";
+   const logoUrl=await uploadBrandLogo(file,brandId);
+   const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_set_brand_logo",{
+    method:"POST",headers:wbfHeaders(authToken(),true),
+    body:JSON.stringify({p_brand_id:brandId,p_logo_url:logoUrl})
+   });
+   const data=await res.json().catch(()=>({}));
+   if(!res.ok)throw new Error(data.message||data.details||"Gagal menyimpan logo brand.");
+  }
   await loadBrands();
-  st.textContent=id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.";
-  setTimeout(resetBrandForm,600);
+  st.textContent=file?"Brand dan logo berhasil disimpan.":(id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.");
+  setTimeout(resetBrandForm,700);
  }catch(e){
   st.textContent="Gagal: "+e.message;
  }finally{
@@ -1268,6 +1301,7 @@ document.getElementById("addBrandBtn").addEventListener("click",()=>{
 });
 document.getElementById("cancelBrandBtn").addEventListener("click",resetBrandForm);
 document.getElementById("saveBrandBtn").addEventListener("click",saveBrand);
+document.getElementById("brandLogoInput").addEventListener("change",previewBrandLogo);
 
 document.getElementById("brandsCard").addEventListener("click",()=>{
 dashboardHome.classList.add("hidden");
