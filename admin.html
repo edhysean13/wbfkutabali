@@ -1406,7 +1406,7 @@ saveProductBtn.addEventListener("click",saveProductToDatabase);
     summary.innerHTML='<div class="muted">MEMUAT LAPORAN...</div>'; rows.innerHTML="";
     try{
       const all=await fetchAllOrders();
-      const skuMap=brand==="ALL"?{}:await buildSkuBrandMap();
+      const skuMap=await buildSkuBrandMap();
       const valid=new Set(["paid","shipped","completed"]);
       const selected=all.filter(o=>{
         if(!valid.has(String(o.status||"").toLowerCase()))return false;
