@@ -70,13 +70,27 @@ select,input[type=file]{font-family:Arial,sans-serif}
 <button class="back" id="backBtn">BACK</button>
 </div>
 <div class="brand-grid">
-<div class="brand-card">VOLCOM</div>
-<div class="brand-card">RIPCURL</div>
-<div class="brand-card">MAE BALI</div>
-<div class="brand-card">ZOMBIES</div>
-<div class="brand-card">TRIDATU BALI</div>
-<div class="brand-card">JUICEMATIC</div>
+<div class="brand-card clickable-brand" data-brand="VOLCOM">VOLCOM</div>
+<div class="brand-card clickable-brand" data-brand="RIPCURL">RIPCURL</div>
+<div class="brand-card clickable-brand" data-brand="MAE BALI">MAE BALI</div>
+<div class="brand-card clickable-brand" data-brand="ZOMBIES">ZOMBIES</div>
+<div class="brand-card clickable-brand" data-brand="TRIDATU BALI">TRIDATU BALI</div>
+<div class="brand-card clickable-brand" data-brand="JUICEMATIC">JUICEMATIC</div>
 </div>
+</section>
+
+<section id="brandDetailPage" class="page hidden">
+<div class="page-head">
+<div><div class="muted">WBF ADMIN</div><h1 id="brandDetailTitle">BRAND</h1></div>
+<button class="back" id="brandDetailBackBtn">BACK</button>
+</div>
+<div class="brand-grid" style="grid-template-columns:repeat(3,1fr)">
+<div class="brand-card category-filter" data-category="ATASAN">ATASAN</div>
+<div class="brand-card category-filter" data-category="BAWAHAN">BAWAHAN</div>
+<div class="brand-card category-filter" data-category="AKSESORIS">AKSESORIS</div>
+</div>
+<button id="brandRegisterBtn" type="button" style="margin-top:18px">+ REGISTER PRODUCT</button>
+<div id="brandProductsList" style="margin-top:20px"></div>
 </section>
 
 <section id="productsPage" class="page hidden">
@@ -96,7 +110,13 @@ select,input[type=file]{font-family:Arial,sans-serif}
 </select>
 <label>SKU</label><input id="productSku" type="text" placeholder="SKU">
 <label>Product Name</label><input id="productName" type="text" placeholder="Nama produk">
-<label>Category</label><input id="productCategory" type="text" placeholder="T-Shirt / Short / Hat / dll">
+<label>Category</label>
+<select id="productCategory" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
+<option value="">Pilih Category</option>
+<option value="ATASAN">ATASAN</option>
+<option value="BAWAHAN">BAWAHAN</option>
+<option value="AKSESORIS">AKSESORIS</option>
+</select>
 <label>Size</label><input id="productSize" type="text" placeholder="S / M / L / XL">
 <label>Color</label><input id="productColor" type="text" placeholder="Warna">
 <label>Price</label><input id="productPrice" type="number" placeholder="Harga">
@@ -147,6 +167,7 @@ document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="E
 document.getElementById("logoutBtn").addEventListener("click",()=>{
 sessionStorage.removeItem("wbf_access_token");
 brandsPage.classList.add("hidden");
+brandDetailPage.classList.add("hidden");
 productsPage.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
 dash.classList.add("hidden");
@@ -160,8 +181,49 @@ brandsPage.classList.remove("hidden");
 
 document.getElementById("backBtn").addEventListener("click",()=>{
 brandsPage.classList.add("hidden");
+brandDetailPage.classList.add("hidden");
 productsPage.classList.add("hidden");
 dashboardHome.classList.remove("hidden");
+});
+
+const brandDetailPage=document.getElementById("brandDetailPage");
+const brandDetailTitle=document.getElementById("brandDetailTitle");
+const brandProductsList=document.getElementById("brandProductsList");
+let selectedBrand="";
+let selectedCategory="";
+
+function openBrand(brand){
+selectedBrand=brand;
+selectedCategory="";
+brandDetailTitle.textContent=brand;
+brandProductsList.innerHTML='<div class="muted">Pilih kategori untuk melihat SKU.</div>';
+dashboardHome.classList.add("hidden");
+brandsPage.classList.add("hidden");
+brandDetailPage.classList.remove("hidden");
+}
+
+document.querySelectorAll(".clickable-brand").forEach(el=>{
+el.addEventListener("click",()=>openBrand(el.dataset.brand));
+});
+
+document.querySelectorAll(".category-filter").forEach(el=>{
+el.addEventListener("click",()=>{
+selectedCategory=el.dataset.category;
+brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+selectedBrand+' · '+selectedCategory+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';
+});
+});
+
+document.getElementById("brandDetailBackBtn").addEventListener("click",()=>{
+brandDetailPage.classList.add("hidden");
+brandsPage.classList.remove("hidden");
+});
+
+document.getElementById("brandRegisterBtn").addEventListener("click",()=>{
+productsPage.classList.remove("hidden");
+brandDetailPage.classList.add("hidden");
+productForm.classList.remove("hidden");
+document.getElementById("productBrand").value=selectedBrand;
+if(selectedCategory) document.getElementById("productCategory").value=selectedCategory;
 });
 
 const productsPage=document.getElementById("productsPage");
