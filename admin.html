@@ -1494,8 +1494,32 @@ async function loadWaitingPayments(){
       const actionHtml=hasProof
         ? `<button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','paid')">PEMBAYARAN VALID</button>`
         : `<button type="button" disabled style="opacity:.45;cursor:not-allowed">MENUNGGU BUKTI TRANSFER</button>`;
-      return `<div class="order-card"><div class="order-head"><div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div><div class="order-status">${hasProof?"BUKTI DITERIMA":"MENUNGGU PEMBAYARAN"}</div></div><div class="order-customer"><b>${escapeHtml(o.customer_name||"-")}</b><br>WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>Alamat: ${escapeHtml(o.customer_address||"-")}<br><span class="muted">${orderDate(o.created_at)}</span></div><div class="order-items">${itemHtml}</div><div class="order-payment-total">TOTAL BARANG: Rp ${orderTotal(items).toLocaleString("id-ID")}<br>ONGKIR: Rp ${Number(o.shipping_fee||0).toLocaleString("id-ID")}<br>TOTAL BAYAR: Rp ${total.toLocaleString("id-ID")}</div>${proofHtml}<div class="order-actions">${actionHtml}<button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">BATALKAN</button></div></div>`;
+      return `<div class="order-card wbf-compact-order-card">
+        <div class="wbf-order-summary" onclick="toggleOrderCard(this.parentElement)" role="button" tabindex="0" aria-label="Buka detail order ${escapeHtml(o.id)}">
+          <div class="wbf-order-summary-main">
+            <div class="wbf-order-summary-label">ORDER</div>
+            <div class="wbf-order-summary-id">${escapeHtml(o.id)}</div>
+          </div>
+          <div class="wbf-order-summary-right">
+            <div class="order-status">${hasProof?"BUKTI DITERIMA":"MENUNGGU PEMBAYARAN"}</div>
+            <div class="wbf-order-chevron">⌄</div>
+          </div>
+        </div>
+
+        <div class="order-details wbf-order-details">
+          <div class="order-customer"><b>${escapeHtml(o.customer_name||"-")}</b><br>WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>Alamat: ${escapeHtml(o.customer_address||"-")}<br><span class="muted">${orderDate(o.created_at)}</span></div>
+          <div class="order-items">${itemHtml}</div>
+          <div class="order-payment-total">TOTAL BARANG: Rp ${orderTotal(items).toLocaleString("id-ID")}<br>ONGKIR: Rp ${Number(o.shipping_fee||0).toLocaleString("id-ID")}<br>TOTAL BAYAR: Rp ${total.toLocaleString("id-ID")}</div>
+          ${proofHtml}
+          <div class="order-actions wbf-order-actions-stack">${actionHtml}<button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','cancelled')">BATALKAN</button></div>
+        </div>
+      </div>`;
     }).join("");
+    list.querySelectorAll(".wbf-order-summary").forEach(el=>{
+      el.addEventListener("keydown",e=>{
+        if(e.key==="Enter"||e.key===" "){e.preventDefault();el.click();}
+      });
+    });
   }catch(e){
     list.innerHTML='<div class="brand-card" style="text-align:left"><b>GAGAL MEMUAT PESANAN</b><div class="muted" style="margin-top:6px">'+escapeHtml(e.message)+'</div></div>';
   }
