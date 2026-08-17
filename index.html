@@ -63,6 +63,130 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 }
 .collection-back:hover{background:transparent !important}
 
+
+/* Compact collection header */
+#catalog-section .section-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 12px;
+  padding:0;
+}
+#catalog-section .section-head h2{
+  margin:0;
+  font-size:26px !important;
+  line-height:1.15;
+  letter-spacing:-.3px;
+  flex:1 1 auto;
+}
+#catalog-section .section-head #catalog-count{
+  flex:0 0 auto;
+  font-size:14px !important;
+  line-height:1.15;
+  white-space:nowrap;
+  text-align:right;
+}
+#catalog-section .collection-back{
+  flex:0 0 auto;
+  font-size:12px !important;
+  line-height:1;
+  margin:0 !important;
+  padding:0 !important;
+  white-space:nowrap;
+}
+#catalog-section .category-nav{
+  margin-top:0 !important;
+  gap:8px !important;
+}
+#catalog-section .category-nav button{
+  font-size:12px !important;
+  padding:9px 13px !important;
+  min-height:38px;
+}
+@media(max-width:600px){
+  #catalog-section .section-head h2{
+    font-size:24px !important;
+  }
+  #catalog-section .section-head{
+    gap:7px;
+  }
+  #catalog-section .section-head #catalog-count{
+    font-size:13px !important;
+  }
+  #catalog-section .collection-back{
+    font-size:11px !important;
+  }
+}
+
+
+/* Final compact Collection header */
+#catalog-section .section-head{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:center;
+  column-gap:10px;
+  margin:0 0 10px !important;
+  padding:0 !important;
+}
+#catalog-section .section-head h2{
+  margin:0 !important;
+  font-size:24px !important;
+  line-height:1.1 !important;
+  letter-spacing:-.2px;
+  white-space:normal;
+}
+#catalog-section .section-head #catalog-count{
+  margin:0 !important;
+  font-size:13px !important;
+  line-height:1.1 !important;
+  white-space:nowrap;
+  text-align:right;
+}
+#catalog-section .section-head .collection-back{
+  margin:0 !important;
+  padding:0 !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  white-space:nowrap;
+  background:transparent !important;
+  border:0 !important;
+}
+#catalog-section .category-nav{
+  margin-top:0 !important;
+  gap:7px !important;
+}
+#catalog-section .category-nav button{
+  font-size:11px !important;
+  padding:8px 12px !important;
+  min-height:36px;
+}
+@media(max-width:600px){
+  #catalog-section .section-head{
+    column-gap:7px;
+  }
+  #catalog-section .section-head h2{
+    font-size:22px !important;
+  }
+  #catalog-section .section-head #catalog-count{
+    font-size:12px !important;
+  }
+  #catalog-section .section-head .collection-back{
+    font-size:10px !important;
+  }
+}
+
+/* Home navigation: no red button backgrounds */
+
+
+/* Brands page: HOME is text-only */
+#brands .page-back{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  color:#fff !important;
+  padding:0 !important;
+}
+
 </style>
 </head>
 <body>
