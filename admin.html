@@ -30,6 +30,7 @@ button{width:100%;height:52px;margin-top:20px;border:0;border-radius:10px;backgr
 .back{width:auto;margin:0;padding:0 18px;height:44px;font-size:14px}
 .brand-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:22px}
 .brand-card{background:#121212;border:1px solid #292929;border-radius:14px;padding:22px;text-align:center;font-size:18px;font-weight:800}
+select,input[type=file]{font-family:Arial,sans-serif}
 @media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}.brand-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -54,11 +55,13 @@ button{width:100%;height:52px;margin-top:20px;border:0;border-radius:10px;backgr
 <button class="logout" id="logoutBtn">LOGOUT</button>
 </div>
 
+<div id="dashboardHome">
 <div class="cards" id="dashboardCards">
 <div class="card clickable" id="brandsCard"><div class="num">6</div><div class="muted">BRANDS</div></div>
-<div class="card"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
+<div class="card clickable" id="productsCard"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
 <div class="card"><div class="num">0</div><div class="muted">ORDERS</div></div>
 <div class="card"><div class="num">0</div><div class="muted">PAYMENTS</div></div>
+</div>
 </div>
 
 <section id="brandsPage" class="page hidden">
@@ -75,6 +78,36 @@ button{width:100%;height:52px;margin-top:20px;border:0;border-radius:10px;backgr
 <div class="brand-card">JUICEMATIC</div>
 </div>
 </section>
+
+<section id="productsPage" class="page hidden">
+<div class="page-head">
+<div><div class="muted">WBF ADMIN</div><h1>PRODUCTS / SKU</h1></div>
+<button class="back" id="productsBackBtn">BACK</button>
+</div>
+
+<button id="registerProductBtn" type="button">+ REGISTER PRODUCT</button>
+
+<div id="productForm" class="hidden" style="margin-top:20px;background:#121212;border:1px solid #292929;border-radius:14px;padding:20px">
+<label>Brand</label>
+<select id="productBrand" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
+<option value="">Pilih Brand</option>
+<option>VOLCOM</option><option>RIPCURL</option><option>MAE BALI</option>
+<option>ZOMBIES</option><option>TRIDATU BALI</option><option>JUICEMATIC</option>
+</select>
+<label>SKU</label><input id="productSku" type="text" placeholder="SKU">
+<label>Product Name</label><input id="productName" type="text" placeholder="Nama produk">
+<label>Category</label><input id="productCategory" type="text" placeholder="T-Shirt / Short / Hat / dll">
+<label>Size</label><input id="productSize" type="text" placeholder="S / M / L / XL">
+<label>Color</label><input id="productColor" type="text" placeholder="Warna">
+<label>Price</label><input id="productPrice" type="number" placeholder="Harga">
+<label>Discount (%)</label><input id="productDiscount" type="number" min="0" max="100" placeholder="0">
+<label>Photo Product</label><input id="productPhoto" type="file" accept="image/*">
+<button id="saveProductBtn" type="button">SAVE PRODUCT</button>
+</div>
+
+<div id="productPreview" style="margin-top:20px"></div>
+</section>
+</section>
 </section>
 
 <script>
@@ -84,7 +117,7 @@ const login=document.getElementById("login");
 const dash=document.getElementById("dashboard");
 const status=document.getElementById("status");
 const btn=document.getElementById("loginBtn");
-const cards=document.getElementById("dashboardCards");
+const dashboardHome=document.getElementById("dashboardHome");
 const brandsPage=document.getElementById("brandsPage");
 
 function showError(text){status.textContent=text}
@@ -114,19 +147,67 @@ document.getElementById("password").addEventListener("keydown",e=>{if(e.key==="E
 document.getElementById("logoutBtn").addEventListener("click",()=>{
 sessionStorage.removeItem("wbf_access_token");
 brandsPage.classList.add("hidden");
-cards.classList.remove("hidden");
+productsPage.classList.add("hidden");
+dashboardHome.classList.remove("hidden");
 dash.classList.add("hidden");
 login.classList.remove("hidden");
 });
 
 document.getElementById("brandsCard").addEventListener("click",()=>{
-cards.classList.add("hidden");
+dashboardHome.classList.add("hidden");
 brandsPage.classList.remove("hidden");
 });
 
 document.getElementById("backBtn").addEventListener("click",()=>{
 brandsPage.classList.add("hidden");
-cards.classList.remove("hidden");
+productsPage.classList.add("hidden");
+dashboardHome.classList.remove("hidden");
+});
+
+const productsPage=document.getElementById("productsPage");
+const productsCard=document.getElementById("productsCard");
+const registerProductBtn=document.getElementById("registerProductBtn");
+const productForm=document.getElementById("productForm");
+const saveProductBtn=document.getElementById("saveProductBtn");
+const productPreview=document.getElementById("productPreview");
+
+productsCard.addEventListener("click",()=>{
+dashboardHome.classList.add("hidden");
+productsPage.classList.remove("hidden");
+});
+
+document.getElementById("productsBackBtn").addEventListener("click",()=>{
+productsPage.classList.add("hidden");
+productForm.classList.add("hidden");
+dashboardHome.classList.remove("hidden");
+});
+
+registerProductBtn.addEventListener("click",()=>{
+productForm.classList.toggle("hidden");
+});
+
+saveProductBtn.addEventListener("click",()=>{
+const brand=document.getElementById("productBrand").value;
+const sku=document.getElementById("productSku").value.trim();
+const name=document.getElementById("productName").value.trim();
+const price=document.getElementById("productPrice").value;
+const discount=document.getElementById("productDiscount").value || 0;
+
+if(!brand||!sku||!name||!price){
+alert("Brand, SKU, Product Name dan Price wajib diisi.");
+return;
+}
+
+const finalPrice=Math.max(0,Number(price)*(1-Number(discount)/100));
+productPreview.innerHTML=
+'<div class="brand-card" style="text-align:left">'+
+'<div style="font-size:13px;color:#888">'+brand+'</div>'+
+'<div style="font-size:20px;margin:8px 0">'+name+'</div>'+
+'<div style="font-size:13px;color:#888">SKU: '+sku+'</div>'+
+'<div style="margin-top:10px">Harga: Rp '+Number(price).toLocaleString("id-ID")+'</div>'+
+'<div style="margin-top:5px">Discount: '+Number(discount)+'%</div>'+
+'<div style="margin-top:5px;font-weight:800">Harga setelah discount: Rp '+finalPrice.toLocaleString("id-ID")+'</div>'+
+'</div>';
 });
 </script>
 </body>
