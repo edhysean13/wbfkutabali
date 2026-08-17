@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WBF Push Test</title>
+<style>
+body{font-family:Arial,sans-serif;background:#080808;color:#fff;padding:24px;max-width:600px;margin:auto}
+button{width:100%;padding:16px;margin:8px 0;border:0;border-radius:10px;font-size:16px;font-weight:700}
+#status{padding:16px;border:1px solid #333;border-radius:10px;margin:16px 0;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<h1>WBF Push Test</h1>
+<div id="status">Memeriksa...</div>
+<button id="enable">AKTIFKAN NOTIFIKASI</button>
+<button id="test" disabled>TEST PUSH NOTIFICATION</button>
+<script>
+const SUPABASE_URL = "https://wjeyyklbcrqxawoxlphk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
+const PUSH_FUNCTION = SUPABASE_URL + "/functions/v1/wbf-push-sender-v2";
+const VAPID_PUBLIC_KEY = "BPOg7dQmv4KW1Z25qYuVg-cJtsiEO0cRoDtIvWY6VAhO249WkGDiaQrS24Xv2NPC0CAx5FOUeCXIGKS0n2q5BcQ";
+const statusEl = document.getElementById("status");
+const testBtn = document.getElementById("test");
+
+function setStatus(s){statusEl.textContent=s}
+
+function urlBase64ToUint8Array(base64String){
+  const padding="=".repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+  const raw=atob(base64); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+
+async function setup(){
+  if(!("serviceWorker" in navigator) || !("PushManager" in window)){
+    setStatus("Perangkat/browser ini belum mendukung Web Push.");
+    return;
+  }
+  const reg=await navigator.serviceWorker.register("./wbf-push-sw.js");
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub) setStatus("Siap. Tekan AKTIFKAN NOTIFIKASI.");
+  else { localStorage.setItem("wbf_push_subscription", JSON.stringify(sub)); testBtn.disabled=false; setStatus("Notifikasi sudah aktif di perangkat ini."); }
+}
+
+document.getElementById("enable").onclick=async()=>{
+  try{
+    const permission=await Notification.requestPermission();
+    if(permission!=="granted"){setStatus("Izin notifikasi ditolak.");return}
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    localStorage.setItem("wbf_push_subscription", JSON.stringify(sub));
+    testBtn.disabled=false;
+    setStatus("BERHASIL. Subscription perangkat sudah dibuat.\nSekarang tekan TEST PUSH NOTIFICATION.");
+  }catch(e){setStatus("Gagal mengaktifkan: "+e.message)}
+};
+
+testBtn.onclick=async()=>{
+  try{
+    const raw=localStorage.getItem("wbf_push_subscription");
+    if(!raw) throw new Error("Subscription belum ada.");
+    const res=await fetch(PUSH_FUNCTION,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+SUPABASE_KEY
+      },
+      body:JSON.stringify({
+        subscription:JSON.parse(raw),
+        payload:{
+          title:"WBF Kuta-Bali",
+          body:"Push notification berhasil! 🔔",
+          tag:"wbf-test",
+          url:"/"
+        }
+      })
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.error || ("HTTP "+res.status));
+    setStatus("PUSH TERKIRIM. Cek notifikasi HP.");
+  }catch(e){setStatus("Push gagal: "+e.message)}
+};
+
+setup().catch(e=>setStatus("Gagal menyiapkan service worker: "+e.message));
+</script>
+</body>
+</html>
