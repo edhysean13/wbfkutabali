@@ -312,6 +312,39 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 #brandProductsList{margin-top:9px!important}
 </style>
 
+
+<style id="wbf-sticky-controls">
+/* Sticky controls: stay visible while PRODUCT CARDS scroll underneath. */
+.top{
+  position:sticky!important;
+  top:0!important;
+  z-index:100!important;
+  background:#000!important;
+  padding-top:8px!important;
+  padding-bottom:6px!important;
+}
+#brandDetailPage .brand-sticky-controls{
+  position:sticky!important;
+  top:50px!important;
+  z-index:90!important;
+  background:#000!important;
+  padding-bottom:7px!important;
+}
+#brandDetailPage .brand-sticky-controls .page-head{
+  margin-top:0!important;
+}
+#brandDetailPage .brand-sticky-controls .brand-grid{
+  margin-top:5px!important;
+}
+#brandDetailPage .brand-sticky-controls #brandRegisterBtn{
+  margin-top:7px!important;
+}
+#brandDetailPage #brandProductsList{
+  position:relative!important;
+  z-index:1!important;
+}
+</style>
+
 </head>
 <body>
 <section id="login" class="wrap">
@@ -359,6 +392,7 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 </section>
 
 <section id="brandDetailPage" class="page hidden">
+<div class="brand-sticky-controls">
 <div class="page-head">
 <div><div class="muted">WBF ADMIN</div><h1 id="brandDetailTitle">BRAND</h1></div>
 <button class="back" id="brandDetailBackBtn">BACK</button>
@@ -372,6 +406,7 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 <div class="brand-card category-filter" data-category="BAG">BAG</div>
 </div>
 <button id="brandRegisterBtn" type="button" style="margin-top:18px">+ REGISTER PRODUCT</button>
+</div>
 <div id="brandProductsList" style="margin-top:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;align-items:start"></div>
 </section>
 
