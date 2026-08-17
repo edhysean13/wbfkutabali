@@ -288,6 +288,39 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
 .wbf-event-empty{grid-column:1/-1;padding:28px 18px;text-align:center;color:#777;border:1px solid #292929;border-radius:16px;background:#121212}
 @media(max-width:650px){.wbf-event-grid{gap:10px}.wbf-event-copy{padding:10px}.wbf-event-copy h3{font-size:14px}.wbf-event-copy p{font-size:12px}}
 </style>
+
+<style id="wbf-event-special-page">
+/* Event is a standalone customer screen */
+body.wbf-event-mode .nav{display:none!important}
+body.wbf-event-mode #main-navigation,
+body.wbf-event-mode .hero,
+body.wbf-event-mode #brands,
+body.wbf-event-mode #catalog-section,
+body.wbf-event-mode #cart,
+body.wbf-event-mode #orders-section,
+body.wbf-event-mode .info-box,
+body.wbf-event-mode #about,
+body.wbf-event-mode footer{display:none!important}
+body.wbf-event-mode #events{display:block!important;margin-top:0!important}
+body.wbf-event-mode #events .page-back{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:#fff!important;
+  padding:0!important;
+  border-radius:0!important;
+}
+body.wbf-event-mode .wbf-event-photo img{
+  width:100%;
+  height:100%;
+  object-fit:contain!important;
+  object-position:center;
+  display:block;
+}
+body.wbf-event-mode .wbf-event-photo{
+  background:#080808;
+}
+</style>
 </head>
 <body>
 
@@ -572,6 +605,7 @@ function renderCatalog(){
 
 
 function showHome(){
+  document.body.classList.remove("wbf-event-mode");
   const os=document.getElementById("orders-section"); if(os)os.style.display="none";
   document.getElementById("brands")?.style.setProperty("display","");
   document.getElementById("catalog-section")?.style.setProperty("display","");
@@ -580,6 +614,9 @@ function showHome(){
   document.getElementById("main-navigation").style.display="flex";
   document.getElementById("brands").style.display="none";
   document.getElementById("events")?.style.setProperty("display","none");
+  document.getElementById("cart")?.style.setProperty("display","");
+  document.getElementById("about")?.style.setProperty("display","");
+  document.querySelector("footer")?.style.setProperty("display","");
   document.getElementById("catalog-section").style.display="block";
   selectedBrand="";
   selectedCategory="ALL";
@@ -597,11 +634,8 @@ function showBrands(){
 }
 
 async function showEvents(){
-  document.querySelector(".hero").style.display="none";
-  document.getElementById("main-navigation").style.display="none";
-  document.getElementById("brands").style.display="none";
+  document.body.classList.add("wbf-event-mode");
   document.getElementById("events").style.display="block";
-  document.getElementById("catalog-section").style.display="none";
   document.getElementById("orders-section")?.style.setProperty("display","none");
   window.scrollTo({top:0,behavior:"smooth"});
   await loadCustomerEvents();
