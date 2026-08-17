@@ -200,7 +200,7 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 .wbf-order-product .no-photo{width:72px;height:72px;display:flex;align-items:center;justify-content:center;background:#1b1b1b;border-radius:8px;font-size:10px;color:#999}
 .wbf-order-field{margin-top:10px}
 .wbf-order-field label{display:block;font-size:12px;color:#aaa;margin-bottom:5px}
-.wbf-order-field input,.wbf-order-field select,.wbf-order-field textarea{width:100%;background:#080808;color:#fff;border:1px solid #383838;border-radius:8px;padding:10px;font-size:14px}
+.wbf-order-field input,.wbf-order-field select,.wbf-order-field textarea{width:100%;background:#080808;color:#fff;border:1px solid #383838;border-radius:8px;padding:10px;font-size:16px!important;-webkit-text-size-adjust:100%}
 .wbf-order-field textarea{min-height:72px;resize:vertical}
 .wbf-order-submit{width:100%;margin-top:14px;background:#df1720!important;color:#fff;border:0;border-radius:9px;padding:12px;font-size:14px;font-weight:800}
 .wbf-order-note{font-size:11px;color:#999;margin-top:8px;line-height:1.4}
@@ -232,6 +232,9 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 #wbfCartBadge{display:none;position:absolute;top:-6px;right:-8px;background:#e21b23;color:#fff;border-radius:20px;min-width:18px;height:18px;align-items:center;justify-content:center;font-size:9px;font-weight:800;padding:0 4px}
 #main-navigation a{position:relative}
 
+
+/* iPhone Safari: cegah auto-zoom saat field disentuh */
+input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:100%; }
 </style>
 </head>
 <body>

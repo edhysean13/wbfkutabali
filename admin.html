@@ -52,6 +52,9 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 .order-card.open .order-details{display:block}
 .order-card.open .order-chevron{transform:rotate(180deg)}
 
+
+/* iPhone Safari: cegah auto-zoom saat field disentuh */
+input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:100%; }
 </style>
 
 <style id="wbf-compact-refinement">
@@ -772,6 +775,8 @@ async function loadWbfOrders(){
         : canPaid
         ? `<button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','shipped')">PROSES / KIRIM</button>
            <button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">SELESAI</button>`
+        : (o.status==="rejected" || o.status==="cancelled" || o.status==="completed")
+        ? ``
         : `<button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">TANDAI SELESAI</button>`;
 
       return `<div class="order-card" onclick="toggleOrderCard(this)">
@@ -1167,6 +1172,8 @@ async function loadOrders(){
         : canPaid
         ? `<button type="button" onclick="event.stopPropagation();updateOrderStatus('${o.id}','shipped')">PROSES / KIRIM</button>
            <button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">SELESAI</button>`
+        : (o.status==="rejected" || o.status==="cancelled" || o.status==="completed")
+        ? ``
         : `<button type="button" class="secondary" onclick="event.stopPropagation();updateOrderStatus('${o.id}','completed')">TANDAI SELESAI</button>`;
       return `<div class="order-card">
         <div class="order-head">
