@@ -574,8 +574,6 @@ function wbfHeaders(token,content=false){
   const h={
     "apikey":KEY,
     "Authorization":"Bearer "+token,
-    "Accept-Profile":"wbf",
-    "Content-Profile":"wbf"
   };
   if(content) h["Content-Type"]="application/json";
   return h;
