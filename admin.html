@@ -1433,18 +1433,31 @@ saveProductBtn.addEventListener("click",saveProductToDatabase);
         shipping+=Number(o.shipping_fee||0);
       });
 
-      summary.innerHTML=`
-        <div class="wbf-sales-box"><small>TRANSAKSI</small><strong>${transaksi}</strong></div>
-        <div class="wbf-sales-box"><small>PCS TERJUAL</small><strong>${pcs}</strong></div>
-        <div class="wbf-sales-box"><small>PENJUALAN</small><strong>${money(omzet)}</strong></div>
-        <div class="wbf-sales-box"><small>ONGKIR</small><strong>${money(shipping)}</strong></div>
-        <div class="wbf-sales-box"><small>TOTAL DIBAYAR</small><strong>${money(omzet+shipping)}</strong></div>`;
-
       const entries=Object.entries(byBrand).sort((a,b)=>b[1].omzet-a[1].omzet);
-      rows.innerHTML=entries.length
-        ?'<div style="margin-top:12px;font-weight:900">RINGKASAN PER BRAND</div>'+
-          entries.map(([b,v])=>`<div class="wbf-sales-row"><span>${escapeHtml(b)} · ${v.pcs} pcs</span><span>${money(v.omzet)}</span></div>`).join("")
-        :'<div class="muted" style="margin-top:12px">Tidak ada penjualan pada filter tersebut.</div>';
+
+      // Saat SEMUA BRAND dipilih, tampilkan daftar brand terlebih dahulu,
+      // lalu total laporan di bagian paling bawah. Filter satu brand tetap
+      // menggunakan format yang sama tanpa mengubah alur laporan lainnya.
+      if(brand==="ALL"){
+        summary.innerHTML="";
+        rows.innerHTML=entries.length
+          ? entries.map(([b,v])=>`<div class="wbf-sales-row"><span>${escapeHtml(b)} ${v.pcs} pcs</span><span>${money(v.omzet)}</span></div>`).join("")+
+            `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #292929;font-weight:900">TOTAL PENJUALAN <span style="float:right">${money(omzet)}</span></div>`+
+            `<div class="wbf-sales-row"><span>TOTAL PCS</span><span>${pcs}</span></div>`+
+            `<div class="wbf-sales-row"><span>ONGKIR</span><span>${money(shipping)}</span></div>`+
+            `<div class="wbf-sales-row"><span>TOTAL DIBAYAR</span><span>${money(omzet+shipping)}</span></div>`
+          :'<div class="muted" style="margin-top:12px">Tidak ada penjualan pada filter tersebut.</div>';
+      }else{
+        summary.innerHTML=`
+          <div class="wbf-sales-box"><small>TRANSAKSI</small><strong>${transaksi}</strong></div>
+          <div class="wbf-sales-box"><small>PCS TERJUAL</small><strong>${pcs}</strong></div>
+          <div class="wbf-sales-box"><small>PENJUALAN</small><strong>${money(omzet)}</strong></div>
+          <div class="wbf-sales-box"><small>ONGKIR</small><strong>${money(shipping)}</strong></div>
+          <div class="wbf-sales-box"><small>TOTAL DIBAYAR</small><strong>${money(omzet+shipping)}</strong></div>`;
+        rows.innerHTML=entries.length
+          ? entries.map(([b,v])=>`<div class="wbf-sales-row"><span>${escapeHtml(b)} ${v.pcs} pcs</span><span>${money(v.omzet)}</span></div>`).join("")
+          :'<div class="muted" style="margin-top:12px">Tidak ada penjualan pada filter tersebut.</div>';
+      }
     }catch(e){
       summary.innerHTML='<div style="color:#ffb3b3">Gagal memuat laporan: '+escapeHtml(e.message)+'</div>';
       rows.innerHTML="";
