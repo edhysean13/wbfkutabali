@@ -1037,25 +1037,32 @@ async function loadBrands(){
  const list=document.getElementById("brandsList"); if(!list)return;
  list.innerHTML='<div class="muted">MEMUAT BRAND...</div>';
  try{
-  const res=await fetch(URL+"/rest/v1/brands?select=id,name,slug,is_active,logo_url&order=name.asc",{headers:wbfHeaders(authToken())});
+  const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brands",{
+   method:"POST",headers:wbfHeaders(authToken(),true),body:"{}"
+  });
   const data=await res.json();
   if(!res.ok)throw new Error(data.message||data.details||"Gagal memuat brand.");
   brandRecords=Array.isArray(data)?data:[];
   renderBrands(); syncBrandSelectors();
- }catch(e){list.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat brand: '+escapeHtml(e.message)+'</div>'}
+ }catch(e){
+  list.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat brand: '+escapeHtml(e.message)+'</div>';
+ }
 }
 
 function renderBrands(){
  const list=document.getElementById("brandsList");
- if(!brandRecords.length){list.innerHTML='<div class="brand-card" style="text-align:left">Belum ada brand.</div>';return}
+ if(!brandRecords.length){
+  list.innerHTML='<div class="brand-card" style="text-align:left">Belum ada brand.</div>';return;
+ }
  list.innerHTML=brandRecords.map(b=>{
-  const logo=b.logo_url?'<img class="brand-logo" src="'+escapeHtml(b.logo_url)+'" alt="'+escapeHtml(b.name)+'">':'<div class="brand-logo-empty">NO LOGO</div>';
   return '<div class="brand-card brand-item clickable-brand" data-brand="'+escapeHtml(b.name)+'">'+
-   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+logo+
+   '<button type="button" class="brand-edit-btn" data-edit-brand="'+escapeHtml(b.id)+'">EDIT</button>'+
+   '<div class="brand-logo-empty">BRAND</div>'+
    '<div class="brand-name">'+escapeHtml(b.name)+'</div></div>';
  }).join("");
  list.querySelectorAll(".clickable-brand").forEach(el=>el.addEventListener("click",e=>{
-  if(e.target.closest(".brand-edit-btn"))return; openBrand(el.dataset.brand);
+  if(e.target.closest(".brand-edit-btn"))return;
+  openBrand(el.dataset.brand);
  }));
  list.querySelectorAll(".brand-edit-btn").forEach(el=>el.addEventListener("click",e=>{
   e.stopPropagation();openBrandEditor(el.dataset.editBrand);
@@ -1066,11 +1073,13 @@ function syncBrandSelectors(){
  const select=document.getElementById("productBrand");
  if(select){
   const current=select.value;
-  select.innerHTML='<option value="">Pilih Brand</option>'+brandRecords.filter(b=>b.is_active!==false).map(b=>'<option value="'+escapeHtml(b.name)+'">'+escapeHtml(b.name)+'</option>').join("");
+  select.innerHTML='<option value="">Pilih Brand</option>'+
+   brandRecords.filter(b=>b.is_active!==false).map(b=>'<option value="'+escapeHtml(b.name)+'">'+escapeHtml(b.name)+'</option>').join("");
   if(current)select.value=current;
  }
  const sales=document.getElementById("wbfSalesBrand");
- if(sales)sales.innerHTML='<option value="ALL">SEMUA BRAND</option>'+brandRecords.filter(b=>b.is_active!==false).map(b=>'<option value="'+escapeHtml(b.name)+'">'+escapeHtml(b.name)+'</option>').join("");
+ if(sales)sales.innerHTML='<option value="ALL">SEMUA BRAND</option>'+
+  brandRecords.filter(b=>b.is_active!==false).map(b=>'<option value="'+escapeHtml(b.name)+'">'+escapeHtml(b.name)+'</option>').join("");
 }
 
 function openBrandEditor(id){
@@ -1078,7 +1087,7 @@ function openBrandEditor(id){
  document.getElementById("brandEditId").value=b.id;
  document.getElementById("brandNameInput").value=b.name||"";
  document.getElementById("brandLogoInput").value="";
- document.getElementById("brandLogoPreview").innerHTML=b.logo_url?'<img src="'+escapeHtml(b.logo_url)+'" style="width:70px;height:70px;object-fit:contain;border-radius:9px;background:#fff"><div class="muted">Logo saat ini</div>':"Belum ada logo.";
+ document.getElementById("brandLogoPreview").innerHTML="Logo brand akan ditambahkan setelah storage logo disiapkan.";
  document.getElementById("brandFormStatus").textContent="";
  document.getElementById("saveBrandBtn").textContent="UPDATE BRAND";
  document.getElementById("brandForm").classList.remove("hidden");
@@ -1095,16 +1104,6 @@ function resetBrandForm(){
  document.getElementById("brandForm").classList.add("hidden");
 }
 
-async function uploadBrandLogo(file,brandId){
- const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
- const path="brands/"+brandId+"."+ext;
- const res=await fetch(URL+"/storage/v1/object/brand-logos/"+path,{
-  method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+authToken(),"Content-Type":file.type||"image/jpeg","x-upsert":"true"},body:file
- });
- if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.error||"Upload logo gagal.")}
- return URL+"/storage/v1/object/public/brand-logos/"+path;
-}
-
 async function saveBrand(){
  const id=document.getElementById("brandEditId").value.trim();
  const name=document.getElementById("brandNameInput").value.trim();
@@ -1113,28 +1112,40 @@ async function saveBrand(){
  if(!name){st.textContent="Nama brand wajib diisi.";return}
  btn.disabled=true;btn.textContent=id?"MENYIMPAN...":"MENAMBAH...";st.textContent="";
  try{
-  let brandId=id;
-  const slug=name.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
-  if(!id){
-   const res=await fetch(URL+"/rest/v1/brands",{method:"POST",headers:{...wbfHeaders(authToken(),true),"Prefer":"return=representation"},body:JSON.stringify({name,slug,is_active:true})});
-   const data=await res.json();if(!res.ok)throw new Error(data.message||data.details||"Gagal menambah brand.");
-   brandId=data[0]?.id||data.id;
-  }else{
-   const res=await fetch(URL+"/rest/v1/brands?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{...wbfHeaders(authToken(),true),"Prefer":"return=minimal"},body:JSON.stringify({name,slug})});
-   if(!res.ok){const d=await res.json();throw new Error(d.message||d.details||"Gagal mengubah brand.")}
-  }
   if(file){
-   const logoUrl=await uploadBrandLogo(file,brandId);
-   const res=await fetch(URL+"/rest/v1/brands?id=eq."+encodeURIComponent(brandId),{method:"PATCH",headers:{...wbfHeaders(authToken(),true),"Prefer":"return=minimal"},body:JSON.stringify({logo_url:logoUrl})});
-   if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||d.details||"Gagal menyimpan logo.")}
+   st.textContent="Logo belum disimpan karena tabel brand saat ini belum memiliki kolom logo. Nama brand tetap bisa disimpan.";
   }
+  if(!id){
+   const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_create_brand",{
+    method:"POST",headers:wbfHeaders(authToken(),true),
+    body:JSON.stringify({p_name:name})
+   });
+   const data=await res.json();
+   if(!res.ok)throw new Error(data.message||data.details||"Gagal menambah brand.");
+  }else{
+   const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_brand",{
+    method:"POST",headers:wbfHeaders(authToken(),true),
+    body:JSON.stringify({p_brand_id:id,p_name:name})
+   });
+   const data=await res.json();
+   if(!res.ok)throw new Error(data.message||data.details||"Gagal mengubah brand.");
+  }
+  await loadBrands();
   st.textContent=id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.";
-  await loadBrands();setTimeout(resetBrandForm,500);
- }catch(e){st.textContent="Gagal: "+e.message}
- finally{btn.disabled=false;btn.textContent=document.getElementById("brandEditId").value?"UPDATE BRAND":"SIMPAN BRAND"}
+  setTimeout(resetBrandForm,600);
+ }catch(e){
+  st.textContent="Gagal: "+e.message;
+ }finally{
+  btn.disabled=false;
+  btn.textContent=document.getElementById("brandEditId").value?"UPDATE BRAND":"SIMPAN BRAND";
+ }
 }
 
-document.getElementById("addBrandBtn").addEventListener("click",()=>{resetBrandForm();document.getElementById("brandForm").classList.remove("hidden");document.getElementById("brandNameInput").focus()});
+document.getElementById("addBrandBtn").addEventListener("click",()=>{
+ resetBrandForm();
+ document.getElementById("brandForm").classList.remove("hidden");
+ document.getElementById("brandNameInput").focus();
+});
 document.getElementById("cancelBrandBtn").addEventListener("click",resetBrandForm);
 document.getElementById("saveBrandBtn").addEventListener("click",saveBrand);
 
