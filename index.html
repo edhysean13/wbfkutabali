@@ -34,8 +34,8 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 @media(max-width:500px){header{padding:8px 14px}.container{padding:0 14px}.hero{padding:35px 22px;min-height:350px}.photo{height:180px}}
 .nav a{display:inline-block;padding:10px 15px;border:1px solid #333;border-radius:8px;background:#151515;color:#fff;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.6px}.nav a:hover{background:#e21b23;border-color:#e21b23}
 .main-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap;margin-top:18px}
-.main-buttons a{display:block;flex:1;min-width:0;text-align:center;padding:12px 10px;border-radius:8px;background:#e21b23;color:#fff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.6px}
-.main-buttons a:hover{background:#b9141b}
+.main-buttons a{display:block;flex:1;min-width:0;text-align:center;padding:12px 10px;border-radius:0;background:transparent;color:#fff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.6px}
+.main-buttons a:hover{background:transparent;color:#fff}
 
 /* Clear Home / Brands page separation */
 #brands{display:none}
@@ -175,7 +175,20 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
   }
 }
 
-/* Home navigation: no red button backgrounds */
+/* Home navigation: text-only, no red button backgrounds */
+.main-buttons a{
+  background:transparent !important;
+  color:#fff !important;
+  border:0 !important;
+  box-shadow:none !important;
+  padding:12px 8px;
+}
+.main-buttons a:hover,
+.main-buttons a:active,
+.main-buttons a:focus{
+  background:transparent !important;
+  color:#fff !important;
+}
 
 
 /* Brands page: HOME is text-only */
