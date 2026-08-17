@@ -88,6 +88,9 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 <div class="brand-card category-filter" data-category="ATASAN">ATASAN</div>
 <div class="brand-card category-filter" data-category="BAWAHAN">BAWAHAN</div>
 <div class="brand-card category-filter" data-category="AKSESORIS">AKSESORIS</div>
+<div class="brand-card category-filter" data-category="TOPI">TOPI</div>
+<div class="brand-card category-filter" data-category="SANDAL">SANDAL</div>
+<div class="brand-card category-filter" data-category="BAG">BAG</div>
 </div>
 <button id="brandRegisterBtn" type="button" style="margin-top:18px">+ REGISTER PRODUCT</button>
 <div id="brandProductsList" style="margin-top:20px"></div>
@@ -116,13 +119,20 @@ button{width:100%;height:48px;margin-top:16px;border:0;border-radius:9px;backgro
 <option value="ATASAN">ATASAN</option>
 <option value="BAWAHAN">BAWAHAN</option>
 <option value="AKSESORIS">AKSESORIS</option>
+<option value="TOPI">TOPI</option>
+<option value="SANDAL">SANDAL</option>
+<option value="BAG">BAG</option>
 </select>
+<input id="productEditId" type="hidden" value="">
 <label>Size</label><input id="productSize" type="text" placeholder="S / M / L / XL">
 <label>Color</label><input id="productColor" type="text" placeholder="Warna">
 <label>Price</label><input id="productPrice" type="number" placeholder="Harga">
 <label>Discount (%)</label><input id="productDiscount" type="number" min="0" max="100" placeholder="0">
 <label>Photo Product</label><input id="productPhoto" type="file" accept="image/*">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
 <button id="saveProductBtn" type="button">SAVE PRODUCT</button>
+<button id="cancelEditBtn" type="button" class="back hidden">CANCEL EDIT</button>
+</div>
 </div>
 
 <div id="productPreview" style="margin-top:20px"></div>
@@ -320,7 +330,7 @@ saveView("brands");
 document.getElementById("brandRegisterBtn").addEventListener("click",()=>{
 productsPage.classList.remove("hidden");
 brandDetailPage.classList.add("hidden");
-productForm.classList.remove("hidden");
+openProductFormForRegister();
 document.getElementById("productBrand").value=selectedBrand;
 document.getElementById("productBrand").disabled=true;
 if(selectedCategory) document.getElementById("productCategory").value=selectedCategory;
@@ -373,7 +383,11 @@ async function loadBrandProducts(){
   try{
     const brandId=getBrandId(selectedBrand);
     if(!brandId) throw new Error("Brand tidak ditemukan.");
-    const res=await fetch(API+"/products?select=id,sku,name,price,discount,sizes,colors,image_url,category&brand_id=eq."+brandId+"&category=eq."+encodeURIComponent(selectedCategory)+"&is_active=eq.true&order=created_at.desc",{headers:wbfHeaders(token)});
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brand_products",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({p_brand_id:brandId,p_category:selectedCategory})
+    });
     const products=await res.json();
     if(!res.ok) throw new Error(products.message||"Gagal mengambil produk.");
     if(!products.length){
@@ -392,8 +406,12 @@ async function loadBrandProducts(){
         '<div style="margin-top:8px">Harga: Rp '+Number(p.price).toLocaleString("id-ID")+'</div>'+
         '<div>Discount: '+Number(p.discount||0)+'%</div>'+
         '<div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div>'+
+        '<button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:12px">EDIT SKU</button>'+
         '</div>';
     }).join("");
+    document.querySelectorAll(".edit-product-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>editProduct(btn.dataset.productId, products));
+    });
   }catch(e){
     brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat SKU: '+escapeHtml(e.message)+'</div>';
   }
@@ -404,13 +422,63 @@ function escapeHtml(v){
 async function refreshProductCount(){
   const token=authToken();
   try{
-    const res=await fetch(API+"/products?select=id&is_active=eq.true",{headers:{...wbfHeaders(token),"Prefer":"count=exact","Range":"0-0"}});
-    const range=res.headers.get("content-range");
-    const count=range?Number(range.split("/")[1]||0):0;
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_active_product_count",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:"{}"
+    });
+    const count=await res.json();
     const el=document.querySelector("#productsCard .num");
-    if(el) el.textContent=count;
+    if(el) el.textContent=Number(count)||0;
   }catch(e){}
 }
+
+let editingProductId="";
+
+function openProductFormForRegister(){
+  editingProductId="";
+  document.getElementById("productEditId").value="";
+  document.getElementById("productForm").classList.remove("hidden");
+  document.getElementById("saveProductBtn").textContent="SAVE PRODUCT";
+  document.getElementById("cancelEditBtn").classList.add("hidden");
+  document.getElementById("productBrand").disabled=false;
+  document.getElementById("productSku").disabled=false;
+}
+
+function editProduct(productId, products){
+  const p=products.find(x=>String(x.id)===String(productId));
+  if(!p) return;
+  editingProductId=p.id;
+  document.getElementById("productEditId").value=p.id;
+  document.getElementById("productBrand").value=selectedBrand;
+  document.getElementById("productBrand").disabled=true;
+  document.getElementById("productSku").value=p.sku||"";
+  document.getElementById("productSku").disabled=false;
+  document.getElementById("productName").value=p.name||"";
+  document.getElementById("productCategory").value=p.category||selectedCategory||"";
+  document.getElementById("productSize").value=(p.sizes||[]).join(" / ");
+  document.getElementById("productColor").value=(p.colors||[]).join(" / ");
+  document.getElementById("productPrice").value=p.price??"";
+  document.getElementById("productDiscount").value=p.discount??0;
+  document.getElementById("productPhoto").value="";
+  document.getElementById("saveProductBtn").textContent="UPDATE PRODUCT";
+  document.getElementById("cancelEditBtn").classList.remove("hidden");
+  document.getElementById("productsPage").classList.remove("hidden");
+  document.getElementById("brandDetailPage").classList.add("hidden");
+  document.getElementById("productForm").classList.remove("hidden");
+  document.getElementById("productForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function cancelEditProduct(){
+  editingProductId="";
+  document.getElementById("productEditId").value="";
+  document.getElementById("productForm").classList.add("hidden");
+  document.getElementById("cancelEditBtn").classList.add("hidden");
+  document.getElementById("saveProductBtn").textContent="SAVE PRODUCT";
+  document.getElementById("productBrand").disabled=false;
+  document.getElementById("productSku").disabled=false;
+}
+
 async function saveProductToDatabase(){
   const brand=document.getElementById("productBrand").value;
   const category=document.getElementById("productCategory").value;
@@ -420,38 +488,72 @@ async function saveProductToDatabase(){
   const color=document.getElementById("productColor").value.trim();
   const price=Number(document.getElementById("productPrice").value);
   const discount=Number(document.getElementById("productDiscount").value||0);
+
   if(!brand||!category||!sku||!name||!Number.isFinite(price)||price<0){
     alert("Brand, Category, SKU, Product Name dan Price wajib diisi."); return;
   }
   if(discount<0||discount>100){alert("Discount harus 0–100%.");return;}
-  saveProductBtn.disabled=true; saveProductBtn.textContent="MENYIMPAN...";
+
+  saveProductBtn.disabled=true;
+  saveProductBtn.textContent=editingProductId?"MENYIMPAN PERUBAHAN...":"MENYIMPAN...";
   try{
     const token=authToken();
     const brandId=getBrandId(brand);
     if(!brandId) throw new Error("Brand tidak ditemukan.");
-    const body={
-      brand_id:brandId, sku, name, price, category, discount,
-      sizes:size?size.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
-      colors:color?color.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
-      is_active:true,is_new_arrival:false
+
+    const common={
+      p_brand_id:brandId,
+      p_sku:sku,
+      p_name:name,
+      p_price:price,
+      p_category:category,
+      p_discount:discount,
+      p_sizes:size?size.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
+      p_colors:color?color.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[]
     };
-    const res=await fetch(API+"/products",{method:"POST",headers:{...wbfHeaders(token,true),"Prefer":"return=representation"},body:JSON.stringify(body)});
+
+    const endpoint=editingProductId
+      ? URL+"/rest/v1/rpc/wbf_admin_update_product"
+      : URL+"/rest/v1/rpc/wbf_admin_create_product";
+
+    const body=editingProductId
+      ? {...common,p_product_id:editingProductId}
+      : common;
+
+    const res=await fetch(endpoint,{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify(body)
+    });
     const data=await res.json();
-    if(!res.ok) throw new Error(data.message||data.details||"Gagal menyimpan produk.");
-    productForm.classList.add("hidden");
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal menyimpan product.");
+
+    alert(editingProductId?"Perubahan product berhasil disimpan.":"Product berhasil disimpan.");
+
+    editingProductId="";
+    document.getElementById("productEditId").value="";
     document.getElementById("productBrand").disabled=false;
+    document.getElementById("productSku").disabled=false;
+    document.getElementById("productForm").classList.add("hidden");
+    document.getElementById("cancelEditBtn").classList.add("hidden");
+    document.getElementById("saveProductBtn").textContent="SAVE PRODUCT";
     ["productSku","productName","productSize","productColor","productPrice","productDiscount"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("productPhoto").value="";
+
     await refreshProductCount();
     if(selectedBrand&&selectedCategory){
       brandDetailPage.classList.remove("hidden");
       productsPage.classList.add("hidden");
       await loadBrandProducts();
     }
-    alert("Product berhasil disimpan.");
-  }catch(e){ alert("Gagal menyimpan product: "+e.message); }
-  finally{saveProductBtn.disabled=false;saveProductBtn.textContent="SAVE PRODUCT";}
+  }catch(e){
+    alert("Gagal menyimpan product: "+e.message);
+  }finally{
+    saveProductBtn.disabled=false;
+    saveProductBtn.textContent=editingProductId?"UPDATE PRODUCT":"SAVE PRODUCT";
+  }
 }
+
 saveProductBtn.addEventListener("click",saveProductToDatabase);
 </script>
 </body>
