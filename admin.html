@@ -128,6 +128,190 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 }
 </style>
 
+<style id="wbf-product-final-layout">
+#brandProductsList{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:8px!important;
+ width:100%!important;
+ align-items:start!important;
+}
+#brandProductsList .product-card{
+ width:auto!important;
+ min-width:0!important;
+ margin:0!important;
+ padding:6px!important;
+ display:flex!important;
+ flex-direction:column!important;
+ height:auto!important;
+ aspect-ratio:auto!important;
+ overflow:hidden!important;
+}
+#brandProductsList .product-card-photo,
+#brandProductsList .product-card-no-photo{
+ width:100%!important;
+ aspect-ratio:1/1!important;
+ height:auto!important;
+ min-height:0!important;
+ object-fit:cover!important;
+ border-radius:6px!important;
+ display:block!important;
+ margin:0 0 5px!important;
+}
+#brandProductsList .product-card-no-photo{
+ background:#1a1a1a!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ color:#777!important;
+ font-size:9px!important;
+}
+#brandProductsList .product-card>div{
+ overflow:visible!important;
+ white-space:normal!important;
+}
+#brandProductsList .product-card .edit-product-btn{
+ width:100%!important;
+ margin-top:7px!important;
+}
+@media(max-width:700px){
+ #brandProductsList{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+ #brandProductsList .product-card{padding:5px!important}
+ #brandProductsList .product-card-photo,
+ #brandProductsList .product-card-no-photo{border-radius:5px!important}
+}
+</style>
+
+<style id="wbf-final-compact-header">
+/* Compact admin chrome */
+.dashboard{max-width:900px!important;padding:14px 14px!important}
+.top,.page-head{
+  position:static!important;
+  top:auto!important;
+  bottom:auto!important;
+  z-index:auto!important;
+  background:transparent!important;
+}
+.top{
+  padding-bottom:9px!important;
+}
+.top h1{
+  font-size:24px!important;
+  line-height:1!important;
+  margin:2px 0 0!important;
+}
+.top .muted,.page-head .muted{
+  font-size:10px!important;
+}
+.logout{
+  height:34px!important;
+  padding:0 13px!important;
+  font-size:11px!important;
+  border-radius:7px!important;
+}
+.page{
+  margin-top:10px!important;
+}
+.page-head{
+  padding-bottom:9px!important;
+}
+.page-head h1{
+  font-size:23px!important;
+  line-height:1!important;
+  margin:2px 0 0!important;
+}
+.back{
+  height:32px!important;
+  padding:0 12px!important;
+  font-size:10px!important;
+  border-radius:7px!important;
+}
+.brand-grid{
+  gap:5px!important;
+  margin-top:9px!important;
+}
+.brand-grid .brand-card{
+  padding:8px 5px!important;
+  min-height:43px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:12px!important;
+  line-height:1!important;
+  border-radius:7px!important;
+}
+#registerProductBtn{
+  height:36px!important;
+  min-height:36px!important;
+  margin-top:10px!important;
+  font-size:11px!important;
+  border-radius:7px!important;
+}
+#brandProductsList{
+  margin-top:12px!important;
+}
+
+/* Never pin the admin headers while scrolling */
+#dashboard,
+#dashboardHome,
+#brandDetailPage,
+#productsPage{
+  position:static!important;
+}
+</style>
+
+
+<style id="wbf-compact-only">
+/* COMPACT ONLY — no sticky/fixed positioning */
+.dashboard{padding:10px 12px!important}
+.top{padding-bottom:6px!important}
+.top h1{font-size:22px!important;margin:1px 0 3px!important}
+.top .muted,.page-head .muted{font-size:9px!important}
+
+.logout{
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 11px!important;
+  font-size:10px!important;
+  border-radius:6px!important;
+}
+
+.page{margin-top:6px!important}
+.page-head{padding-bottom:6px!important}
+.page-head h1{
+  font-size:21px!important;
+  margin:1px 0 3px!important;
+}
+.back{
+  height:29px!important;
+  min-height:29px!important;
+  padding:0 10px!important;
+  font-size:9px!important;
+  border-radius:6px!important;
+}
+
+.brand-grid{
+  gap:4px!important;
+  margin-top:6px!important;
+}
+.brand-grid .brand-card{
+  min-height:38px!important;
+  padding:6px 4px!important;
+  font-size:11px!important;
+  border-radius:6px!important;
+}
+
+#registerProductBtn{
+  height:32px!important;
+  min-height:32px!important;
+  margin-top:7px!important;
+  font-size:10px!important;
+  border-radius:6px!important;
+}
+
+#brandProductsList{margin-top:9px!important}
+</style>
+
 </head>
 <body>
 <section id="login" class="wrap">
@@ -188,7 +372,7 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 <div class="brand-card category-filter" data-category="BAG">BAG</div>
 </div>
 <button id="brandRegisterBtn" type="button" style="margin-top:18px">+ REGISTER PRODUCT</button>
-<div id="brandProductsList" style="margin-top:20px"></div>
+<div id="brandProductsList" style="margin-top:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;align-items:start"></div>
 </section>
 
 <section id="productsPage" class="page hidden">
@@ -492,9 +676,9 @@ async function loadBrandProducts(){
     brandProductsList.innerHTML=products.map(p=>{
       const finalPrice=Math.max(0,Number(p.price)*(1-Number(p.discount||0)/100));
       const img=p.image_url
-  ? '<img src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.name||'Product')+'" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:7px;margin-bottom:7px">'
-  : '<div style="width:100%;height:150px;border-radius:7px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;color:#777;font-size:9px;margin-bottom:7px">NO PHOTO</div>';
-      return '<div class="brand-card" style="text-align:left;margin-bottom:10px">'+img+
+  ? '<img class="product-card-photo" src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.name||'Product')+'" loading="lazy">'
+  : '<div class="product-card-no-photo">NO PHOTO</div>';
+      return '<div class="brand-card product-card" style="text-align:left">'+img+
         '<div class="muted">'+selectedBrand+' · '+p.category+'</div>'+
         '<div style="font-size:18px;margin:6px 0">'+escapeHtml(p.name)+'</div>'+
         '<div class="muted">SKU: '+escapeHtml(p.sku)+'</div>'+
