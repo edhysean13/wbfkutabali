@@ -260,6 +260,18 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
 .my-order-payment{margin-top:10px;padding:10px;border:1px solid #333;border-radius:10px}
 .my-order-payment img{max-width:220px;width:100%;display:block;margin:8px auto;border-radius:8px}
 </style>
+<style id="wbf-payment-proof-merged">
+
+.wbf-transfer-box{margin-top:10px;padding:10px;border:1px solid #333;border-radius:10px;background:#0d0d0d}
+.wbf-transfer-title{font-weight:800;margin-bottom:7px}
+.wbf-transfer-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;color:#aaa;font-size:12px}
+.wbf-transfer-row b{color:#fff;text-align:right}
+.wbf-proof-box{margin-top:10px;padding:10px;border:1px solid #333;border-radius:10px;background:#0d0d0d}
+.wbf-proof-box input[type=file]{width:100%;font-size:12px;color:#aaa;margin-top:8px}
+.wbf-proof-btn{width:100%;margin-top:10px;background:#df1720;color:#fff;border:0;border-radius:9px;padding:11px;font-weight:800}
+.wbf-proof-btn:disabled{opacity:.5}
+.wbf-proof-preview{display:none;width:100%;max-height:280px;object-fit:contain;margin-top:9px;border-radius:8px;background:#050505;border:1px solid #292929}
+</style>
 </head>
 <body>
 
@@ -890,28 +902,197 @@ async function loadMyOrders(){
   try{
     const results=[];
     for(const id of ids){
-      const res=await fetch(WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_order_status",{method:"POST",headers:apiHeaders(),body:JSON.stringify({p_order_id:id,p_customer_phone:phone})});
+      const res=await fetch(
+        WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_order_status",
+        {method:"POST",headers:apiHeaders(),body:JSON.stringify({p_order_id:id,p_customer_phone:phone})}
+      );
       const data=await res.json();
       if(res.ok && data) results.push(data);
     }
-    if(!results.length){list.innerHTML='<div class="info-box">Order tidak ditemukan untuk nomor WhatsApp ini.</div>';return;}
+    if(!results.length){
+      list.innerHTML='<div class="info-box">Order tidak ditemukan untuk nomor WhatsApp ini.</div>';
+      return;
+    }
+
     results.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+
     list.innerHTML=results.map(data=>{
       const items=Array.isArray(data.items)?data.items:[];
       const itemHtml=items.map(i=>`<div class="my-order-item"><b>${esc(i.product_name||"Produk")}</b><br>SKU: ${esc(i.sku||"-")} · Size: ${esc(i.size||"-")} · Qty: ${Number(i.quantity||0)}<br>Rp ${(Number(i.unit_price||0)*Number(i.quantity||0)).toLocaleString("id-ID")}</div>`).join("");
-      const itemTotal=items.reduce((s,i)=>s+Number(i.unit_price||0)*Number(i.quantity||0),0);
+      const itemTotal=items.reduce((sum,i)=>sum+Number(i.unit_price||0)*Number(i.quantity||0),0);
       const shipping=Number(data.shipping_fee||0);
       const grand=itemTotal+shipping;
+      const payment=data.payment||{};
+      const bank=data.store_bank||{};
+      const paymentAmount=Number(payment.amount||grand);
+
       let paymentHtml="";
+
       if(data.status==="confirmed"){
-        paymentHtml=`<div class="my-order-payment"><b>PEMBAYARAN</b><br>Total barang: Rp ${itemTotal.toLocaleString("id-ID")}<br>Ongkir: Rp ${shipping.toLocaleString("id-ID")}<br><div class="my-order-total">TOTAL BAYAR: Rp ${grand.toLocaleString("id-ID")}</div><div style="margin-top:8px;color:#aaa">QRIS akan ditampilkan di sini setelah QRIS toko dipasang.</div></div>`;
-      } else if(data.status==="paid"){
-        paymentHtml=`<div class="my-order-payment"><b>PEMBAYARAN SUDAH DIVERIFIKASI</b><br>Total: Rp ${grand.toLocaleString("id-ID")}</div>`;
+        let bankHtml="";
+        if(bank.bank_name||bank.account_number||bank.account_name){
+          bankHtml=
+            `<div class="wbf-transfer-box">`+
+              `<div class="wbf-transfer-title">TRANSFER KE REKENING TOKO</div>`+
+              `<div class="wbf-transfer-row"><span>Bank</span><b>${esc(bank.bank_name||"-")}</b></div>`+
+              `<div class="wbf-transfer-row"><span>No. Rekening</span><b>${esc(bank.account_number||"-")}</b></div>`+
+              `<div class="wbf-transfer-row"><span>Atas Nama</span><b>${esc(bank.account_name||"-")}</b></div>`+
+            `</div>`;
+        }else{
+          bankHtml='<div class="wbf-transfer-box"><div class="wbf-transfer-title">REKENING TOKO</div><div style="color:#aaa">Rekening toko belum diatur admin.</div></div>';
+        }
+
+        let proofHtml="";
+        if(payment.status==="paid" && payment.customer_proof_url){
+          proofHtml=
+            `<div class="wbf-proof-box">`+
+              `<b>BUKTI PEMBAYARAN TERKIRIM</b>`+
+              `<div style="margin-top:6px;color:#aaa">Bukti transfer sedang menunggu verifikasi admin.</div>`+
+            `</div>`;
+        }else{
+          proofHtml=
+            `<div class="wbf-proof-box">`+
+              `<b>KONFIRMASI PEMBAYARAN</b>`+
+              `<div style="margin-top:6px;color:#aaa">Transfer sesuai TOTAL BAYAR di atas, lalu upload screenshot bukti transfer.</div>`+
+              `<input id="wbfProofFile_${esc(data.id)}" type="file" accept="image/*">`+
+              `<img id="wbfProofPreview_${esc(data.id)}" class="wbf-proof-preview" alt="Preview bukti pembayaran">`+
+              `<button id="wbfProofBtn_${esc(data.id)}" class="wbf-proof-btn" type="button" onclick="submitWbfPaymentProof('${esc(data.id)}')">UPLOAD BUKTI PEMBAYARAN</button>`+
+            `</div>`;
+        }
+
+        paymentHtml=
+          `<div class="my-order-payment">`+
+            `<b>PEMBAYARAN</b><br>`+
+            `Total barang: Rp ${itemTotal.toLocaleString("id-ID")}<br>`+
+            `Ongkir: Rp ${shipping.toLocaleString("id-ID")}<br>`+
+            `<div class="my-order-total">TOTAL BAYAR: Rp ${paymentAmount.toLocaleString("id-ID")}</div>`+
+            bankHtml+
+            proofHtml+
+          `</div>`;
+
+      }else if(data.status==="paid"){
+        paymentHtml=
+          `<div class="my-order-payment">`+
+            `<b>PEMBAYARAN SUDAH DIVERIFIKASI</b><br>`+
+            `Total: Rp ${grand.toLocaleString("id-ID")}`+
+          `</div>`;
       }
-      return `<div class="my-order-card"><div class="my-order-head"><div><b>ORDER</b><div class="my-order-id">${esc(data.id)}</div></div><div class="my-order-status">${esc(MY_ORDER_STATUS[data.status]||data.status)}</div></div><div style="margin-top:10px">${itemHtml}</div><div class="my-order-total">TOTAL BARANG: Rp ${itemTotal.toLocaleString("id-ID")}<br>ONGKIR: Rp ${shipping.toLocaleString("id-ID")}<br>TOTAL: Rp ${grand.toLocaleString("id-ID")}</div>${paymentHtml}</div>`;
+
+      return `<div class="my-order-card">`+
+        `<div class="my-order-head">`+
+          `<div><b>ORDER</b><div class="my-order-id">${esc(data.id)}</div></div>`+
+          `<div class="my-order-status">${esc(MY_ORDER_STATUS[data.status]||data.status)}</div>`+
+        `</div>`+
+        `<div style="margin-top:10px">${itemHtml}</div>`+
+        `<div class="my-order-total">TOTAL BARANG: Rp ${itemTotal.toLocaleString("id-ID")}<br>ONGKIR: Rp ${shipping.toLocaleString("id-ID")}<br>TOTAL: Rp ${grand.toLocaleString("id-ID")}</div>`+
+        `${paymentHtml}`+
+      `</div>`;
     }).join("");
-  }catch(e){ list.innerHTML='<div class="info-box">Gagal memuat pesanan: '+esc(e.message)+'</div>'; }
+
+    // Preview selected payment screenshots without changing the existing order flow.
+    results.forEach(data=>{
+      if(data.status!=="confirmed")return;
+      const file=document.getElementById("wbfProofFile_"+data.id);
+      const preview=document.getElementById("wbfProofPreview_"+data.id);
+      if(file&&preview){
+        file.addEventListener("change",()=>{
+          const f=file.files?.[0];
+          if(!f){
+            preview.style.display="none";
+            preview.removeAttribute("src");
+            return;
+          }
+          if(!f.type.startsWith("image/")){
+            alert("Bukti pembayaran harus berupa gambar.");
+            file.value="";
+            return;
+          }
+          const reader=new FileReader();
+          reader.onload=()=>{preview.src=reader.result;preview.style.display="block";};
+          reader.readAsDataURL(f);
+        });
+      }
+    });
+  }catch(e){
+    list.innerHTML='<div class="info-box">Gagal memuat pesanan: '+esc(e.message)+'</div>';
+  }
 }
+
+async function compressWbfPaymentProof(file){
+  if(!file)throw new Error("Pilih screenshot bukti pembayaran terlebih dahulu.");
+  if(!file.type.startsWith("image/"))throw new Error("Bukti pembayaran harus berupa gambar.");
+
+  const source=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(new Error("Gagal membaca gambar."));
+    reader.readAsDataURL(file);
+  });
+
+  const img=await new Promise((resolve,reject)=>{
+    const image=new Image();
+    image.onload=()=>resolve(image);
+    image.onerror=()=>reject(new Error("Gambar tidak dapat dibaca."));
+    image.src=source;
+  });
+
+  const max=1100;
+  const w=img.naturalWidth||img.width;
+  const h=img.naturalHeight||img.height;
+  const scale=Math.min(1,max/Math.max(w,h));
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.max(1,Math.round(w*scale));
+  canvas.height=Math.max(1,Math.round(h*scale));
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+
+  const result=canvas.toDataURL("image/jpeg",0.72);
+  if(result.length>800000)throw new Error("Screenshot terlalu besar. Pilih screenshot yang lebih kecil.");
+  return result;
+}
+
+async function submitWbfPaymentProof(orderId){
+  const phone=localStorage.getItem("wbf_customer_phone")||document.getElementById("myOrdersPhone").value.trim();
+  const file=document.getElementById("wbfProofFile_"+orderId)?.files?.[0];
+  const btn=document.getElementById("wbfProofBtn_"+orderId);
+
+  if(!phone){alert("Nomor WhatsApp belum ditemukan.");return;}
+  if(!file){alert("Pilih screenshot bukti pembayaran terlebih dahulu.");return;}
+
+  if(btn){
+    btn.disabled=true;
+    btn.textContent="MENGIRIM BUKTI...";
+  }
+
+  try{
+    const proof=await compressWbfPaymentProof(file);
+    const res=await fetch(
+      WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_submit_payment_proof",
+      {
+        method:"POST",
+        headers:apiHeaders(),
+        body:JSON.stringify({
+          p_order_id:orderId,
+          p_customer_phone:phone,
+          p_proof_data:proof
+        })
+      }
+    );
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.message||data.details||"Gagal mengirim bukti pembayaran.");
+
+    await loadMyOrders();
+    alert("Bukti pembayaran berhasil dikirim. Menunggu verifikasi admin.");
+  }catch(e){
+    alert("Gagal mengirim bukti pembayaran: "+e.message);
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.textContent="UPLOAD BUKTI PEMBAYARAN";
+    }
+  }
+}
+
 setInterval(()=>{
   const sec=document.getElementById("orders-section");
   if(sec && sec.style.display!=="none" && document.getElementById("myOrdersPhone").value.trim()) loadMyOrders();
