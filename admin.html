@@ -652,6 +652,15 @@ html, body {
 .wbf-admin-event-actions button{flex:1}
 @media(max-width:650px){.wbf-admin-event-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.wbf-admin-event-card{padding:8px}.wbf-admin-event-card label{font-size:10px}.wbf-admin-event-card input[type=text],.wbf-admin-event-card textarea{font-size:12px}.wbf-admin-event-card textarea{min-height:64px}.wbf-admin-event-actions{display:block}.wbf-admin-event-actions button{width:100%;margin-top:5px}}
 </style>
+<!-- WBF ADMIN PWA -->
+<link rel="manifest" href="./wbf-admin-manifest.webmanifest">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="WBF Admin">
+<link rel="apple-touch-icon" href="./wbf-admin-icon-192.png">
+
 </head>
 <body>
 <section id="login" class="wrap">
@@ -1781,6 +1790,15 @@ saveProductBtn.addEventListener("click",saveProductToDatabase);
   document.getElementById("wbfSalesCheck")?.addEventListener("click",loadSalesReport);
 })();
 </script>
+
+<script id="wbf-admin-pwa">
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./wbf-app-sw.js", {scope:"./"}).catch(() => {});
+  });
+}
+</script>
+
 </body>
 </html>
 <script>
