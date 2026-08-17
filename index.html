@@ -45,6 +45,24 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 .brands-page-grid button{border:1px solid #333;background:#151515;color:#fff;border-radius:10px;padding:15px 8px;font-weight:800;font-size:13px}
 @media(max-width:800px){.brands-page-grid{grid-template-columns:repeat(2,1fr)}}
 
+
+.collection-back{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent !important;
+  border:0 !important;
+  color:#fff !important;
+  padding:0 !important;
+  margin-top:-8px;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.collection-back:hover{background:transparent !important}
+
 </style>
 </head>
 <body>
@@ -92,7 +110,7 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 
 
 <section class="section" id="catalog-section">
-  <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="page-back" onclick="showBrands();return false;" style="display:none">BRANDS</a></div>
+  <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="collection-back" onclick="showBrands();return false;" style="display:none">BACK</a></div>
   <div class="category-nav" id="category-nav" style="display:none">
     <button data-category="ALL" class="active">SEMUA</button>
     <button data-category="ATASAN">ATASAN</button>
