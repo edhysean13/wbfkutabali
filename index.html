@@ -262,6 +262,22 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
 .my-order-total{border-top:1px solid #333;margin-top:8px;padding-top:9px;font-weight:800}
 .my-order-payment{margin-top:10px;padding:10px;border:1px solid #333;border-radius:10px}
 .my-order-payment img{max-width:220px;width:100%;display:block;margin:8px auto;border-radius:8px}
+
+/* Pesanan Saya: kartu order zigzag agar tiap order mudah dibedakan */
+#myOrdersList .my-order-card:nth-child(odd){background:#e21b23;border-color:#e21b23}
+#myOrdersList .my-order-card:nth-child(even){background:#f5f5f5;border-color:#f5f5f5;color:#111}
+#myOrdersList .my-order-card:nth-child(even) .my-order-id{color:#555}
+#myOrdersList .my-order-card:nth-child(even) .my-order-status{background:#222;color:#fff}
+#myOrdersList .my-order-card:nth-child(even) .my-order-item{border-top-color:#d2d2d2}
+#myOrdersList .my-order-card:nth-child(even) .my-order-total{border-top-color:#c8c8c8}
+#myOrdersList .my-order-card:nth-child(even) .my-order-payment{border-color:#d0d0d0;background:#fff}
+#myOrdersList .my-order-card:nth-child(even) .wbf-transfer-box,
+#myOrdersList .my-order-card:nth-child(even) .wbf-proof-box{border-color:#d0d0d0;background:#f0f0f0}
+#myOrdersList .my-order-card:nth-child(even) .wbf-transfer-row{color:#555}
+#myOrdersList .my-order-card:nth-child(even) .wbf-transfer-row b{color:#111}
+#myOrdersList .my-order-card:nth-child(even) .wbf-transfer-title,
+#myOrdersList .my-order-card:nth-child(even) .wbf-proof-box b{color:#111}
+#myOrdersList .my-order-card:nth-child(even) .wbf-proof-box div{color:#555!important}
 </style>
 <style id="wbf-payment-proof-merged">
 
