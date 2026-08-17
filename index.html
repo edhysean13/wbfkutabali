@@ -954,8 +954,9 @@ async function loadMyOrders(){
             `<div class="wbf-proof-box">`+
               `<b>KONFIRMASI PEMBAYARAN</b>`+
               `<div style="margin-top:6px;color:#aaa">Transfer sesuai TOTAL BAYAR di atas, lalu upload screenshot bukti transfer.</div>`+
-              `<input id="wbfProofFile_${esc(data.id)}" type="file" accept="image/*">`+
+              `<input id="wbfProofFile_${esc(data.id)}" type="file" accept="image/*" onchange="previewWbfPaymentProof(this, '${esc(data.id)}')">`+
               `<img id="wbfProofPreview_${esc(data.id)}" class="wbf-proof-preview" alt="Preview bukti pembayaran">`+
+              `<div id="wbfProofFileName_${esc(data.id)}" style="display:none;margin-top:7px;color:#aaa;font-size:13px"></div>`+
               `<button id="wbfProofBtn_${esc(data.id)}" class="wbf-proof-btn" type="button" onclick="submitWbfPaymentProof('${esc(data.id)}')">UPLOAD BUKTI PEMBAYARAN</button>`+
             `</div>`;
         }
@@ -989,33 +990,36 @@ async function loadMyOrders(){
       `</div>`;
     }).join("");
 
-    // Preview selected payment screenshots without changing the existing order flow.
-    results.forEach(data=>{
-      if(data.status!=="confirmed")return;
-      const file=document.getElementById("wbfProofFile_"+data.id);
-      const preview=document.getElementById("wbfProofPreview_"+data.id);
-      if(file&&preview){
-        file.addEventListener("change",()=>{
-          const f=file.files?.[0];
-          if(!f){
-            preview.style.display="none";
-            preview.removeAttribute("src");
-            return;
-          }
-          if(!f.type.startsWith("image/")){
-            alert("Bukti pembayaran harus berupa gambar.");
-            file.value="";
-            return;
-          }
-          const reader=new FileReader();
-          reader.onload=()=>{preview.src=reader.result;preview.style.display="block";};
-          reader.readAsDataURL(f);
-        });
-      }
-    });
   }catch(e){
     list.innerHTML='<div class="info-box">Gagal memuat pesanan: '+esc(e.message)+'</div>';
   }
+}
+
+function previewWbfPaymentProof(input, orderId){
+  const preview=document.getElementById("wbfProofPreview_"+orderId);
+  const nameBox=document.getElementById("wbfProofFileName_"+orderId);
+  const file=input?.files?.[0];
+  if(!preview)return;
+  preview.style.display="none";
+  preview.removeAttribute("src");
+  if(nameBox){nameBox.style.display="none";nameBox.textContent="";}
+  if(!file)return;
+  if(!file.type || !file.type.startsWith("image/")){
+    alert("Pilih file gambar (JPG, PNG, HEIC, dll.) sebagai bukti pembayaran.");
+    input.value="";
+    return;
+  }
+  if(nameBox){
+    nameBox.textContent="File dipilih: "+file.name;
+    nameBox.style.display="block";
+  }
+  const reader=new FileReader();
+  reader.onload=()=>{
+    preview.src=reader.result;
+    preview.style.display="block";
+  };
+  reader.onerror=()=>alert("File berhasil dipilih, tetapi preview tidak dapat dibaca oleh perangkat.");
+  reader.readAsDataURL(file);
 }
 
 async function compressWbfPaymentProof(file){
