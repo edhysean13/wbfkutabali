@@ -236,6 +236,16 @@ footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:cent
 /* iPhone Safari: cegah auto-zoom saat field disentuh */
 input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:100%; }
 </style>
+<style>
+.my-order-card{background:#111;border:1px solid #292929;border-radius:12px;padding:12px;margin:8px 0}
+.my-order-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.my-order-id{font-size:11px;color:#999;word-break:break-all}
+.my-order-status{font-size:10px;font-weight:800;padding:5px 7px;border-radius:7px;background:#292929;white-space:nowrap}
+.my-order-item{border-top:1px solid #292929;padding:8px 0;font-size:12px}
+.my-order-total{border-top:1px solid #333;margin-top:8px;padding-top:9px;font-weight:800}
+.my-order-payment{margin-top:10px;padding:10px;border:1px solid #333;border-radius:10px}
+.my-order-payment img{max-width:220px;width:100%;display:block;margin:8px auto;border-radius:8px}
+</style>
 </head>
 <body>
 
@@ -260,6 +270,7 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
   <a href="#home" onclick="showHome();return false;">HOME</a>
   <a href="#brands" onclick="showBrands();return false;">BRANDS</a>
   <a href="#cart" onclick="openCart();return false;">CART<span id="wbfCartBadge">0</span></a>
+  <a href="#orders" onclick="openMyOrders();return false;">PESANAN SAYA<span id="wbfOrderBadge" style="display:none"></span></a>
   <a href="#about">ABOUT</a>
 </section>
 
@@ -308,6 +319,15 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
 <section class="section" id="cart">
   <div class="section-head"><h2>Cart</h2></div>
   <div class="info-box">Keranjang masih kosong.</div>
+</section>
+<section class="section" id="orders-section" style="display:none">
+  <div class="section-head"><h2>PESANAN SAYA</h2><a href="#home" class="page-back" onclick="showHome();return false;">HOME</a></div>
+  <div class="info-box" id="myOrdersIntro">Masukkan nomor WhatsApp yang digunakan saat order untuk melihat status pesanan.</div>
+  <div style="display:flex;gap:8px;margin:10px 0">
+    <input id="myOrdersPhone" type="tel" placeholder="Nomor WhatsApp" style="flex:1;font-size:16px">
+    <button type="button" onclick="loadMyOrders()" style="width:auto;padding:0 16px">CEK</button>
+  </div>
+  <div id="myOrdersList"></div>
 </section>
 <section class="section" id="about">
   <div class="section-head"><h2>About WBF</h2></div>
@@ -476,6 +496,10 @@ function renderCatalog(){
 
 
 function showHome(){
+  const os=document.getElementById("orders-section"); if(os)os.style.display="none";
+  document.getElementById("brands")?.style.setProperty("display","");
+  document.getElementById("catalog-section")?.style.setProperty("display","");
+
   document.querySelector(".hero").style.display="block";
   document.getElementById("main-navigation").style.display="flex";
   document.getElementById("brands").style.display="none";
@@ -685,8 +709,8 @@ async function submitWbfCart(){
   const phone=document.getElementById("wbfCustomerPhone").value.trim();
   const address=document.getElementById("wbfCustomerAddress").value.trim();
   const btn=document.getElementById("wbfOrderSubmit");
-  if(!name||!phone||!address){
-    alert("Nama, nomor telepon dan alamat wajib diisi.");
+  if(!name||!phone||!address||!size){
+    alert("Nama, nomor telepon, alamat, dan size wajib diisi.");
     return;
   }
   btn.disabled=true;
@@ -701,6 +725,7 @@ async function submitWbfCart(){
     );
     const data=await res.json();
     if(!res.ok)throw new Error(data.message||data.details||"Order gagal dikirim.");
+    rememberCustomerOrder(data.id,phone,data.status||"pending");
     wbfCart=[];
     saveWbfCart();
     document.getElementById("wbfOrderFormWrap").style.display="none";
@@ -732,27 +757,12 @@ function orderProduct(productId){
     image+
     '<div><b>'+esc(p.name||"Product")+'</b><div style="font-size:12px;color:#aaa;margin-top:4px">SKU: '+esc(p.sku||"-")+'</div><div style="margin-top:5px;font-weight:800">Rp '+money(sale)+'</div></div>';
 
-  const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
-  const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
   const sf=document.getElementById("wbfSizeField");
   const cf=document.getElementById("wbfColorField");
   const ss=document.getElementById("wbfOrderSize");
-  const cs=document.getElementById("wbfOrderColor");
-
-  if(sizes.length){
-    ss.innerHTML='<option value="">Pilih size</option>'+sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-    sf.style.display="block";
-  }else{
-    ss.innerHTML="";
-    sf.style.display="none";
-  }
-  if(colors.length){
-    cs.innerHTML='<option value="">Pilih warna</option>'+colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-    cf.style.display="block";
-  }else{
-    cs.innerHTML="";
-    cf.style.display="none";
-  }
+  if(sf){ sf.style.display="block"; }
+  if(cf){ cf.style.display="none"; }
+  if(ss){ ss.outerHTML='<input id="wbfOrderSize" type="text" placeholder="Ketik size, contoh M / L / XL" style="width:100%;font-size:16px">'; }
 
   document.getElementById("wbfCustomerName").value="";
   document.getElementById("wbfCustomerPhone").value="";
@@ -774,8 +784,8 @@ async function submitWbfOrder(){
   const phone=document.getElementById("wbfCustomerPhone").value.trim();
   const address=document.getElementById("wbfCustomerAddress").value.trim();
   const quantity=Math.max(1,Number(document.getElementById("wbfOrderQty").value||1));
-  const size=document.getElementById("wbfOrderSize").value||null;
-  const color=document.getElementById("wbfOrderColor").value||null;
+  const size=document.getElementById("wbfOrderSize").value.trim()||null;
+  const color=null;
   const btn=document.getElementById("wbfOrderSubmit");
 
   if(!name||!phone||!address){
@@ -807,8 +817,7 @@ async function submitWbfOrder(){
     const data=await res.json();
     if(!res.ok) throw new Error(data.message||data.details||"Order gagal dikirim.");
 
-    localStorage.setItem("wbf_last_order_id",data.id);
-    localStorage.setItem("wbf_last_order_status",data.status||"pending");
+    rememberCustomerOrder(data.id,phone,data.status||"pending");
 
     document.getElementById("wbfOrderFormWrap").style.display="none";
     document.getElementById("wbfOrderSuccess").style.display="block";
@@ -822,6 +831,78 @@ async function submitWbfOrder(){
     btn.textContent="KIRIM ORDER";
   }
 }
+
+
+function rememberCustomerOrder(orderId,phone,status){
+  localStorage.setItem("wbf_customer_phone",phone);
+  localStorage.setItem("wbf_last_order_id",orderId);
+  localStorage.setItem("wbf_last_order_status",status||"pending");
+  let ids=[]; try{ids=JSON.parse(localStorage.getItem("wbf_customer_orders")||"[]")}catch(e){}
+  ids=Array.isArray(ids)?ids.filter(Boolean):[];
+  if(!ids.includes(orderId))ids.unshift(orderId);
+  localStorage.setItem("wbf_customer_orders",JSON.stringify(ids.slice(0,20)));
+}
+const MY_ORDER_STATUS={
+  pending:"MENUNGGU CEK STOK",
+  confirmed:"STOK TERSEDIA • MENUNGGU PEMBAYARAN",
+  rejected:"STOK TIDAK TERSEDIA",
+  paid:"PEMBAYARAN VALID • SIAP DIKIRIM",
+  shipped:"PROSES PENGIRIMAN",
+  completed:"PROSES SELESAI",
+  cancelled:"DIBATALKAN"
+};
+function openMyOrders(){
+  document.getElementById("orders-section").style.display="block";
+  document.getElementById("hero")?.classList?.add("hidden");
+  document.getElementById("brands")?.style.setProperty("display","none");
+  document.getElementById("catalog-section")?.style.setProperty("display","none");
+  document.querySelector(".info-box")?.style.setProperty("display","none");
+  const phone=localStorage.getItem("wbf_customer_phone")||"";
+  document.getElementById("myOrdersPhone").value=phone;
+  loadMyOrders();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function closeMyOrders(){
+  document.getElementById("orders-section").style.display="none";
+}
+async function loadMyOrders(){
+  const phone=document.getElementById("myOrdersPhone").value.trim();
+  const list=document.getElementById("myOrdersList");
+  if(!phone){ list.innerHTML='<div class="info-box">Masukkan nomor WhatsApp terlebih dahulu.</div>'; return; }
+  localStorage.setItem("wbf_customer_phone",phone);
+  let ids=[]; try{ids=JSON.parse(localStorage.getItem("wbf_customer_orders")||"[]")}catch(e){}
+  if(!ids.length){ const last=localStorage.getItem("wbf_last_order_id"); if(last)ids=[last]; }
+  if(!ids.length){ list.innerHTML='<div class="info-box">Belum ada pesanan.</div>'; return; }
+  list.innerHTML='<div class="info-box">Memuat pesanan...</div>';
+  try{
+    const results=[];
+    for(const id of ids){
+      const res=await fetch(WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_public_order_status",{method:"POST",headers:apiHeaders(),body:JSON.stringify({p_order_id:id,p_customer_phone:phone})});
+      const data=await res.json();
+      if(res.ok && data) results.push(data);
+    }
+    if(!results.length){list.innerHTML='<div class="info-box">Order tidak ditemukan untuk nomor WhatsApp ini.</div>';return;}
+    results.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+    list.innerHTML=results.map(data=>{
+      const items=Array.isArray(data.items)?data.items:[];
+      const itemHtml=items.map(i=>`<div class="my-order-item"><b>${esc(i.product_name||"Produk")}</b><br>SKU: ${esc(i.sku||"-")} · Size: ${esc(i.size||"-")} · Qty: ${Number(i.quantity||0)}<br>Rp ${(Number(i.unit_price||0)*Number(i.quantity||0)).toLocaleString("id-ID")}</div>`).join("");
+      const itemTotal=items.reduce((s,i)=>s+Number(i.unit_price||0)*Number(i.quantity||0),0);
+      const shipping=Number(data.shipping_fee||0);
+      const grand=itemTotal+shipping;
+      let paymentHtml="";
+      if(data.status==="confirmed"){
+        paymentHtml=`<div class="my-order-payment"><b>PEMBAYARAN</b><br>Total barang: Rp ${itemTotal.toLocaleString("id-ID")}<br>Ongkir: Rp ${shipping.toLocaleString("id-ID")}<br><div class="my-order-total">TOTAL BAYAR: Rp ${grand.toLocaleString("id-ID")}</div><div style="margin-top:8px;color:#aaa">QRIS akan ditampilkan di sini setelah QRIS toko dipasang.</div></div>`;
+      } else if(data.status==="paid"){
+        paymentHtml=`<div class="my-order-payment"><b>PEMBAYARAN SUDAH DIVERIFIKASI</b><br>Total: Rp ${grand.toLocaleString("id-ID")}</div>`;
+      }
+      return `<div class="my-order-card"><div class="my-order-head"><div><b>ORDER</b><div class="my-order-id">${esc(data.id)}</div></div><div class="my-order-status">${esc(MY_ORDER_STATUS[data.status]||data.status)}</div></div><div style="margin-top:10px">${itemHtml}</div><div class="my-order-total">TOTAL BARANG: Rp ${itemTotal.toLocaleString("id-ID")}<br>ONGKIR: Rp ${shipping.toLocaleString("id-ID")}<br>TOTAL: Rp ${grand.toLocaleString("id-ID")}</div>${paymentHtml}</div>`;
+    }).join("");
+  }catch(e){ list.innerHTML='<div class="info-box">Gagal memuat pesanan: '+esc(e.message)+'</div>'; }
+}
+setInterval(()=>{
+  const sec=document.getElementById("orders-section");
+  if(sec && sec.style.display!=="none" && document.getElementById("myOrdersPhone").value.trim()) loadMyOrders();
+},15000);
 
 showHome();
 updateCartBadge();
