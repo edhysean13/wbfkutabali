@@ -350,13 +350,9 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
         <label>Alamat</label>
         <textarea id="wbfCustomerAddress" placeholder="Alamat pengiriman / alamat yang mudah dihubungi"></textarea>
       </div>
-      <div class="wbf-order-field" id="wbfSizeField" style="display:none">
+      <div class="wbf-order-field" id="wbfSizeField">
         <label>Size</label>
-        <select id="wbfOrderSize"></select>
-      </div>
-      <div class="wbf-order-field" id="wbfColorField" style="display:none">
-        <label>Color</label>
-        <select id="wbfOrderColor"></select>
+        <input id="wbfOrderSize" type="text" placeholder="Ketik size, contoh: M / L / XL" autocomplete="off">
       </div>
       <div class="wbf-order-field">
         <label>Jumlah</label>
@@ -530,45 +526,24 @@ function cartKey(p,size,color){
 function addToCart(productId){
   const p=allProducts.find(x=>String(x.id)===String(productId));
   if(!p)return;
-
-  const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
-  const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
-  let size=null;
-  let color=null;
-
-  // If variants exist, choose them in the same order form before adding.
-  if(sizes.length||colors.length){
-    openAddToCartVariant(p);
-    return;
-  }
-
-  addCartLine(p,1,size,color);
+  openAddToCartVariant(p);
 }
 
 function openAddToCartVariant(p){
   wbfSelectedOrderProduct=p;
-  const sizes=Array.isArray(p.sizes)?p.sizes.filter(Boolean):[];
-  const colors=Array.isArray(p.colors)?p.colors.filter(Boolean):[];
   const image=p.image_url
     ? '<img src="'+esc(p.image_url)+'" alt="'+esc(p.name||"Product")+'">'
     : '<div class="no-photo">NO PHOTO</div>';
 
   document.getElementById("wbfOrderProduct").innerHTML=
-    image+'<div><b>'+esc(p.name||"Product")+'</b><div style="font-size:12px;color:#aaa;margin-top:4px">Pilih varian sebelum masuk Cart</div></div>';
+    image+'<div><b>'+esc(p.name||"Product")+'</b><div style="font-size:12px;color:#aaa;margin-top:4px">Isi size dan jumlah sebelum masuk Cart</div></div>';
 
+  // Size is intentionally blank and typed manually by the customer.
+  // Registered product data does not supply size/color anymore.
   const sf=document.getElementById("wbfSizeField");
-  const cf=document.getElementById("wbfColorField");
   const ss=document.getElementById("wbfOrderSize");
-  const cs=document.getElementById("wbfOrderColor");
-
-  if(sizes.length){
-    ss.innerHTML='<option value="">Pilih size</option>'+sizes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-    sf.style.display="block";
-  }else{sf.style.display="none";}
-  if(colors.length){
-    cs.innerHTML='<option value="">Pilih warna</option>'+colors.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-    cf.style.display="block";
-  }else{cf.style.display="none";}
+  sf.style.display="";
+  ss.value="";
 
   document.getElementById("wbfCustomerName").parentElement.style.display="none";
   document.getElementById("wbfCustomerPhone").parentElement.style.display="none";
@@ -581,12 +556,13 @@ function openAddToCartVariant(p){
   const submit=document.getElementById("wbfOrderSubmit");
   submit.textContent="TAMBAH KE CART";
   submit.onclick=()=>{
-    const size=document.getElementById("wbfOrderSize").value||null;
-    const color=document.getElementById("wbfOrderColor").value||null;
+    const size=(document.getElementById("wbfOrderSize").value||"").trim();
     const qty=Math.max(1,Number(document.getElementById("wbfOrderQty").value||1));
-    if(sizes.length && !size){ alert("Pilih size terlebih dahulu."); return; }
-    if(colors.length && !color){ alert("Pilih warna terlebih dahulu."); return; }
-    addCartLine(p,qty,size,color);
+    if(!size){
+      alert("Isi size terlebih dahulu.");
+      return;
+    }
+    addCartLine(p,qty,size,null);
     closeOrderModal();
     document.getElementById("wbfCustomerName").parentElement.style.display="";
     document.getElementById("wbfCustomerPhone").parentElement.style.display="";
@@ -595,7 +571,7 @@ function openAddToCartVariant(p){
     submit.onclick=submitWbfOrder;
     openCart();
   };
-  document.getElementById("wbfOrderModal").classList.add("show");
+  document.getElementById("wbfOrderModal").classList.add("open");
 }
 
 function addCartLine(p,qty,size,color){
