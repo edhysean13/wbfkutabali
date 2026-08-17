@@ -355,6 +355,22 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 }
 </style>
 
+
+<style>
+.order-card{background:#121212;border:1px solid #292929;border-radius:14px;padding:14px;margin-bottom:10px}
+.order-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.order-id{font-size:12px;color:#aaa;word-break:break-all}
+.order-status{font-size:11px;font-weight:800;padding:5px 8px;border-radius:8px;background:#292929;white-space:nowrap}
+.order-customer{margin-top:10px;font-size:14px;line-height:1.45}
+.order-items{margin-top:10px;display:grid;gap:7px}
+.order-item{border-top:1px solid #292929;padding-top:8px;font-size:13px;line-height:1.4}
+.order-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}
+.order-actions button{margin:0;height:38px;font-size:12px}
+.order-actions .danger{background:#7d1016}
+.order-actions .secondary{background:#292929}
+.order-note{width:100%;min-height:60px;background:#080808;color:#fff;border:1px solid #333;border-radius:9px;padding:9px;margin-top:9px;resize:vertical}
+</style>
+
 </head>
 <body>
 <section id="login" class="wrap">
@@ -484,10 +500,12 @@ input,select{height:40px!important;padding:0 10px!important;border-radius:8px!im
 </div>
 </div>
 
-<div id="ordersList" style="margin-top:16px">
+<div style="display:flex;justify-content:flex-end;margin-top:12px">
+<button type="button" id="refreshOrdersBtn" style="width:auto;padding:0 16px;margin:0">REFRESH</button>
+</div>
+<div id="ordersList" style="margin-top:12px">
 <div class="brand-card" style="text-align:left">
-<div class="muted">BELUM ADA ORDER</div>
-<div style="margin-top:6px;font-size:14px">Order customer akan muncul di sini.</div>
+<div class="muted">MEMUAT ORDER...</div>
 </div>
 </div>
 </section>
@@ -525,6 +543,7 @@ function restoreView(){
   } else if(view==="orders"){
     dashboardHome.classList.add("hidden");
     ordersPage.classList.remove("hidden");
+    setTimeout(()=>loadOrders(),0);
   }
 }
 
@@ -1011,4 +1030,131 @@ saveProductBtn.addEventListener("click",saveProductToDatabase);
 window.addEventListener("load",()=>{
   try{ restoreView(); }catch(e){}
 });
+
+/* LIVE ORDERS */
+function orderStatusLabel(status){
+  const map={
+    pending:"MENUNGGU CEK STOK",
+    confirmed:"STOK TERSEDIA",
+    rejected:"STOK TIDAK TERSEDIA",
+    paid:"SUDAH BAYAR",
+    shipped:"DIKIRIM",
+    completed:"SELESAI",
+    cancelled:"DIBATALKAN"
+  };
+  return map[status]||String(status||"").toUpperCase();
+}
+function orderStatusClass(status){ return "order-status"; }
+function orderTotal(items){
+  return (items||[]).reduce((sum,i)=>sum+Number(i.unit_price||0)*Number(i.quantity||0),0);
+}
+function orderDate(v){
+  try{return new Date(v).toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+  catch(e){return v||""}
+}
+async function loadOrders(){
+  const list=document.getElementById("ordersList");
+  const totalEl=document.getElementById("wbfTotalOrders");
+  const pendingEl=document.getElementById("wbfPendingOrders");
+  if(!list)return;
+  list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">MEMUAT ORDER...</div></div>';
+  try{
+    const token=authToken();
+    if(!token) throw new Error("Session admin tidak ditemukan.");
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_orders",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:"{}"
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal mengambil order.");
+    const orders=Array.isArray(data)?data:[];
+    if(totalEl) totalEl.textContent=orders.length;
+    if(pendingEl) pendingEl.textContent=orders.filter(o=>o.status==="pending").length;
+
+    if(!orders.length){
+      list.innerHTML='<div class="brand-card" style="text-align:left"><div class="muted">BELUM ADA ORDER</div><div style="margin-top:6px;font-size:14px">Order customer akan muncul di sini.</div></div>';
+      return;
+    }
+
+    list.innerHTML=orders.map(o=>{
+      const items=Array.isArray(o.items)?o.items:[];
+      const itemHtml=items.map(i=>{
+        const line=Number(i.unit_price||0)*Number(i.quantity||0);
+        const size=i.size?` · Size: ${escapeHtml(i.size)}`:"";
+        return `<div class="order-item"><b>${escapeHtml(i.product_name||"-")}</b><br>
+          SKU: ${escapeHtml(i.sku||"-")}${size} · Qty: ${Number(i.quantity||0)}
+          <br>Rp ${line.toLocaleString("id-ID")}</div>`;
+      }).join("");
+      const canCheck=o.status==="pending";
+      const canConfirm=o.status==="confirmed";
+      const canPaid=o.status==="paid";
+      const actionHtml = canCheck
+        ? `<button type="button" onclick="updateOrderStatus('${o.id}','confirmed')">STOK TERSEDIA</button>
+           <button type="button" class="danger" onclick="updateOrderStatus('${o.id}','rejected')">STOK TIDAK ADA</button>`
+        : canConfirm
+        ? `<button type="button" onclick="updateOrderStatus('${o.id}','paid')">SUDAH BAYAR</button>
+           <button type="button" class="secondary" onclick="updateOrderStatus('${o.id}','cancelled')">BATALKAN</button>`
+        : canPaid
+        ? `<button type="button" onclick="updateOrderStatus('${o.id}','shipped')">PROSES / KIRIM</button>
+           <button type="button" class="secondary" onclick="updateOrderStatus('${o.id}','completed')">SELESAI</button>`
+        : `<button type="button" class="secondary" onclick="updateOrderStatus('${o.id}','completed')">TANDAI SELESAI</button>`;
+      return `<div class="order-card">
+        <div class="order-head">
+          <div><b>ORDER</b><div class="order-id">${escapeHtml(o.id)}</div></div>
+          <div class="order-status">${orderStatusLabel(o.status)}</div>
+        </div>
+        <div class="order-customer">
+          <b>${escapeHtml(o.customer_name||"-")}</b><br>
+          WhatsApp: ${escapeHtml(o.customer_phone||"-")}<br>
+          Alamat: ${escapeHtml(o.customer_address||"-")}<br>
+          <span class="muted">${orderDate(o.created_at)}</span>
+        </div>
+        <div class="order-items">${itemHtml}</div>
+        <div style="font-weight:800;margin-top:10px">TOTAL: Rp ${orderTotal(items).toLocaleString("id-ID")}</div>
+        <textarea class="order-note" id="note-${o.id}" placeholder="Catatan admin...">${escapeHtml(o.admin_note||"")}</textarea>
+        <div class="order-actions">${actionHtml}</div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    list.innerHTML='<div class="brand-card" style="text-align:left"><b>GAGAL MEMUAT ORDER</b><div class="muted" style="margin-top:6px">'+escapeHtml(e.message)+'</div></div>';
+  }
+}
+async function updateOrderStatus(orderId,statusValue){
+  const token=authToken();
+  const noteEl=document.getElementById("note-"+orderId);
+  const note=noteEl?noteEl.value.trim():"";
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_update_order",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({p_order_id:orderId,p_status:statusValue,p_admin_note:note||null})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.message||data.details||"Gagal memperbarui order.");
+    await loadOrders();
+    alert("Status order diperbarui: "+orderStatusLabel(statusValue));
+  }catch(e){
+    alert("Gagal memperbarui order: "+e.message);
+  }
+}
+window.updateOrderStatus=updateOrderStatus;
+
+const _oldRefreshOrdersBtn=document.getElementById("refreshOrdersBtn");
+if(_oldRefreshOrdersBtn)_oldRefreshOrdersBtn.addEventListener("click",loadOrders);
+
+const _oldOrdersCard=document.getElementById("ordersCard");
+if(_oldOrdersCard)_oldOrdersCard.addEventListener("click",async()=>{
+  dashboardHome.classList.add("hidden");
+  ordersPage.classList.remove("hidden");
+  saveView("orders");
+  await loadOrders();
+});
+const _oldOrdersBackBtn=document.getElementById("ordersBackBtn");
+if(_oldOrdersBackBtn)_oldOrdersBackBtn.addEventListener("click",()=>{
+  ordersPage.classList.add("hidden");
+  dashboardHome.classList.remove("hidden");
+  saveView("dashboard");
+});
+
 </script>
