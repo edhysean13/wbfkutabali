@@ -830,7 +830,17 @@ html, body {
 <option value="BAG">BAG</option>
 </select>
 <input id="productEditId" type="hidden" value="">
-<label>Size</label><input id="productSize" type="text" placeholder="Contoh: S / M / L / XL">
+<label>Size</label>
+<select id="productSize" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
+<option value="">Pilih Size</option>
+<option value="ALL / ONE SIZE">ALL / ONE SIZE</option>
+<option value="S / M / L / XL / XXL">S, M, L, XL, XXL</option>
+<option value="6 / 8 / 10 / 12 / 14">6, 8, 10, 12, 14</option>
+<option value="30 / 32 / 34 / 36 / 38">30, 32, 34, 36, 38</option>
+<option value="36 / 37 / 38 / 39 / 40">36, 37, 38, 39, 40</option>
+<option value="40 / 41 / 42 / 43 / 44 / 45">40, 41, 42, 43, 44, 45</option>
+</select>
+<div class="muted" style="margin-top:5px;font-size:11px">Pilih kelompok size yang sesuai dengan produk.</div>
 <label>Color</label><input id="productColor" type="text" placeholder="Contoh: Hitam / Putih">
 <label>Price</label><input id="productPrice" type="number" placeholder="Harga">
 <label>Discount (%)</label><input id="productDiscount" type="number" min="0" max="100" placeholder="0">
@@ -1522,7 +1532,15 @@ function editProduct(productId, products){
   document.getElementById("productName").value=p.name||"";
   document.getElementById("productGender").value=(p.gender||"MEN").toUpperCase();
   document.getElementById("productCategory").value=p.category||selectedCategory||"";
-  document.getElementById("productSize").value=(p.sizes||[]).join(" / ");
+  const existingSize=(p.sizes||[]).join(" / ");
+  const sizeSelect=document.getElementById("productSize");
+  if(existingSize && !Array.from(sizeSelect.options).some(o=>o.value===existingSize)){
+    const opt=document.createElement("option");
+    opt.value=existingSize;
+    opt.textContent=existingSize+" (tersimpan)";
+    sizeSelect.appendChild(opt);
+  }
+  sizeSelect.value=existingSize;
   document.getElementById("productColor").value=(p.colors||[]).join(" / ");
   document.getElementById("productPrice").value=p.price??"";
   document.getElementById("productDiscount").value=p.discount??0;
