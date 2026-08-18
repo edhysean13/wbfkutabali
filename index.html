@@ -25,7 +25,7 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
 .card{background:#121212;border:1px solid #282828;border-radius:12px;overflow:hidden}.photo{aspect-ratio:1/1;background:#1a1a1a;color:#888;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover;display:block}
 .info{padding:11px}.tag{font-size:10px;color:#e21b23;font-weight:bold;letter-spacing:1px}.name{font-weight:bold;margin:7px 0}.sku{color:#888;font-size:11px;margin:4px 0}.meta{color:#ddd;font-size:11px;line-height:1.5}.price{font-size:15px;font-weight:bold;margin-top:6px}.old-price{text-decoration:line-through;color:#777;font-size:11px}.sale-price{font-size:16px;font-weight:800}
 .order{width:100%;margin-top:10px;padding:9px;border:0;border-radius:7px;background:#e21b23;color:#fff;font-weight:bold}
-.category-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}.category-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 12px;font-weight:700;font-size:11px}.category-nav button.active{background:#fff;color:#111}
+.wbf-gender-btn{white-space:nowrap;border:1px solid #383838;background:#080808;color:#fff;border-radius:8px;padding:9px 14px;font-weight:800;font-size:11px}.wbf-gender-btn.active{background:#fff;color:#111}.category-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}.category-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 12px;font-weight:700;font-size:11px}.category-nav button.active{background:#fff;color:#111}
 .catalog-status{color:#888;font-size:12px;padding:8px 0}
 @media(max-width:800px){.products{grid-template-columns:repeat(3,1fr);gap:7px}.info{padding:7px}.name{font-size:12px}.sku,.meta{font-size:9px}.price{font-size:12px}.sale-price{font-size:13px}.old-price{font-size:9px}.order{padding:7px;font-size:10px}.photo{aspect-ratio:1/1}}
 .info-box{margin-top:32px;padding:20px;border:1px solid #282828;background:#111;border-radius:14px;color:#bdbdbd;line-height:1.6}
@@ -289,36 +289,6 @@ input, select, textarea { font-size:16px !important; -webkit-text-size-adjust:10
 @media(max-width:650px){.wbf-event-grid{gap:10px}.wbf-event-copy{padding:10px}.wbf-event-copy h3{font-size:14px}.wbf-event-copy p{font-size:12px}}
 </style>
 
-<style id="wbf-special-promo-css">
-.wbf-special-promo-section{display:none;margin:24px auto 0;max-width:1200px;padding:0 5%;}
-.wbf-special-promo-section.show{display:block;}
-.wbf-special-promo-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
-.wbf-special-promo-head h2{margin:0;font-size:24px;letter-spacing:.2px;}
-.wbf-special-promo-head span{font-size:11px;color:#888;}
-.wbf-special-promo-card{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:0;background:#111;border:1px solid #292929;border-radius:18px;overflow:hidden;min-height:320px;}
-.wbf-special-promo-photo{background:#181818;min-height:320px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;}
-.wbf-special-promo-photo img{width:100%;height:100%;object-fit:cover;display:block;}
-.wbf-special-promo-copy{padding:24px;display:flex;flex-direction:column;justify-content:center;}
-.wbf-special-promo-kicker{font-size:10px;letter-spacing:1.8px;color:#e21b23;font-weight:900;}
-.wbf-special-promo-copy h3{margin:9px 0 7px;font-size:26px;line-height:1.12;}
-.wbf-special-promo-copy .sku{font-size:11px;color:#888;}
-.wbf-special-promo-price{margin-top:13px;font-weight:900;font-size:22px;}
-.wbf-special-promo-old{font-size:12px;color:#777;text-decoration:line-through;margin-bottom:2px;}
-.wbf-special-promo-copy .order{margin-top:16px;}
-.wbf-special-promo-dots{display:flex;justify-content:center;gap:6px;margin-top:10px;}
-.wbf-special-promo-dot{width:7px;height:7px;border-radius:50%;background:#444;}
-.wbf-special-promo-dot.active{background:#fff;}
-body.wbf-event-mode .wbf-special-promo-section{display:none!important;}
-@media(max-width:650px){
-  .wbf-special-promo-section{padding:0 14px;margin-top:18px;}
-  .wbf-special-promo-head h2{font-size:21px;}
-  .wbf-special-promo-card{grid-template-columns:1fr;min-height:0;}
-  .wbf-special-promo-photo{height:290px;min-height:290px;}
-  .wbf-special-promo-copy{padding:16px;}
-  .wbf-special-promo-copy h3{font-size:20px;}
-  .wbf-special-promo-price{font-size:18px;}
-}
-</style>
 <style id="wbf-event-special-page">
 /* Event is a standalone customer screen */
 body.wbf-event-mode .nav{display:none!important}
@@ -389,14 +359,6 @@ body.wbf-event-mode .wbf-event-photo{
     <a class="cta" href="#brands" onclick="showBrands();return false;">EXPLORE COLLECTION</a>
   </div>
 </section>
-<section class="wbf-special-promo-section" id="special-promo-section" aria-label="Special Promo">
-  <div class="wbf-special-promo-head">
-    <h2>SPECIAL PROMO</h2>
-    <span id="special-promo-count"></span>
-  </div>
-  <div id="special-promo-slot"></div>
-  <div class="wbf-special-promo-dots" id="special-promo-dots"></div>
-</section>
 <section class="main-buttons container" id="main-navigation">
   <a href="#home" onclick="showHome();return false;">HOME</a>
   <a href="#brands" onclick="showBrands();return false;">BRANDS</a>
@@ -409,6 +371,11 @@ body.wbf-event-mode .wbf-event-photo{
   <div class="section-head">
     <h2>Brands</h2>
     <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
+  </div>
+  <div class="wbf-gender-nav" style="display:flex;gap:8px;overflow-x:auto;margin:0 0 14px">
+    <button type="button" data-gender="ALL" class="wbf-gender-btn active" onclick="showGenderCollection('ALL')">SEMUA</button>
+    <button type="button" data-gender="MEN" class="wbf-gender-btn" onclick="showGenderCollection('MEN')">MEN</button>
+    <button type="button" data-gender="LADIES" class="wbf-gender-btn" onclick="showGenderCollection('LADIES')">LADIES</button>
   </div>
   <div class="brands-page-grid" id="customer-brands-grid"></div>
 </section>
@@ -544,9 +511,7 @@ let allBrands=[];
 let allProducts=[];
 let selectedBrand="";
 let selectedCategory="ALL";
-let specialPromoProducts=[];
-let specialPromoIndex=0;
-let specialPromoTimer=null;
+let selectedGender="ALL";
 
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
@@ -607,70 +572,10 @@ async function loadCustomerProducts(){
     const data=await res.json();
     if(!res.ok) throw new Error(data.message||data.details||"Gagal mengambil katalog.");
     allProducts=Array.isArray(data)?data:[];
-    renderSpecialPromo();
     renderCatalog();
   }catch(e){
     document.getElementById("catalog").innerHTML="";
     status.textContent="Katalog belum dapat dimuat: "+e.message;
-  }
-}
-
-function renderSpecialPromo(){
-  const section=document.getElementById("special-promo-section");
-  const slot=document.getElementById("special-promo-slot");
-  const dots=document.getElementById("special-promo-dots");
-  const count=document.getElementById("special-promo-count");
-  if(!section||!slot||!dots)return;
-
-  const candidates=allProducts.filter(p=>{
-    const cat=String(p?.category||"").trim().toUpperCase();
-    return (p?.is_special_promo===true || p?.is_special_promo===1 || p?.is_special_promo==="true") && cat==="ATASAN";
-  });
-  specialPromoProducts=candidates;
-
-  if(specialPromoProducts.length<5){
-    section.classList.remove("show");
-    slot.innerHTML="";
-    dots.innerHTML="";
-    if(count)count.textContent=specialPromoProducts.length?specialPromoProducts.length+" dipilih · butuh minimal 5":"";
-    if(specialPromoTimer){clearInterval(specialPromoTimer);specialPromoTimer=null;}
-    return;
-  }
-
-  section.classList.add("show");
-  specialPromoIndex=((specialPromoIndex%specialPromoProducts.length)+specialPromoProducts.length)%specialPromoProducts.length;
-  if(count)count.textContent=specialPromoProducts.length+" produk";
-
-  const p=specialPromoProducts[specialPromoIndex];
-  const discount=Number(p.discount||0);
-  const sale=Math.max(0,Number(p.price||0)*(1-discount/100));
-  const imageUrls=getProductImages(p);
-  const image=imageUrls.length
-    ? '<img src="'+esc(imageUrls[0])+'" alt="'+esc(p.name||"Product")+'" loading="eager">'
-    : '<span style="color:#777;font-size:12px">NO PHOTO</span>';
-
-  slot.innerHTML='<div class="wbf-special-promo-card">'+
-      '<div class="wbf-special-promo-photo" id="special-promo-photo">'+image+'</div>'+ 
-      '<div class="wbf-special-promo-copy">'+
-        '<div class="wbf-special-promo-kicker">SPECIAL PROMO · '+esc(p.category||"ATASAN")+'</div>'+ 
-        '<h3>'+esc(p.name||"Product")+'</h3>'+ 
-        '<div class="sku">SKU: '+esc(p.sku||"-")+'</div>'+ 
-        '<div class="wbf-special-promo-price">'+(discount>0?'<div class="wbf-special-promo-old">Rp '+money(p.price)+'</div>':'')+'Rp '+money(sale)+(discount>0?' <small style="font-size:11px;color:#aaa">('+discount+'% OFF)</small>':'')+'</div>'+ 
-        '<button class="order" onclick="addToCart(\''+esc(p.id)+'\')">ORDER</button>'+ 
-      '</div>'+ 
-    '</div>';
-
-  const photo=document.getElementById("special-promo-photo");
-  if(photo)photo.addEventListener("click",()=>openProductGallery(p.id));
-
-  dots.innerHTML=specialPromoProducts.map((_,idx)=>'<span class="wbf-special-promo-dot '+(idx===specialPromoIndex?'active':'')+'"></span>').join('');
-
-  if(!specialPromoTimer){
-    specialPromoTimer=setInterval(()=>{
-      if(document.hidden||specialPromoProducts.length<5)return;
-      specialPromoIndex=(specialPromoIndex+1)%specialPromoProducts.length;
-      renderSpecialPromo();
-    },4500);
   }
 }
 
@@ -683,6 +588,8 @@ function renderCatalog(){
   let products=allProducts;
   if(selectedBrand){
     products=products.filter(p=>p.brand_id===WBF_BRANDS[selectedBrand]);
+    catNav.style.display="flex";
+  }else if(selectedGender!=="ALL"){
     catNav.style.display="flex";
   }else{
     catNav.style.display="none";
@@ -724,13 +631,16 @@ function renderCatalog(){
       }
     }
   }
+  if(selectedGender!=="ALL"){
+    products=products.filter(p=>(p.gender||"MEN").toUpperCase()===selectedGender);
+  }
   if(selectedCategory!=="ALL"){
     products=products.filter(p=>(p.category||"").toUpperCase()===selectedCategory);
   }
 
   const title=selectedBrand
-    ? selectedBrand+" Collection"+(selectedCategory!=="ALL"?" · "+selectedCategory:"")
-    : "New Arrival";
+    ? selectedBrand+" Collection"+(selectedGender!=="ALL"?" · "+selectedGender:" ")+(selectedCategory!=="ALL"?" · "+selectedCategory:"")
+    : (selectedGender!=="ALL" ? selectedGender+" Collection" : "New Arrival");
   document.getElementById("catalog-title").textContent=title;
   count.textContent=products.length+" Produk";
   document.getElementById("back-to-brands").style.display=selectedBrand?"inline-flex":"none";
@@ -790,13 +700,13 @@ function showHome(){
   document.getElementById("catalog-section").style.display="block";
   selectedBrand="";
   selectedCategory="ALL";
-  renderSpecialPromo();
+  selectedGender="ALL";
+  document.querySelectorAll(".wbf-gender-btn").forEach(b=>b.classList.toggle("active",b.dataset.gender==="ALL"));
   renderCatalog();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function showBrands(){
-  document.getElementById("special-promo-section")?.classList.remove("show");
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
   document.getElementById("brands").style.display="block";
@@ -807,7 +717,6 @@ function showBrands(){
 
 async function showEvents(){
   document.body.classList.add("wbf-event-mode");
-  document.getElementById("special-promo-section")?.classList.remove("show");
   document.getElementById("events").style.display="block";
   document.getElementById("orders-section")?.style.setProperty("display","none");
   window.scrollTo({top:0,behavior:"smooth"});
@@ -836,6 +745,20 @@ async function loadCustomerEvents(){
     console.error("Event customer gagal dimuat:",e);
     grid.innerHTML='<div class="wbf-event-empty">Event belum dapat dimuat.</div>';
   }
+}
+
+function showGenderCollection(gender){
+  selectedGender=gender;
+  selectedBrand="";
+  selectedCategory="ALL";
+  document.querySelectorAll(".wbf-gender-btn").forEach(b=>b.classList.toggle("active",b.dataset.gender===gender));
+  document.querySelector(".hero").style.display="none";
+  document.getElementById("main-navigation").style.display="none";
+  document.getElementById("brands").style.display="none";
+  document.getElementById("catalog-section").style.display="block";
+  document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
+  renderCatalog();
+  document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
 function filterBrand(brand){
@@ -1221,7 +1144,6 @@ const MY_ORDER_STATUS={
   cancelled:"DIBATALKAN"
 };
 function openMyOrders(){
-  document.getElementById("special-promo-section")?.classList.remove("show");
   document.getElementById("orders-section").style.display="block";
   document.getElementById("hero")?.classList?.add("hidden");
   document.getElementById("brands")?.style.setProperty("display","none");
