@@ -668,8 +668,28 @@ html, body {
 .wbf-photo-preview-item div{padding:4px;font-size:9px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 
+<script src="./wbf-pwa.js"></script>
+
+<style id="wbf-admin-push-ui">
+#wbfAdminPush{
+  position:fixed;right:14px;bottom:14px;z-index:40000;
+  display:none;align-items:center;gap:8px;
+  background:#111;border:1px solid #333;border-radius:12px;
+  padding:10px 12px;box-shadow:0 10px 28px rgba(0,0,0,.45)
+}
+#wbfAdminPush.show{display:flex}
+#wbfAdminPush button{width:auto!important;margin:0!important;padding:8px 10px!important}
+#wbfAdminPush .push-copy{font-size:11px;color:#aaa}
+#wbfAdminPush .push-copy b{display:block;color:#fff;font-size:12px;margin-bottom:2px}
+</style>
 </head>
 <body>
+
+<div id="wbfAdminPush">
+  <div class="push-copy"><b>🔔 Notifikasi Admin</b>Aktifkan untuk menerima order baru.</div>
+  <button id="wbfAdminPushEnable" type="button">AKTIFKAN</button>
+</div>
+
 <section id="login" class="wrap">
 <div class="box">
 <div class="logo">WBF</div>
@@ -830,17 +850,7 @@ html, body {
 <option value="BAG">BAG</option>
 </select>
 <input id="productEditId" type="hidden" value="">
-<label>Size</label>
-<select id="productSize" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
-<option value="">Pilih Size</option>
-<option value="ALL / ONE SIZE">ALL / ONE SIZE</option>
-<option value="S / M / L / XL / XXL">S, M, L, XL, XXL</option>
-<option value="6 / 8 / 10 / 12 / 14">6, 8, 10, 12, 14</option>
-<option value="30 / 32 / 34 / 36 / 38">30, 32, 34, 36, 38</option>
-<option value="36 / 37 / 38 / 39 / 40">36, 37, 38, 39, 40</option>
-<option value="40 / 41 / 42 / 43 / 44 / 45">40, 41, 42, 43, 44, 45</option>
-</select>
-<div class="muted" style="margin-top:5px;font-size:11px">Pilih kelompok size yang sesuai dengan produk.</div>
+<label>Size</label><input id="productSize" type="text" placeholder="Contoh: S / M / L / XL">
 <label>Color</label><input id="productColor" type="text" placeholder="Contoh: Hitam / Putih">
 <label>Price</label><input id="productPrice" type="number" placeholder="Harga">
 <label>Discount (%)</label><input id="productDiscount" type="number" min="0" max="100" placeholder="0">
@@ -1532,15 +1542,7 @@ function editProduct(productId, products){
   document.getElementById("productName").value=p.name||"";
   document.getElementById("productGender").value=(p.gender||"MEN").toUpperCase();
   document.getElementById("productCategory").value=p.category||selectedCategory||"";
-  const existingSize=(p.sizes||[]).join(" / ");
-  const sizeSelect=document.getElementById("productSize");
-  if(existingSize && !Array.from(sizeSelect.options).some(o=>o.value===existingSize)){
-    const opt=document.createElement("option");
-    opt.value=existingSize;
-    opt.textContent=existingSize+" (tersimpan)";
-    sizeSelect.appendChild(opt);
-  }
-  sizeSelect.value=existingSize;
+  document.getElementById("productSize").value=(p.sizes||[]).join(" / ");
   document.getElementById("productColor").value=(p.colors||[]).join(" / ");
   document.getElementById("productPrice").value=p.price??"";
   document.getElementById("productDiscount").value=p.discount??0;
@@ -1894,6 +1896,42 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
+
+<script id="wbf-admin-push-script">
+(function(){
+  function setup(){
+    const box=document.getElementById("wbfAdminPush");
+    const btn=document.getElementById("wbfAdminPushEnable");
+    if(!box||!btn) return;
+
+    function refresh(){
+      const ok=localStorage.getItem("wbf_push_registered")==="1" &&
+               localStorage.getItem("wbf_push_role")==="admin";
+      box.classList.toggle("show", !ok);
+    }
+
+    btn.addEventListener("click",async function(){
+      btn.disabled=true; btn.textContent="MEMPROSES...";
+      try{
+        if(!window.WBF_PUSH || typeof window.WBF_PUSH.enable!=="function")
+          throw new Error("Modul notifikasi belum siap.");
+        window.WBF_PUSH.setRole("admin");
+        const ok=await window.WBF_PUSH.enable();
+        if(!ok) throw new Error("Notifikasi tidak dapat diaktifkan di perangkat ini.");
+        box.classList.remove("show");
+        alert("Notifikasi Admin berhasil diaktifkan.");
+      }catch(e){
+        alert(e?.message||"Notifikasi gagal diaktifkan.");
+      }finally{
+        btn.disabled=false; btn.textContent="AKTIFKAN"; refresh();
+      }
+    });
+    refresh();
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",setup);
+  else setup();
+})();
+</script>
 </body>
 </html>
 <script>
