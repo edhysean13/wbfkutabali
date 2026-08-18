@@ -833,6 +833,11 @@ html, body {
   <span>TAMPILKAN DI NEW ARRIVAL</span>
 </label>
 <div class="muted" style="margin-top:5px">Centang jika produk ini ingin tampil di layar New Arrival customer.</div>
+<label style="display:flex;align-items:center;gap:9px;margin-top:12px;color:#fff;cursor:pointer">
+  <input id="productSpecialPromo" type="checkbox" style="width:20px;height:20px;margin:0;accent-color:#df1720">
+  <span>TAMPILKAN DI SPECIAL PROMO</span>
+</label>
+<div class="muted" style="margin-top:5px">Khusus kaos / kategori ATASAN. Home customer akan menampilkan minimal 5 produk Special Promo secara bergantian dalam 1 slot.</div>
 <label>Photo Product (maks. 3 foto)</label><input id="productPhoto" type="file" accept="image/*" multiple><div id="productPhotoPreview" class="muted" style="margin-top:8px"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
 <button id="saveProductBtn" type="button">SAVE PRODUCT</button>
@@ -1456,6 +1461,7 @@ async function loadBrandProducts(){
         '<div>Discount: '+Number(p.discount||0)+'%</div>'+
         '<div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div>'+
         '<div style="margin-top:7px;font-size:10px;font-weight:800;color:'+(p.is_new_arrival?'#7ee787':'#888')+'">'+(p.is_new_arrival?'✓ NEW ARRIVAL':'— BUKAN NEW ARRIVAL')+'</div>'+
+        '<div style="margin-top:4px;font-size:10px;font-weight:800;color:'+(p.is_special_promo?'#ffcc66':'#888')+'">'+(p.is_special_promo?'✓ SPECIAL PROMO':'— BUKAN SPECIAL PROMO')+'</div>'+
         '<button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:12px">EDIT SKU</button>'+
         '</div>';
     }).join("");
@@ -1494,6 +1500,7 @@ function openProductFormForRegister(){
   document.getElementById("productBrand").disabled=false;
   document.getElementById("productSku").disabled=false;
   document.getElementById("productNewArrival").checked=false;
+  document.getElementById("productSpecialPromo").checked=false;
 }
 
 function editProduct(productId, products){
@@ -1512,6 +1519,7 @@ function editProduct(productId, products){
   document.getElementById("productPrice").value=p.price??"";
   document.getElementById("productDiscount").value=p.discount??0;
   document.getElementById("productNewArrival").checked=!!p.is_new_arrival;
+  document.getElementById("productSpecialPromo").checked=!!p.is_special_promo;
   document.getElementById("productPhoto").value="";
   const existingImages=Array.isArray(p.image_urls)&&p.image_urls.length?p.image_urls:(p.image_url?[p.image_url]:[]);
   renderProductPhotoPreview(existingImages,true);
@@ -1548,6 +1556,7 @@ function cancelEditProduct(){
   document.getElementById("productBrand").disabled=false;
   document.getElementById("productSku").disabled=false;
   document.getElementById("productNewArrival").checked=false;
+  document.getElementById("productSpecialPromo").checked=false;
 }
 
 async function saveProductToDatabase(){
@@ -1560,6 +1569,7 @@ async function saveProductToDatabase(){
   const price=Number(document.getElementById("productPrice").value);
   const discount=Number(document.getElementById("productDiscount").value||0);
   const isNewArrival=document.getElementById("productNewArrival").checked;
+  const isSpecialPromo=document.getElementById("productSpecialPromo").checked;
   const photos=Array.from(document.getElementById("productPhoto").files||[]).slice(0,3);
 
   if(!brand||!category||!sku||!name||!Number.isFinite(price)||price<0){
@@ -1633,6 +1643,14 @@ async function saveProductToDatabase(){
     });
     const arrivalData=await arrivalRes.json().catch(()=>null);
     if(!arrivalRes.ok) throw new Error(arrivalData?.message||arrivalData?.details||"Gagal mengatur New Arrival.");
+
+    const promoRes=await fetch(URL+"/rest/v1/rpc/wbf_admin_set_product_special_promo",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({p_product_id:savedProductId,p_is_special_promo:isSpecialPromo})
+    });
+    const promoData=await promoRes.json().catch(()=>null);
+    if(!promoRes.ok) throw new Error(promoData?.message||promoData?.details||"Gagal mengatur Special Promo.");
 
     alert(editingProductId?"Perubahan product berhasil disimpan.":"Product berhasil disimpan.");
 
@@ -1822,13 +1840,13 @@ if ("serviceWorker" in navigator) {
         updateViaCache: "none"
       });
 
-      // Always check the server for a newer Admin PWA service worker.
       await reg.update();
 
-      // Activate a newly installed worker immediately.
-      if (reg.waiting) {
-        reg.waiting.postMessage({type:"SKIP_WAITING"});
-      }
+      const activateWaiting = () => {
+        if (reg.waiting) reg.waiting.postMessage({type:"SKIP_WAITING"});
+      };
+
+      activateWaiting();
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (window.__wbfAdminReloading) return;
@@ -1837,12 +1855,10 @@ if ("serviceWorker" in navigator) {
       });
 
       reg.addEventListener("updatefound", () => {
-        const next = reg.installing;
-        if (!next) return;
-        next.addEventListener("statechange", () => {
-          if (next.state === "installed" && navigator.serviceWorker.controller) {
-            next.postMessage({type:"SKIP_WAITING"});
-          }
+        const worker = reg.installing;
+        if (!worker) return;
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed") activateWaiting();
         });
       });
     } catch (e) {}
