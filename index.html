@@ -372,11 +372,6 @@ body.wbf-event-mode .wbf-event-photo{
     <h2>Brands</h2>
     <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
   </div>
-  <div class="wbf-gender-nav" style="display:flex;gap:8px;overflow-x:auto;margin:0 0 14px">
-    <button type="button" data-gender="ALL" class="wbf-gender-btn active" onclick="showGenderCollection('ALL')">SEMUA</button>
-    <button type="button" data-gender="MEN" class="wbf-gender-btn" onclick="showGenderCollection('MEN')">MEN</button>
-    <button type="button" data-gender="LADIES" class="wbf-gender-btn" onclick="showGenderCollection('LADIES')">LADIES</button>
-  </div>
   <div class="brands-page-grid" id="customer-brands-grid"></div>
 </section>
 
@@ -385,6 +380,10 @@ body.wbf-event-mode .wbf-event-photo{
 
 <section class="section" id="catalog-section">
   <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="collection-back" onclick="showBrands();return false;" style="display:none;align-self:center">BACK</a></div>
+  <div class="wbf-brand-gender-nav" id="brand-gender-nav" style="display:none;gap:8px;overflow-x:auto;margin:0 0 14px">
+    <button type="button" data-gender="MEN" class="wbf-gender-btn" onclick="selectBrandGender('MEN')">MEN</button>
+    <button type="button" data-gender="LADIES" class="wbf-gender-btn" onclick="selectBrandGender('LADIES')">LADIES</button>
+  </div>
   <div class="category-nav" id="category-nav" style="display:none">
     <button data-category="ALL" class="active">SEMUA</button>
     <button data-category="ATASAN">ATASAN</button>
@@ -511,7 +510,7 @@ let allBrands=[];
 let allProducts=[];
 let selectedBrand="";
 let selectedCategory="ALL";
-let selectedGender="ALL";
+let selectedGender="";
 
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
@@ -584,12 +583,25 @@ function renderCatalog(){
   const status=document.getElementById("catalog-status");
   const count=document.getElementById("catalog-count");
   const catNav=document.getElementById("category-nav");
+  const brandGenderNav=document.getElementById("brand-gender-nav");
+
+  if(brandGenderNav){
+    brandGenderNav.style.display=selectedBrand?"flex":"none";
+    brandGenderNav.querySelectorAll(".wbf-gender-btn").forEach(b=>b.classList.toggle("active",b.dataset.gender===selectedGender));
+  }
 
   let products=allProducts;
   if(selectedBrand){
     products=products.filter(p=>p.brand_id===WBF_BRANDS[selectedBrand]);
-    catNav.style.display="flex";
-  }else if(selectedGender!=="ALL"){
+    catNav.style.display=selectedGender?"flex":"none";
+    if(!selectedGender){
+      document.getElementById("catalog-title").textContent=selectedBrand;
+      count.textContent="Pilih MEN atau LADIES";
+      status.textContent="";
+      catalog.innerHTML='<div class="catalog-status">Pilih koleksi MEN atau LADIES untuk melihat produk.</div>';
+      return;
+    }
+  }else if(selectedGender!=="ALL" && selectedGender){
     catNav.style.display="flex";
   }else{
     catNav.style.display="none";
@@ -631,7 +643,7 @@ function renderCatalog(){
       }
     }
   }
-  if(selectedGender!=="ALL"){
+  if(selectedGender && selectedGender!=="ALL"){
     products=products.filter(p=>(p.gender||"MEN").toUpperCase()===selectedGender);
   }
   if(selectedCategory!=="ALL"){
@@ -700,8 +712,7 @@ function showHome(){
   document.getElementById("catalog-section").style.display="block";
   selectedBrand="";
   selectedCategory="ALL";
-  selectedGender="ALL";
-  document.querySelectorAll(".wbf-gender-btn").forEach(b=>b.classList.toggle("active",b.dataset.gender==="ALL"));
+  selectedGender="";
   renderCatalog();
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -747,15 +758,11 @@ async function loadCustomerEvents(){
   }
 }
 
-function showGenderCollection(gender){
+function selectBrandGender(gender){
+  if(!selectedBrand)return;
   selectedGender=gender;
-  selectedBrand="";
   selectedCategory="ALL";
-  document.querySelectorAll(".wbf-gender-btn").forEach(b=>b.classList.toggle("active",b.dataset.gender===gender));
-  document.querySelector(".hero").style.display="none";
-  document.getElementById("main-navigation").style.display="none";
-  document.getElementById("brands").style.display="none";
-  document.getElementById("catalog-section").style.display="block";
+  document.querySelectorAll("#brand-gender-nav .wbf-gender-btn").forEach(b=>b.classList.toggle("active",b.dataset.gender===gender));
   document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
   renderCatalog();
   document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
@@ -763,11 +770,13 @@ function showGenderCollection(gender){
 
 function filterBrand(brand){
   selectedBrand=brand;
+  selectedGender="";
   selectedCategory="ALL";
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
   document.getElementById("brands").style.display="none";
   document.getElementById("catalog-section").style.display="block";
+  document.querySelectorAll("#brand-gender-nav .wbf-gender-btn").forEach(b=>b.classList.remove("active"));
   document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
   renderCatalog();
   document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
