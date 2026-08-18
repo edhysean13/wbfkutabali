@@ -661,6 +661,13 @@ html, body {
 <meta name="apple-mobile-web-app-title" content="WBF Admin">
 <link rel="apple-touch-icon" href="./wbf-admin-icon-192.png">
 
+<style id="wbf-product-photo-admin">
+#productPhotoPreview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px}
+.wbf-photo-preview-item{border:1px solid #292929;border-radius:8px;background:#0d0d0d;overflow:hidden;text-align:center}
+.wbf-photo-preview-item img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}
+.wbf-photo-preview-item div{padding:4px;font-size:9px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+
 </head>
 <body>
 <section id="login" class="wrap">
@@ -826,7 +833,7 @@ html, body {
   <span>TAMPILKAN DI NEW ARRIVAL</span>
 </label>
 <div class="muted" style="margin-top:5px">Centang jika produk ini ingin tampil di layar New Arrival customer.</div>
-<label>Photo Product</label><input id="productPhoto" type="file" accept="image/*"><div id="productPhotoPreview" class="muted" style="margin-top:8px"></div>
+<label>Photo Product (maks. 3 foto)</label><input id="productPhoto" type="file" accept="image/*" multiple><div id="productPhotoPreview" class="muted" style="margin-top:8px"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
 <button id="saveProductBtn" type="button">SAVE PRODUCT</button>
 <button id="cancelEditBtn" type="button" class="back hidden">CANCEL EDIT</button>
@@ -1506,8 +1513,8 @@ function editProduct(productId, products){
   document.getElementById("productDiscount").value=p.discount??0;
   document.getElementById("productNewArrival").checked=!!p.is_new_arrival;
   document.getElementById("productPhoto").value="";
-  const photoPreview=document.getElementById("productPhotoPreview");
-  if(photoPreview) photoPreview.innerHTML=p.image_url?'<img src="'+escapeHtml(p.image_url)+'" style="width:120px;height:120px;object-fit:cover;border-radius:10px"><div class="muted">Foto saat ini</div>':"";
+  const existingImages=Array.isArray(p.image_urls)&&p.image_urls.length?p.image_urls:(p.image_url?[p.image_url]:[]);
+  renderProductPhotoPreview(existingImages,true);
   document.getElementById("saveProductBtn").textContent="UPDATE PRODUCT";
   document.getElementById("cancelEditBtn").classList.remove("hidden");
   document.getElementById("productsPage").classList.remove("hidden");
@@ -1515,6 +1522,21 @@ function editProduct(productId, products){
   document.getElementById("productForm").classList.remove("hidden");
   document.getElementById("productForm").scrollIntoView({behavior:"smooth",block:"start"});
 }
+
+function renderProductPhotoPreview(urls,existing=false){
+  const preview=document.getElementById("productPhotoPreview");
+  if(!preview)return;
+  const list=(Array.isArray(urls)?urls:[]).filter(Boolean).slice(0,3);
+  if(!list.length){ preview.innerHTML=""; return; }
+  preview.innerHTML=list.map((url,idx)=>'<div class="wbf-photo-preview-item"><img src="'+escapeHtml(url)+'" alt="Foto '+(idx+1)+'"><div>Foto '+(idx+1)+(existing?' · tersimpan':'')+'</div></div>').join("");
+}
+
+document.getElementById("productPhoto").addEventListener("change",()=>{
+  const files=Array.from(document.getElementById("productPhoto").files||[]).slice(0,3);
+  if(files.length>3) alert("Maksimal 3 foto product.");
+  const urls=files.map(f=>URL.createObjectURL(f));
+  renderProductPhotoPreview(urls,false);
+});
 
 function cancelEditProduct(){
   editingProductId="";
@@ -1538,7 +1560,7 @@ async function saveProductToDatabase(){
   const price=Number(document.getElementById("productPrice").value);
   const discount=Number(document.getElementById("productDiscount").value||0);
   const isNewArrival=document.getElementById("productNewArrival").checked;
-  const photo=document.getElementById("productPhoto").files[0];
+  const photos=Array.from(document.getElementById("productPhoto").files||[]).slice(0,3);
 
   if(!brand||!category||!sku||!name||!Number.isFinite(price)||price<0){
     alert("Brand, Category, SKU, Product Name dan Price wajib diisi."); return;
@@ -1552,8 +1574,8 @@ async function saveProductToDatabase(){
     const brandId=getBrandId(brand);
     if(!brandId) throw new Error("Brand tidak ditemukan.");
 
-    let imageUrl=null;
-    if(photo){
+    const imageUrls=[];
+    for(const photo of photos){
       const safeName=photo.name.toLowerCase().replace(/[^a-z0-9._-]+/g,"-");
       const path="admin/"+crypto.randomUUID()+"-"+safeName;
       const uploadRes=await fetch(URL+"/storage/v1/object/product-photos/"+path,{
@@ -1570,7 +1592,7 @@ async function saveProductToDatabase(){
         const err=await uploadRes.json().catch(()=>({}));
         throw new Error(err.message||err.error||"Gagal upload foto product.");
       }
-      imageUrl=URL+"/storage/v1/object/public/product-photos/"+path;
+      imageUrls.push(URL+"/storage/v1/object/public/product-photos/"+path);
     }
 
     const common={
@@ -1583,7 +1605,7 @@ async function saveProductToDatabase(){
       p_is_new_arrival:isNewArrival,
       p_sizes:size?size.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
       p_colors:color?color.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
-      p_image_url:imageUrl
+      p_image_urls:imageUrls
     };
 
     const endpoint=editingProductId
@@ -1624,6 +1646,7 @@ async function saveProductToDatabase(){
     ["productSku","productName","productSize","productColor","productPrice","productDiscount"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("productNewArrival").checked=false;
     document.getElementById("productPhoto").value="";
+    document.getElementById("productPhotoPreview").innerHTML="";
 
     await refreshProductCount();
     if(selectedBrand&&selectedCategory){

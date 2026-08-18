@@ -326,6 +326,19 @@ body.wbf-event-mode .wbf-event-photo{
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <script src="./wbf-pwa.js"></script>
+
+<style id="wbf-product-gallery">
+#wbfProductGallery{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:20000;display:none;align-items:center;justify-content:center;touch-action:none}
+#wbfProductGallery.show{display:flex}
+.wbf-gallery-stage{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.wbf-gallery-image{max-width:94vw;max-height:86vh;width:auto;height:auto;object-fit:contain;user-select:none;-webkit-user-drag:none;border-radius:8px}
+.wbf-gallery-close{position:absolute;top:18px;right:18px;width:42px!important;height:42px!important;margin:0!important;border:0!important;background:rgba(255,255,255,.12)!important;color:#fff!important;border-radius:50%!important;font-size:28px!important;line-height:1!important;z-index:3}
+.wbf-gallery-prev,.wbf-gallery-next{position:absolute;top:50%;transform:translateY(-50%);width:44px!important;height:44px!important;margin:0!important;border:0!important;background:rgba(255,255,255,.12)!important;color:#fff!important;border-radius:50%!important;font-size:28px!important;z-index:3}
+.wbf-gallery-prev{left:14px}.wbf-gallery-next{right:14px}
+.wbf-gallery-counter{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.55);padding:6px 10px;border-radius:20px;font-size:12px;z-index:3}
+@media(max-width:600px){.wbf-gallery-image{max-width:100vw;max-height:82vh}.wbf-gallery-prev,.wbf-gallery-next{width:38px!important;height:38px!important;font-size:23px!important}.wbf-gallery-prev{left:8px}.wbf-gallery-next{right:8px}}
+.photo{cursor:zoom-in}
+</style>
 </head>
 <body>
 
@@ -428,6 +441,16 @@ Jl. Bypass Ngurah Rai No 11H, Badung, Bali, Indonesia
       <div class="wbf-cart-total"><span>TOTAL</span><span id="wbfCartTotal">Rp 0</span></div>
       <button class="wbf-cart-checkout" type="button" onclick="checkoutWbfCart()">CHECKOUT</button>
     </div>
+  </div>
+</div>
+
+<div id="wbfProductGallery" aria-hidden="true">
+  <div class="wbf-gallery-stage" id="wbfGalleryStage">
+    <button type="button" class="wbf-gallery-close" onclick="closeProductGallery()" aria-label="Tutup">×</button>
+    <button type="button" class="wbf-gallery-prev" onclick="galleryPrev()" aria-label="Foto sebelumnya">‹</button>
+    <img id="wbfGalleryImage" class="wbf-gallery-image" alt="Product">
+    <button type="button" class="wbf-gallery-next" onclick="galleryNext()" aria-label="Foto berikutnya">›</button>
+    <div id="wbfGalleryCounter" class="wbf-gallery-counter"></div>
   </div>
 </div>
 
@@ -621,8 +644,9 @@ function renderCatalog(){
   catalog.innerHTML=products.map(p=>{
     const discount=Number(p.discount||0);
     const sale=Math.max(0,Number(p.price||0)*(1-discount/100));
-    const image=p.image_url
-      ? '<div class="photo"><img src="'+esc(p.image_url)+'" alt="'+esc(p.name||"Product")+'" loading="lazy"></div>'
+    const imageUrls=Array.isArray(p.image_urls)&&p.image_urls.length?p.image_urls:(p.image_url?[p.image_url]:[]);
+    const image=imageUrls.length
+      ? '<div class="photo product-gallery-trigger" data-product-id="'+esc(p.id)+'"><img src="'+esc(imageUrls[0])+'" alt="'+esc(p.name||"Product")+'" loading="lazy"></div>'
       : '<div class="photo">NO PHOTO</div>';
     const sizes=(p.sizes||[]).join(" / ");
     const colors=(p.colors||[]).join(" / ");
@@ -643,6 +667,9 @@ function renderCatalog(){
       '<button class="order" onclick="addToCart(\''+esc(p.id)+'\')">ORDER</button>'+
       '</div></article>';
   }).join("");
+    catalog.querySelectorAll(".product-gallery-trigger").forEach(el=>{
+      el.addEventListener("click",()=>openProductGallery(el.dataset.productId));
+    });
 }
 
 
@@ -727,6 +754,56 @@ document.querySelectorAll(".category-nav button").forEach(btn=>{
   });
 });
 
+
+let wbfGalleryImages=[];
+let wbfGalleryIndex=0;
+function getProductImages(p){
+  return (Array.isArray(p?.image_urls)&&p.image_urls.length?p.image_urls:(p?.image_url?[p.image_url]:[])).filter(Boolean).slice(0,3);
+}
+function openProductGallery(productId){
+  const p=allProducts.find(x=>String(x.id)===String(productId));
+  if(!p)return;
+  wbfGalleryImages=getProductImages(p);
+  if(!wbfGalleryImages.length)return;
+  wbfGalleryIndex=0;
+  const modal=document.getElementById("wbfProductGallery");
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  renderProductGallery();
+}
+function renderProductGallery(){
+  const img=document.getElementById("wbfGalleryImage");
+  const counter=document.getElementById("wbfGalleryCounter");
+  if(!img)return;
+  img.src=wbfGalleryImages[wbfGalleryIndex];
+  counter.textContent=(wbfGalleryIndex+1)+" / "+wbfGalleryImages.length;
+  document.querySelector(".wbf-gallery-prev").style.display=wbfGalleryImages.length>1?"block":"none";
+  document.querySelector(".wbf-gallery-next").style.display=wbfGalleryImages.length>1?"block":"none";
+}
+function galleryPrev(){ if(wbfGalleryImages.length<2)return; wbfGalleryIndex=(wbfGalleryIndex-1+wbfGalleryImages.length)%wbfGalleryImages.length; renderProductGallery(); }
+function galleryNext(){ if(wbfGalleryImages.length<2)return; wbfGalleryIndex=(wbfGalleryIndex+1)%wbfGalleryImages.length; renderProductGallery(); }
+function closeProductGallery(){
+  const modal=document.getElementById("wbfProductGallery");
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+}
+(function(){
+  const stage=document.getElementById("wbfGalleryStage");
+  if(!stage)return;
+  let startX=0,startY=0;
+  stage.addEventListener("touchstart",e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});
+  stage.addEventListener("touchend",e=>{const t=e.changedTouches[0];const dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){dx<0?galleryNext():galleryPrev();}},{passive:true});
+  stage.addEventListener("click",e=>{if(e.target===stage)closeProductGallery();});
+  document.addEventListener("keydown",e=>{
+    const modal=document.getElementById("wbfProductGallery");
+    if(!modal.classList.contains("show"))return;
+    if(e.key==="Escape")closeProductGallery();
+    if(e.key==="ArrowLeft")galleryPrev();
+    if(e.key==="ArrowRight")galleryNext();
+  });
+})();
 
 let wbfCart=JSON.parse(localStorage.getItem("wbf_cart")||"[]");
 
