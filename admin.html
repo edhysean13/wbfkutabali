@@ -1583,8 +1583,7 @@ async function saveProductToDatabase(){
       p_is_new_arrival:isNewArrival,
       p_sizes:size?size.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
       p_colors:color?color.split(/[\/,]+/).map(s=>s.trim()).filter(Boolean):[],
-      p_image_url:imageUrl,
-      p_is_new_arrival:isNewArrival
+      p_image_url:imageUrl
     };
 
     const endpoint=editingProductId
@@ -1658,11 +1657,11 @@ saveProductBtn.addEventListener("click",saveProductToDatabase);
     "JUICEMATIC":"JUICEMATIC"
   };
   const brandIds={
-    "VOLCOM":"0f2d5b4d-4a8d-4c6e-b7d8-6f7f3f0c7c55",
+    "VOLCOM":"fc2b3b92-68d6-423e-b931-1870e08ac91d",
     "RIPCURL":"86491a6e-6e3e-4d07-a658-7a7078034d21",
     "MAE BALI":"c71cdd00-c291-4933-a237-778f35ae3b33",
     "ZOMBIES":"13ba8be4-abe4-4f29-9173-219c33fef936",
-    "TRIDATU BALI":"6910b3d5-0899-4d17-ab52-6322f6c8d-423e-b931-1870e08ac91d",
+    "TRIDATU BALI":"6910b3d5-0899-4d17-ab52-6322f621c355",
     "JUICEMATIC":"58c2f116-5a4d-4be7-a6a7-73b6ace23981"
   };
 
@@ -1794,7 +1793,7 @@ saveProductBtn.addEventListener("click",saveProductToDatabase);
 <script id="wbf-admin-pwa">
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./wbf-app-sw.js", {scope:"./"}).catch(() => {});
+    navigator.serviceWorker.register("./wbf-admin-sw.js", {scope:"./", updateViaCache:"none"}).catch(() => {});
   });
 }
 </script>
