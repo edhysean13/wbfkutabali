@@ -1,4 +1,4 @@
-const CACHE_NAME = "wbf-admin-v1";
+const CACHE_NAME = "wbf-admin-v2";
 const STATIC_ASSETS = [
   "./admin.html",
   "./wbf-admin-manifest.webmanifest",
