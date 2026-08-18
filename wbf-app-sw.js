@@ -1,4 +1,4 @@
-const CACHE_NAME = "wbf-app-v4";
+const CACHE_NAME = "wbf-app-v5";
 
 const STATIC_ASSETS = [
   "./wbf-logo-online-order.png",

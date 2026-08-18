@@ -1274,6 +1274,41 @@ showHome();
 updateCartBadge();
 loadCustomerBrands();
 loadCustomerProducts();
+
+/* WBF LIVE CUSTOMER CATALOG SYNC
+   Keeps the installed PWA in sync with admin changes without reinstalling.
+   Uses the existing public RPCs and preserves the current screen/filter state. */
+(function(){
+  let wbfSyncBusy = false;
+
+  async function syncCustomerData(){
+    if (wbfSyncBusy || document.hidden) return;
+    wbfSyncBusy = true;
+    try {
+      await Promise.allSettled([
+        loadCustomerBrands(),
+        loadCustomerProducts()
+      ]);
+
+      const events = document.getElementById("events");
+      const eventGrid = document.getElementById("customer-events-grid");
+      if (events && eventGrid && events.style.display !== "none") {
+        await loadCustomerEvents();
+      }
+    } finally {
+      wbfSyncBusy = false;
+    }
+  }
+
+  // Fast first refresh after the page becomes visible.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) syncCustomerData();
+  });
+
+  // Keep an already-open customer PWA synchronized with admin changes.
+  setInterval(syncCustomerData, 10000);
+})();
+
 </script>
 </body>
 </html>
