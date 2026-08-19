@@ -643,10 +643,7 @@ function renderCatalog(){
   const genderNav=document.getElementById("gender-nav");
   if(selectedBrand){
     products=products.filter(p=>p.brand_id===WBF_BRANDS[selectedBrand]);
-    // Saat brand dipilih, tampilkan MEN/LADIES terlebih dahulu.
-    // Setelah salah satu gender dipilih, tombol gender disembunyikan
-    // dan area ini berubah menjadi tombol kategori.
-    genderNav.style.display=selectedGender?"none":"flex";
+    genderNav.style.display="flex";
     if(!selectedGender){
       catNav.style.display="none";
       products=[];
@@ -827,12 +824,6 @@ document.querySelectorAll("#gender-nav button").forEach(btn=>{
   btn.addEventListener("click",()=>{
     selectedGender=btn.dataset.gender;
     selectedCategory="ALL";
-
-    // Gender hanya menjadi langkah pilihan awal.
-    // Setelah dipilih, tombol MEN/LADIES hilang dan kategori muncul.
-    document.getElementById("gender-nav").style.display="none";
-    document.getElementById("category-nav").style.display="flex";
-
     document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",b===btn));
     document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
     renderCatalog();
