@@ -27,6 +27,26 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
 .special-promo-section .section-head h2{font-size:24px}
 .special-promo-note{color:#888;font-size:12px}
 .special-promo-empty{grid-column:1/-1;color:#777;padding:20px 0;text-align:center;border:1px solid #282828;border-radius:12px;background:#111}
+.special-promo-grid .card{
+  background:#071a2e;
+  border:1px solid #1688d8;
+  box-shadow:0 0 0 1px rgba(22,136,216,.18);
+  position:relative;
+}
+.special-promo-grid .card .tag{
+  display:inline-block;
+  background:#1688d8;
+  color:#fff;
+  padding:4px 7px;
+  border-radius:5px;
+  letter-spacing:.8px;
+}
+.special-promo-grid .card .sale-price{
+  color:#5ec5ff;
+}
+.special-promo-grid .card .old-price{
+  color:#777;
+}
 @media(max-width:800px){
   .products{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
   .special-promo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
