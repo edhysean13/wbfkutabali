@@ -340,33 +340,35 @@ body.wbf-event-mode .wbf-event-photo{
 .photo{cursor:zoom-in}
 </style>
 
+<style id="wbf-iphone-install-note-css">
+.wbf-iphone-install-note{display:none;background:#fff;color:#111;border:1px solid #ddd;border-radius:10px;margin:10px 0 12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);height:44px;align-items:center}
+.wbf-iphone-track{display:flex;align-items:center;gap:10px;width:max-content;white-space:nowrap;font-size:12px;font-weight:600;padding:0 22px;animation:wbfIphoneTicker 24s linear infinite}
+.wbf-iphone-pulse{font-weight:900;animation:wbfIphonePulse 2.8s ease-in-out infinite}
+@keyframes wbfIphoneTicker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+@keyframes wbfIphonePulse{0%,100%{opacity:1}50%{opacity:.48}}
+@media(prefers-reduced-motion:reduce){.wbf-iphone-track{animation:none}.wbf-iphone-pulse{animation:none}}
+</style>
 <style id="wbf-push-ui">
-#wbfPushBanner{display:none;position:fixed;left:0;right:0;bottom:0;z-index:30000;overflow:hidden;background:#fff;color:#111;border-top:1px solid #ddd;box-shadow:0 -4px 14px rgba(0,0,0,.12);height:30px}
-#wbfPushBanner.show{display:block}
-#wbfPushBanner .wbf-push-track{display:flex;width:max-content;min-width:100%;align-items:center;height:30px;animation:wbfPushTicker 18s linear infinite;white-space:nowrap}
-#wbfPushBanner .wbf-push-copy{font-size:10px;line-height:30px;padding-right:70px;font-weight:600}
-#wbfPushBanner .wbf-push-title{font-weight:800;display:inline}
-#wbfPushBanner .wbf-push-text{display:inline;margin-left:6px}
-#wbfPushBanner .wbf-push-action{display:inline-block;margin-left:9px;background:#111;color:#fff;border:0;border-radius:5px;padding:4px 7px;font-size:9px;font-weight:800;line-height:1}
-#wbfPushBanner .wbf-push-close{position:absolute;right:4px;top:4px;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:#eee;color:#555;font-size:14px;z-index:2}
-#wbfPushActive{display:none;position:fixed;right:10px;bottom:10px;z-index:29999;background:#111;border:1px solid #333;border-radius:20px;padding:7px 10px;color:#fff;font-size:9px}
-@keyframes wbfPushTicker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
-@media (prefers-reduced-motion: reduce){#wbfPushBanner .wbf-push-track{animation:none}}
+#wbfPushBanner{display:none;position:fixed;left:14px;right:14px;bottom:14px;z-index:30000;background:#111;color:#fff;border:1px solid #333;border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#wbfPushBanner.show{display:flex;align-items:center;gap:10px}
+#wbfPushBanner .wbf-push-copy{flex:1;min-width:0}
+#wbfPushBanner .wbf-push-title{font-weight:800;font-size:13px;display:block;margin-bottom:2px}
+#wbfPushBanner .wbf-push-text{color:#aaa;font-size:11px;line-height:1.35}
+#wbfPushEnable{flex:none;background:#e21b23;color:#fff;border:0;border-radius:8px;padding:9px 11px;font-size:11px;font-weight:800}
+#wbfPushClose{flex:none;background:transparent;color:#777;border:0;padding:5px;font-size:16px}
+#wbfPushActive{display:none;position:fixed;right:14px;bottom:14px;z-index:29999;background:#111;border:1px solid #333;border-radius:20px;padding:8px 11px;color:#aaa;font-size:10px}
 </style>
 
 </head>
 <body>
 
 <div id="wbfPushBanner" aria-live="polite">
-  <div class="wbf-push-track">
-    <div class="wbf-push-copy">
-      <span class="wbf-push-title">📱 KHUSUS iPHONE:</span>
-      <span class="wbf-push-text">Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon.</span>
-      <span>Caranya: <b>Share → Tambahkan ke Layar Utama</b></span>
-      <button id="wbfPushEnable" class="wbf-push-action" type="button">AKTIFKAN NOTIFIKASI</button>
-    </div>
+  <div class="wbf-push-copy">
+    <div class="wbf-push-title">🔔 Aktifkan Notifikasi</div>
+    <div class="wbf-push-text">Dapatkan update status order kamu secara langsung.</div>
   </div>
-  <button id="wbfPushClose" class="wbf-push-close" type="button" aria-label="Tutup">×</button>
+  <button id="wbfPushEnable" type="button">AKTIFKAN NOTIFIKASI</button>
+  <button id="wbfPushClose" type="button" aria-label="Tutup">×</button>
 </div>
 <div id="wbfPushActive">✓ Notifikasi Aktif</div>
 
@@ -400,6 +402,13 @@ body.wbf-event-mode .wbf-event-photo{
   <div class="section-head">
     <h2>Brands</h2>
     <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
+  </div>
+  <div id="wbfIphoneInstallNote" class="wbf-iphone-install-note" aria-label="Panduan iPhone">
+    <div class="wbf-iphone-track">
+      <span class="wbf-iphone-pulse">📱 KHUSUS iPHONE:</span>
+      <span>Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon.</span>
+      <span>Caranya: <b>Share → Tambahkan ke Layar Utama</b></span>
+    </div>
   </div>
   <div class="brands-page-grid" id="customer-brands-grid"></div>
 </section>
@@ -1457,6 +1466,16 @@ loadCustomerProducts();
     if(!isIOS)banner.remove();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply();
+})();
+</script>
+<script id="wbf-iphone-install-note-script">
+(function(){
+ function apply(){
+  const el=document.getElementById("wbfIphoneInstallNote"); if(!el)return;
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  el.style.display=ios?"flex":"none";
+ }
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply();
 })();
 </script>
 </body>
