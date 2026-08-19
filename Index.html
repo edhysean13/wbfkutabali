@@ -381,10 +381,17 @@ body.wbf-event-mode .wbf-event-photo{
 @media(prefers-reduced-motion:reduce){#wbfIphoneExploreNote .wbf-iphone-title,#wbfIphoneExploreNote .wbf-iphone-icon{animation:none}}
 
 <style id="wbf-customer-gender-filter">
-.gender-nav{display:none;gap:7px;overflow-x:auto;padding:2px 0 8px;margin:0 0 4px}
-.gender-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 14px;font-weight:700;font-size:11px;min-height:36px}
+.gender-nav{display:none;grid-template-columns:1fr 1fr;gap:8px;width:100%;box-sizing:border-box;padding:0;margin:0 0 8px}
+.gender-nav button{width:100%;white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:8px;padding:10px 12px;font-weight:800;font-size:13px;min-height:42px}
 .gender-nav button.active{background:#fff;color:#111}
-</style>
+.category-nav{display:none;flex-wrap:wrap;gap:7px;width:100%;box-sizing:border-box;margin:0 0 10px;overflow:visible}
+.category-nav button{flex:0 0 auto;white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:8px;padding:10px 13px;font-weight:800;font-size:12px;min-height:40px}
+.category-nav button.active{background:#fff;color:#111}
+@media(max-width:600px){
+  .gender-nav button{font-size:13px;min-height:44px}
+  .category-nav{gap:7px}
+  .category-nav button{font-size:12px;padding:9px 12px;min-height:40px}
+}
 </style>
 </head>
 <body>
@@ -829,7 +836,9 @@ function filterBrand(brand){
   selectedGender="";
   selectedCategory="ALL";
   const genderNav=document.getElementById("gender-nav");
-  if(genderNav) genderNav.style.display="flex";
+  const catNav=document.getElementById("category-nav");
+  if(genderNav){ genderNav.style.display="grid"; }
+  if(catNav){ catNav.style.display="none"; }
   document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",false));
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
@@ -846,6 +855,8 @@ document.querySelectorAll("#gender-nav button").forEach(btn=>{
     selectedCategory="ALL";
     document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",b===btn));
     document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
+    const catNav=document.getElementById("category-nav");
+    if(catNav) catNav.style.display="flex";
     renderCatalog();
   });
 });
