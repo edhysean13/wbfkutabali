@@ -31,28 +31,24 @@
 
   async function saveSubscription(sub) {
     const keys = sub.toJSON().keys || {};
-    const body = {
-      device_id: deviceId(),
-      role: getRole(),
-      customer_phone: getPhone(),
-      endpoint: sub.endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
-      user_agent: navigator.userAgent,
-      active: true
-    };
-
-    const res = await fetch(SUPABASE_URL + "/rest/v1/push_subscriptions", {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/register_push_subscription", {
       method: "POST",
       headers: {
         "apikey": SUPABASE_KEY,
         "Authorization": "Bearer " + SUPABASE_KEY,
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=minimal"
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        p_device_id: deviceId(),
+        p_role: getRole(),
+        p_customer_phone: getPhone(),
+        p_endpoint: sub.endpoint,
+        p_p256dh: keys.p256dh,
+        p_auth: keys.auth,
+        p_user_agent: navigator.userAgent,
+        p_active: true
+      })
     });
-
     if (!res.ok) {
       const text = await res.text();
       throw new Error(text || ("HTTP " + res.status));

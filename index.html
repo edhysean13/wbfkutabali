@@ -341,45 +341,32 @@ body.wbf-event-mode .wbf-event-photo{
 </style>
 
 <style id="wbf-push-ui">
-#wbfPushBanner{
-  display:none;
-  position:fixed;
-  left:14px;right:14px;bottom:14px;
-  z-index:30000;
-  background:#111;
-  border:1px solid #333;
-  border-radius:14px;
-  padding:13px 14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.45);
-}
-#wbfPushBanner.show{display:flex;align-items:center;gap:10px}
-#wbfPushBanner .wbf-push-copy{flex:1;min-width:0}
-#wbfPushBanner .wbf-push-title{font-weight:800;font-size:13px;margin-bottom:3px}
-#wbfPushBanner .wbf-push-text{color:#aaa;font-size:11px;line-height:1.35}
-#wbfPushEnable{
-  flex:none;background:#e21b23;color:#fff;border:0;border-radius:8px;
-  padding:9px 11px;font-size:11px;font-weight:800
-}
-#wbfPushClose{
-  flex:none;background:transparent;color:#777;border:0;padding:5px;font-size:16px
-}
-#wbfPushActive{
-  display:none;position:fixed;right:14px;bottom:14px;z-index:29999;
-  background:#111;border:1px solid #333;border-radius:20px;padding:8px 11px;
-  color:#aaa;font-size:10px
-}
+#wbfPushBanner{display:none;position:fixed;left:0;right:0;bottom:0;z-index:30000;overflow:hidden;background:#fff;color:#111;border-top:1px solid #ddd;box-shadow:0 -4px 14px rgba(0,0,0,.12);height:30px}
+#wbfPushBanner.show{display:block}
+#wbfPushBanner .wbf-push-track{display:flex;width:max-content;min-width:100%;align-items:center;height:30px;animation:wbfPushTicker 18s linear infinite;white-space:nowrap}
+#wbfPushBanner .wbf-push-copy{font-size:10px;line-height:30px;padding-right:70px;font-weight:600}
+#wbfPushBanner .wbf-push-title{font-weight:800;display:inline}
+#wbfPushBanner .wbf-push-text{display:inline;margin-left:6px}
+#wbfPushBanner .wbf-push-action{display:inline-block;margin-left:9px;background:#111;color:#fff;border:0;border-radius:5px;padding:4px 7px;font-size:9px;font-weight:800;line-height:1}
+#wbfPushBanner .wbf-push-close{position:absolute;right:4px;top:4px;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:#eee;color:#555;font-size:14px;z-index:2}
+#wbfPushActive{display:none;position:fixed;right:10px;bottom:10px;z-index:29999;background:#111;border:1px solid #333;border-radius:20px;padding:7px 10px;color:#fff;font-size:9px}
+@keyframes wbfPushTicker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion: reduce){#wbfPushBanner .wbf-push-track{animation:none}}
 </style>
 
 </head>
 <body>
 
 <div id="wbfPushBanner" aria-live="polite">
-  <div class="wbf-push-copy">
-    <div class="wbf-push-title">🔔 Aktifkan Notifikasi</div>
-    <div class="wbf-push-text">Dapatkan update status order kamu secara langsung.</div>
+  <div class="wbf-push-track">
+    <div class="wbf-push-copy">
+      <span class="wbf-push-title">📱 KHUSUS iPHONE:</span>
+      <span class="wbf-push-text">Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon.</span>
+      <span>Caranya: <b>Share → Tambahkan ke Layar Utama</b></span>
+      <button id="wbfPushEnable" class="wbf-push-action" type="button">AKTIFKAN NOTIFIKASI</button>
+    </div>
   </div>
-  <button id="wbfPushEnable" type="button">AKTIFKAN</button>
-  <button id="wbfPushClose" type="button" aria-label="Tutup">×</button>
+  <button id="wbfPushClose" class="wbf-push-close" type="button" aria-label="Tutup">×</button>
 </div>
 <div id="wbfPushActive">✓ Notifikasi Aktif</div>
 
@@ -1432,60 +1419,45 @@ loadCustomerProducts();
 
 <script id="wbf-push-ui-script">
 (function(){
-  function ready(fn){
-    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",fn);
-    else fn();
-  }
+  function ready(fn){if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fn);else fn();}
   ready(function(){
-    const banner=document.getElementById("wbfPushBanner");
-    const active=document.getElementById("wbfPushActive");
-    const enable=document.getElementById("wbfPushEnable");
-    const close=document.getElementById("wbfPushClose");
-    if(!banner||!enable) return;
-
+    const banner=document.getElementById("wbfPushBanner"),active=document.getElementById("wbfPushActive");
+    const enable=document.getElementById("wbfPushEnable"),close=document.getElementById("wbfPushClose");
+    if(!banner||!enable)return;
     const dismissed=localStorage.getItem("wbf_push_banner_dismissed")==="1";
-    const isRegistered=localStorage.getItem("wbf_push_registered")==="1";
-
     function showState(){
       const ok=localStorage.getItem("wbf_push_registered")==="1";
-      if(ok){
-        banner.classList.remove("show");
-        if(active) active.style.display="block";
-      }else if(!dismissed){
-        banner.classList.add("show");
-      }
+      if(ok){banner.classList.remove("show");if(active)active.style.display="block";}
+      else if(!dismissed)banner.classList.add("show");
     }
-
-    enable.addEventListener("click", async function(){
-      enable.disabled=true;
-      enable.textContent="MEMPROSES...";
+    enable.addEventListener("click",async function(){
+      enable.disabled=true;enable.textContent="MEMPROSES...";
       try{
-        if(!window.WBF_PUSH || typeof window.WBF_PUSH.enable!=="function")
-          throw new Error("Modul notifikasi belum siap.");
+        if(!window.WBF_PUSH||typeof window.WBF_PUSH.enable!=="function")throw new Error("Modul notifikasi belum siap.");
         const phone=localStorage.getItem("wbf_customer_phone")||"";
-        if(phone && window.WBF_PUSH.setCustomerPhone) window.WBF_PUSH.setCustomerPhone(phone);
-        if(window.WBF_PUSH.setRole) window.WBF_PUSH.setRole("customer");
+        if(phone&&window.WBF_PUSH.setCustomerPhone)window.WBF_PUSH.setCustomerPhone(phone);
+        if(window.WBF_PUSH.setRole)window.WBF_PUSH.setRole("customer");
         const ok=await window.WBF_PUSH.enable();
-        if(!ok) throw new Error("Notifikasi belum dapat diaktifkan di perangkat ini.");
-        banner.classList.remove("show");
-        if(active) active.style.display="block";
-      }catch(e){
-        alert(e && e.message ? e.message : "Notifikasi gagal diaktifkan.");
-      }finally{
-        enable.disabled=false;
-        enable.textContent="AKTIFKAN";
-      }
+        if(!ok)throw new Error("Notifikasi belum dapat diaktifkan di perangkat ini.");
+        banner.classList.remove("show");if(active)active.style.display="block";
+      }catch(e){alert(e&&e.message?e.message:"Notifikasi gagal diaktifkan.");}
+      finally{enable.disabled=false;enable.textContent="AKTIFKAN NOTIFIKASI";}
     });
-
-    close.addEventListener("click",function(){
-      localStorage.setItem("wbf_push_banner_dismissed","1");
-      banner.classList.remove("show");
-    });
-
+    close.addEventListener("click",function(){localStorage.setItem("wbf_push_banner_dismissed","1");banner.classList.remove("show");});
     showState();
   });
 })();
 </script>
 
+<script id="wbf-iphone-only-banner">
+(function(){
+  function apply(){
+    const banner=document.getElementById("wbfPushBanner");if(!banner)return;
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    if(!isIOS)banner.remove();
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply();
+})();
+</script>
 </body>
 </html>
