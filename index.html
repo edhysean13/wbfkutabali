@@ -25,7 +25,7 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
 .card{background:#121212;border:1px solid #282828;border-radius:12px;overflow:hidden}.photo{aspect-ratio:1/1;background:#1a1a1a;color:#888;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover;display:block}
 .info{padding:11px}.tag{font-size:10px;color:#e21b23;font-weight:bold;letter-spacing:1px}.name{font-weight:bold;margin:7px 0}.sku{color:#888;font-size:11px;margin:4px 0}.meta{color:#ddd;font-size:11px;line-height:1.5}.price{font-size:15px;font-weight:bold;margin-top:6px}.old-price{text-decoration:line-through;color:#777;font-size:11px}.sale-price{font-size:16px;font-weight:800}
 .order{width:100%;margin-top:10px;padding:9px;border:0;border-radius:7px;background:#e21b23;color:#fff;font-weight:bold}
-.category-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}.category-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 12px;font-weight:700;font-size:11px}.category-nav button.active{background:#fff;color:#111}
+.gender-nav{display:none;gap:8px;padding:2px 0 8px}.gender-nav button{flex:1;white-space:nowrap;border:1px solid #e21b23;background:#e21b23;color:#fff;border-radius:8px;padding:10px 14px;font-weight:800;font-size:13px}.gender-nav button.active{background:#fff;color:#111;border-color:#fff}.category-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}.category-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 12px;font-weight:700;font-size:11px}.category-nav button.active{background:#fff;color:#111}
 .catalog-status{color:#888;font-size:12px;padding:8px 0}
 @media(max-width:800px){.products{grid-template-columns:repeat(3,1fr);gap:7px}.info{padding:7px}.name{font-size:12px}.sku,.meta{font-size:9px}.price{font-size:12px}.sale-price{font-size:13px}.old-price{font-size:9px}.order{padding:7px;font-size:10px}.photo{aspect-ratio:1/1}}
 .info-box{margin-top:32px;padding:20px;border:1px solid #282828;background:#111;border-radius:14px;color:#bdbdbd;line-height:1.6}
@@ -435,6 +435,10 @@ body.wbf-event-mode .wbf-event-photo{
 <section class="section" id="catalog-section">
   <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="collection-back" onclick="showBrands();return false;" style="display:none;align-self:center">BACK</a></div>
 <div id="wbfIphoneExploreNote" aria-label="Informasi khusus iPhone"><div class="wbf-iphone-copy"><span class="wbf-iphone-icon">📱</span><span class="wbf-iphone-title">KHUSUS iPHONE:</span><span> Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon. Caranya: <b>Share → Tambahkan ke Layar Utama</b></span></div></div>
+  <div class="gender-nav" id="gender-nav" style="display:none" aria-label="Pilih gender">
+    <button type="button" data-gender="MEN">MEN</button>
+    <button type="button" data-gender="LADIES">LADIES</button>
+  </div>
   <div class="category-nav" id="category-nav" style="display:none">
     <button data-category="ALL" class="active">SEMUA</button>
     <button data-category="ATASAN">ATASAN</button>
@@ -560,6 +564,7 @@ let allBrands=[];
 
 let allProducts=[];
 let selectedBrand="";
+let selectedGender="";
 let selectedCategory="ALL";
 
 function esc(v){
@@ -635,10 +640,26 @@ function renderCatalog(){
   const catNav=document.getElementById("category-nav");
 
   let products=allProducts;
+  const genderNav=document.getElementById("gender-nav");
   if(selectedBrand){
     products=products.filter(p=>p.brand_id===WBF_BRANDS[selectedBrand]);
-    catNav.style.display="flex";
+    // Saat brand dipilih, tampilkan MEN/LADIES terlebih dahulu.
+    // Setelah salah satu gender dipilih, tombol gender disembunyikan
+    // dan area ini berubah menjadi tombol kategori.
+    genderNav.style.display=selectedGender?"none":"flex";
+    if(!selectedGender){
+      catNav.style.display="none";
+      products=[];
+      status.textContent="Pilih MEN atau LADIES.";
+    }else{
+      catNav.style.display="flex";
+      products=products.filter(p=>{
+        const g=String(p.gender||p.product_gender||p.collection||p.gender_collection||"").trim().toUpperCase();
+        return g===selectedGender || g==="UNISEX";
+      });
+    }
   }else{
+    genderNav.style.display="none";
     catNav.style.display="none";
 
     // HOME = hanya product yang dipilih sebagai NEW ARRIVAL.
@@ -791,6 +812,7 @@ async function loadCustomerEvents(){
 
 function filterBrand(brand){
   selectedBrand=brand;
+  selectedGender="";
   selectedCategory="ALL";
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
@@ -800,6 +822,22 @@ function filterBrand(brand){
   renderCatalog();
   document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
 }
+
+document.querySelectorAll("#gender-nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    selectedGender=btn.dataset.gender;
+    selectedCategory="ALL";
+
+    // Gender hanya menjadi langkah pilihan awal.
+    // Setelah dipilih, tombol MEN/LADIES hilang dan kategori muncul.
+    document.getElementById("gender-nav").style.display="none";
+    document.getElementById("category-nav").style.display="flex";
+
+    document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",b===btn));
+    document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
+    renderCatalog();
+  });
+});
 
 document.querySelectorAll(".category-nav button").forEach(btn=>{
   btn.addEventListener("click",()=>{
