@@ -617,7 +617,6 @@ async function loadCustomerBrands(){
 
 async function loadCustomerProducts(){
   const status=document.getElementById("catalog-status");
-  status.textContent="Memuat produk...";
   try{
     const res=await fetch(
       WBF_SUPABASE_URL+"/rest/v1/rpc/get_public_products",
@@ -625,11 +624,40 @@ async function loadCustomerProducts(){
     );
     const data=await res.json();
     if(!res.ok) throw new Error(data.message||data.details||"Gagal mengambil katalog.");
-    allProducts=Array.isArray(data)?data:[];
+
+    const nextProducts=Array.isArray(data)?data:[];
+
+    // Jangan render ulang katalog bila data sebenarnya sama.
+    // Ini menjaga gambar tetap hidup dan menghilangkan efek "kedip"
+    // saat live-sync berjalan setiap 10 detik.
+    const stable = x => {
+      if(!x || typeof x!=="object") return x;
+      const o={};
+      Object.keys(x).sort().forEach(k=>{
+        const v=x[k];
+        if(Array.isArray(v)) o[k]=v.map(stable);
+        else if(v && typeof v==="object") o[k]=stable(v);
+        else o[k]=v;
+      });
+      return o;
+    };
+    const signature = JSON.stringify(nextProducts.map(stable));
+    if(signature===window.__wbfProductSignature){
+      return;
+    }
+
+    window.__wbfProductSignature=signature;
+    allProducts=nextProducts;
     renderCatalog();
   }catch(e){
-    document.getElementById("catalog").innerHTML="";
-    status.textContent="Katalog belum dapat dimuat: "+e.message;
+    // Jangan mengosongkan katalog yang sedang tampil hanya karena
+    // satu refresh live-sync gagal.
+    if(!Array.isArray(allProducts) || !allProducts.length){
+      document.getElementById("catalog").innerHTML="";
+      status.textContent="Katalog belum dapat dimuat: "+e.message;
+    }else{
+      console.warn("Refresh katalog WBF gagal:",e);
+    }
   }
 }
 
