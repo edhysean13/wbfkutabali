@@ -843,21 +843,11 @@ html, body {
 <select id="productSizeSelect" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
 <option value="">Pilih Size</option>
 <option value="ALL / ONE SIZE">ALL / ONE SIZE</option>
-<optgroup label="S, M, L, XL, XXL">
-<option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
-</optgroup>
-<optgroup label="6, 8, 10, 12, 14">
-<option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="14">14</option>
-</optgroup>
-<optgroup label="30, 32, 34, 36, 38">
-<option value="30">30</option><option value="32">32</option><option value="34">34</option><option value="36">36</option><option value="38">38</option>
-</optgroup>
-<optgroup label="36, 37, 38, 39, 40">
-<option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option>
-</optgroup>
-<optgroup label="40, 41, 42, 43, 44, 45">
-<option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option>
-</optgroup>
+<option value="S / M / L / XL / XXL">S, M, L, XL, XXL</option>
+<option value="6 / 8 / 10 / 12 / 14">6, 8, 10, 12, 14</option>
+<option value="30 / 32 / 34 / 36 / 38">30, 32, 34, 36, 38</option>
+<option value="36 / 37 / 38 / 39 / 40">36, 37, 38, 39, 40</option>
+<option value="40 / 41 / 42 / 43 / 44 / 45">40, 41, 42, 43, 44, 45</option>
 </select>
 <div class="muted" style="margin-top:5px">Pilih size sesuai produk. Data size lama tetap dipertahankan saat edit jika tidak diubah.</div>
 <label>Color</label><input id="productColor" type="text" placeholder="Contoh: Hitam / Putih">
@@ -1486,15 +1476,40 @@ async function loadBrandProducts(){
     const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brand_products",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({p_brand_id:brandId,p_category:selectedCategory})});
     const products=await res.json();if(!res.ok)throw new Error(products.message||"Gagal mengambil produk.");
     const gendered=products.filter(p=>String(p.gender||"").toUpperCase()===selectedGender);
-    const sizes=[...new Set(gendered.flatMap(p=>Array.isArray(p.sizes)?p.sizes:[]).map(v=>String(v).trim()).filter(Boolean))];
+    const sizeGroups=[
+      {label:"ALL / ONE SIZE", values:["ALL","ONE SIZE","ALL / ONE SIZE"]},
+      {label:"S, M, L, XL, XXL", values:["S","M","L","XL","XXL"]},
+      {label:"6, 8, 10, 12, 14", values:["6","8","10","12","14"]},
+      {label:"30, 32, 34, 36, 38", values:["30","32","34","36","38"]},
+      {label:"36, 37, 38, 39, 40", values:["36","37","38","39","40"]},
+      {label:"40, 41, 42, 43, 44, 45", values:["40","41","42","43","44","45"]}
+    ];
     const sf=document.getElementById("brandSizeFilters");
-    if(sf){sf.innerHTML='<button type="button" class="brand-card size-filter active" data-size="">SEMUA</button>'+sizes.map(sz=>'<button type="button" class="brand-card size-filter" data-size="'+escapeHtml(sz)+'">'+escapeHtml(sz)+'</button>').join("");sf.style.display=sizes.length?"flex":"none";sf.querySelectorAll(".size-filter").forEach(btn=>btn.addEventListener("click",()=>{selectedSize=btn.dataset.size||"";sf.querySelectorAll(".size-filter").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderBrandProducts(gendered);}));}
+    if(sf){
+      const norm=p=>(Array.isArray(p.sizes)?p.sizes:[]).map(v=>String(v).trim().toUpperCase());
+      const available=sizeGroups.filter(g=>gendered.some(p=>{const ps=norm(p);return g.values.some(v=>ps.includes(v));}));
+      sf.innerHTML='<button type="button" class="brand-card size-filter active" data-size="">SEMUA</button>'+available.map(g=>'<button type="button" class="brand-card size-filter" data-size="'+escapeHtml(g.label)+'">'+escapeHtml(g.label)+'</button>').join("");
+      sf.style.display=available.length?"flex":"none";
+      sf.querySelectorAll(".size-filter").forEach(btn=>btn.addEventListener("click",()=>{selectedSize=btn.dataset.size||"";sf.querySelectorAll(".size-filter").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderBrandProducts(gendered);}));
+    }
     renderBrandProducts(gendered);
   }catch(e){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat SKU: '+escapeHtml(e.message)+'</div>';}
 }
 
 function renderBrandProducts(products){
-  const filtered=selectedSize?products.filter(p=>(p.sizes||[]).some(sz=>String(sz).trim()===selectedSize)):products;
+  const sizeGroupMap={
+    "ALL / ONE SIZE":["ALL","ONE SIZE","ALL / ONE SIZE"],
+    "S, M, L, XL, XXL":["S","M","L","XL","XXL"],
+    "6, 8, 10, 12, 14":["6","8","10","12","14"],
+    "30, 32, 34, 36, 38":["30","32","34","36","38"],
+    "36, 37, 38, 39, 40":["36","37","38","39","40"],
+    "40, 41, 42, 43, 44, 45":["40","41","42","43","44","45"]
+  };
+  const filtered=selectedSize?products.filter(p=>{
+    const wanted=sizeGroupMap[selectedSize]||[selectedSize];
+    const actual=(Array.isArray(p.sizes)?p.sizes:[]).map(v=>String(v).trim().toUpperCase());
+    return wanted.some(v=>actual.includes(v));
+  }):products;
   if(!filtered.length){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+escapeHtml(selectedBrand)+' · '+escapeHtml(selectedGender)+' · '+escapeHtml(selectedCategory)+(selectedSize?' · '+escapeHtml(selectedSize):'')+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';return;}
   brandProductsList.innerHTML=filtered.map(p=>{
     const finalPrice=Math.max(0,Number(p.price)*(1-Number(p.discount||0)/100));
@@ -1526,21 +1541,33 @@ let editingProductId="";
 let originalProductSizes = null;
 let productSizeChanged = false;
 
+const WBF_SIZE_GROUPS={
+  "ALL / ONE SIZE":["ALL / ONE SIZE"],
+  "S / M / L / XL / XXL":["S","M","L","XL","XXL"],
+  "6 / 8 / 10 / 12 / 14":["6","8","10","12","14"],
+  "30 / 32 / 34 / 36 / 38":["30","32","34","36","38"],
+  "36 / 37 / 38 / 39 / 40":["36","37","38","39","40"],
+  "40 / 41 / 42 / 43 / 44 / 45":["40","41","42","43","44","45"]
+};
 function setRegisterSizeValue(values){
   const hidden=document.getElementById("productSize");
   const select=document.getElementById("productSizeSelect");
   if(!hidden||!select)return;
   const arr=(Array.isArray(values)?values:[values]).map(v=>String(v??"").trim()).filter(Boolean);
-  const first=arr.length===1?arr[0]:"";
-  if(first && [...select.options].some(o=>o.value===first)) select.value=first;
+  const joined=arr.join(" / ");
+  const exact=Object.entries(WBF_SIZE_GROUPS).find(([key,group])=>group.length===arr.length && group.every((v,i)=>String(arr[i]).toUpperCase()===String(v).toUpperCase()));
+  if(exact) select.value=exact[0];
   else select.value="";
-  hidden.value=arr.join(" / ");
+  hidden.value=joined;
 }
 
 function syncRegisterSizes(){
   const hidden=document.getElementById("productSize"),select=document.getElementById("productSizeSelect");
   if(!hidden||!select)return;
-  if(productSizeChanged){ hidden.value=select.value||""; }
+  if(productSizeChanged){
+    const group=WBF_SIZE_GROUPS[select.value]||[];
+    hidden.value=group.join(" / ");
+  }
 }
 
 function openProductFormForRegister(){
@@ -1570,7 +1597,9 @@ function openProductFormForRegister(){
   document.getElementById("productNewArrival").checked=false;
   document.getElementById("productSpecialPromo").checked=false;
   document.getElementById("productGender").value="MEN";
-  renderRegisterSizePicker([]);
+  originalProductSizes=null;
+  productSizeChanged=false;
+  setRegisterSizeValue([]);
 }
 
 function editProduct(productId, products){
