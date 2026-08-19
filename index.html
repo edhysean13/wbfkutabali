@@ -340,23 +340,95 @@ body.wbf-event-mode .wbf-event-photo{
 .photo{cursor:zoom-in}
 </style>
 
-<style id="wbf-iphone-install-note-css">
-.wbf-iphone-install-note{display:none;background:#fff;color:#111;border:1px solid #ddd;border-radius:10px;margin:10px 0 12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);height:44px;align-items:center}
-.wbf-iphone-track{display:flex;align-items:center;gap:10px;width:max-content;white-space:nowrap;font-size:12px;font-weight:600;padding:0 22px;animation:wbfIphoneTicker 24s linear infinite}
-.wbf-iphone-pulse{font-weight:900;animation:wbfIphonePulse 2.8s ease-in-out infinite}
-@keyframes wbfIphoneTicker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
-@keyframes wbfIphonePulse{0%,100%{opacity:1}50%{opacity:.48}}
-@media(prefers-reduced-motion:reduce){.wbf-iphone-track{animation:none}.wbf-iphone-pulse{animation:none}}
-</style>
 <style id="wbf-push-ui">
-#wbfPushBanner{display:none;position:fixed;left:14px;right:14px;bottom:14px;z-index:30000;background:#111;color:#fff;border:1px solid #333;border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#wbfPushBanner{
+  display:none;
+  position:fixed;
+  left:14px;right:14px;bottom:14px;
+  z-index:30000;
+  background:#111;
+  border:1px solid #333;
+  border-radius:14px;
+  padding:13px 14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+}
 #wbfPushBanner.show{display:flex;align-items:center;gap:10px}
 #wbfPushBanner .wbf-push-copy{flex:1;min-width:0}
-#wbfPushBanner .wbf-push-title{font-weight:800;font-size:13px;display:block;margin-bottom:2px}
+#wbfPushBanner .wbf-push-title{font-weight:800;font-size:13px;margin-bottom:3px}
 #wbfPushBanner .wbf-push-text{color:#aaa;font-size:11px;line-height:1.35}
-#wbfPushEnable{flex:none;background:#e21b23;color:#fff;border:0;border-radius:8px;padding:9px 11px;font-size:11px;font-weight:800}
-#wbfPushClose{flex:none;background:transparent;color:#777;border:0;padding:5px;font-size:16px}
-#wbfPushActive{display:none;position:fixed;right:14px;bottom:14px;z-index:29999;background:#111;border:1px solid #333;border-radius:20px;padding:8px 11px;color:#aaa;font-size:10px}
+#wbfPushEnable{
+  flex:none;background:#e21b23;color:#fff;border:0;border-radius:8px;
+  padding:9px 11px;font-size:11px;font-weight:800
+}
+#wbfPushClose{
+  flex:none;background:transparent;color:#777;border:0;padding:5px;font-size:16px
+}
+#wbfPushActive{
+  display:none;position:fixed;right:14px;bottom:14px;z-index:29999;
+  background:#111;border:1px solid #333;border-radius:20px;padding:8px 11px;
+  color:#aaa;font-size:10px
+}
+</style>
+
+
+<style id="wbf-iphone-explore-note">
+#wbfIphoneExploreNote{
+  display:none;
+  margin:12px 0 16px;
+  background:#fff;
+  color:#111;
+  border:1px solid #ddd;
+  border-radius:14px;
+  min-height:52px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 3px 12px rgba(0,0,0,.10);
+}
+#wbfIphoneExploreNote.show{display:flex;align-items:center}
+#wbfIphoneExploreNote .wbf-iphone-track{
+  display:flex;
+  width:max-content;
+  align-items:center;
+  white-space:nowrap;
+  animation:wbfIphoneTicker 20s linear infinite;
+  padding-left:100%;
+}
+#wbfIphoneExploreNote .wbf-iphone-copy{
+  font-size:13px;
+  line-height:1.3;
+  font-weight:600;
+  padding-right:80px;
+}
+#wbfIphoneExploreNote .wbf-iphone-title{
+  font-weight:900;
+  animation:wbfIphoneBlink 2.8s ease-in-out infinite;
+}
+#wbfIphoneExploreNote .wbf-iphone-icon{
+  display:inline-block;
+  margin-right:6px;
+  animation:wbfIphonePulse 2.8s ease-in-out infinite;
+}
+@keyframes wbfIphoneTicker{
+  from{transform:translateX(0)}
+  to{transform:translateX(-100%)}
+}
+@keyframes wbfIphoneBlink{
+  0%,100%{opacity:1}
+  50%{opacity:.45}
+}
+@keyframes wbfIphonePulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+}
+@media(max-width:600px){
+  #wbfIphoneExploreNote{min-height:50px;border-radius:13px}
+  #wbfIphoneExploreNote .wbf-iphone-copy{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  #wbfIphoneExploreNote .wbf-iphone-track,
+  #wbfIphoneExploreNote .wbf-iphone-title,
+  #wbfIphoneExploreNote .wbf-iphone-icon{animation:none}
+}
 </style>
 
 </head>
@@ -367,7 +439,7 @@ body.wbf-event-mode .wbf-event-photo{
     <div class="wbf-push-title">🔔 Aktifkan Notifikasi</div>
     <div class="wbf-push-text">Dapatkan update status order kamu secara langsung.</div>
   </div>
-  <button id="wbfPushEnable" type="button">AKTIFKAN NOTIFIKASI</button>
+  <button id="wbfPushEnable" type="button">AKTIFKAN</button>
   <button id="wbfPushClose" type="button" aria-label="Tutup">×</button>
 </div>
 <div id="wbfPushActive">✓ Notifikasi Aktif</div>
@@ -403,13 +475,16 @@ body.wbf-event-mode .wbf-event-photo{
     <h2>Brands</h2>
     <a href="#home" class="page-back" onclick="showHome();return false;">HOME</a>
   </div>
-  <div id="wbfIphoneInstallNote" class="wbf-iphone-install-note" aria-label="Panduan iPhone">
-    <div class="wbf-iphone-track">
-      <span class="wbf-iphone-pulse">📱 KHUSUS iPHONE:</span>
-      <span>Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon.</span>
-      <span>Caranya: <b>Share → Tambahkan ke Layar Utama</b></span>
+<div id="wbfIphoneExploreNote" aria-label="Informasi khusus iPhone">
+  <div class="wbf-iphone-track">
+    <div class="wbf-iphone-copy">
+      <span class="wbf-iphone-icon">📱</span>
+      <span class="wbf-iphone-title">KHUSUS iPHONE:</span>
+      <span> Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon. &nbsp; Caranya: <b>Share → Tambahkan ke Layar Utama</b></span>
     </div>
   </div>
+</div>
+
   <div class="brands-page-grid" id="customer-brands-grid"></div>
 </section>
 
@@ -1428,55 +1503,73 @@ loadCustomerProducts();
 
 <script id="wbf-push-ui-script">
 (function(){
-  function ready(fn){if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",fn);else fn();}
+  function ready(fn){
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",fn);
+    else fn();
+  }
   ready(function(){
-    const banner=document.getElementById("wbfPushBanner"),active=document.getElementById("wbfPushActive");
-    const enable=document.getElementById("wbfPushEnable"),close=document.getElementById("wbfPushClose");
-    if(!banner||!enable)return;
+    const banner=document.getElementById("wbfPushBanner");
+    const active=document.getElementById("wbfPushActive");
+    const enable=document.getElementById("wbfPushEnable");
+    const close=document.getElementById("wbfPushClose");
+    if(!banner||!enable) return;
+
     const dismissed=localStorage.getItem("wbf_push_banner_dismissed")==="1";
+    const isRegistered=localStorage.getItem("wbf_push_registered")==="1";
+
     function showState(){
       const ok=localStorage.getItem("wbf_push_registered")==="1";
-      if(ok){banner.classList.remove("show");if(active)active.style.display="block";}
-      else if(!dismissed)banner.classList.add("show");
+      if(ok){
+        banner.classList.remove("show");
+        if(active) active.style.display="block";
+      }else if(!dismissed){
+        banner.classList.add("show");
+      }
     }
-    enable.addEventListener("click",async function(){
-      enable.disabled=true;enable.textContent="MEMPROSES...";
+
+    enable.addEventListener("click", async function(){
+      enable.disabled=true;
+      enable.textContent="MEMPROSES...";
       try{
-        if(!window.WBF_PUSH||typeof window.WBF_PUSH.enable!=="function")throw new Error("Modul notifikasi belum siap.");
+        if(!window.WBF_PUSH || typeof window.WBF_PUSH.enable!=="function")
+          throw new Error("Modul notifikasi belum siap.");
         const phone=localStorage.getItem("wbf_customer_phone")||"";
-        if(phone&&window.WBF_PUSH.setCustomerPhone)window.WBF_PUSH.setCustomerPhone(phone);
-        if(window.WBF_PUSH.setRole)window.WBF_PUSH.setRole("customer");
+        if(phone && window.WBF_PUSH.setCustomerPhone) window.WBF_PUSH.setCustomerPhone(phone);
+        if(window.WBF_PUSH.setRole) window.WBF_PUSH.setRole("customer");
         const ok=await window.WBF_PUSH.enable();
-        if(!ok)throw new Error("Notifikasi belum dapat diaktifkan di perangkat ini.");
-        banner.classList.remove("show");if(active)active.style.display="block";
-      }catch(e){alert(e&&e.message?e.message:"Notifikasi gagal diaktifkan.");}
-      finally{enable.disabled=false;enable.textContent="AKTIFKAN NOTIFIKASI";}
+        if(!ok) throw new Error("Notifikasi belum dapat diaktifkan di perangkat ini.");
+        banner.classList.remove("show");
+        if(active) active.style.display="block";
+      }catch(e){
+        alert(e && e.message ? e.message : "Notifikasi gagal diaktifkan.");
+      }finally{
+        enable.disabled=false;
+        enable.textContent="AKTIFKAN";
+      }
     });
-    close.addEventListener("click",function(){localStorage.setItem("wbf_push_banner_dismissed","1");banner.classList.remove("show");});
+
+    close.addEventListener("click",function(){
+      localStorage.setItem("wbf_push_banner_dismissed","1");
+      banner.classList.remove("show");
+    });
+
     showState();
   });
 })();
 </script>
 
-<script id="wbf-iphone-only-banner">
+
+<script id="wbf-iphone-explore-script">
 (function(){
   function apply(){
-    const banner=document.getElementById("wbfPushBanner");if(!banner)return;
-    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-    if(!isIOS)banner.remove();
+    const n=document.getElementById("wbfIphoneExploreNote");
+    if(!n)return;
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    if(ios)n.classList.add("show"); else n.remove();
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply();
 })();
 </script>
-<script id="wbf-iphone-install-note-script">
-(function(){
- function apply(){
-  const el=document.getElementById("wbfIphoneInstallNote"); if(!el)return;
-  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-  el.style.display=ios?"flex":"none";
- }
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply();
-})();
-</script>
+
 </body>
 </html>
