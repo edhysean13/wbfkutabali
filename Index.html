@@ -652,14 +652,24 @@ function renderCatalog(){
     if(genderNav) genderNav.style.display="flex";
     catNav.style.display=selectedGender?"flex":"none";
 
-    // Product gender is stored by Admin. Accept the common field names so
-    // this customer page remains compatible with the current/older RPC shape.
-    if(selectedGender){
-      products=products.filter(p=>{
-        const g=String(p.gender||p.product_gender||p.collection||p.gender_collection||"").trim().toUpperCase();
-        return g===selectedGender || g==="UNISEX";
-      });
+    // Setelah memilih Brand, customer WAJIB memilih MEN atau LADIES
+    // sebelum produk ditampilkan.
+    if(!selectedGender){
+      products=[];
+      document.getElementById("catalog-title").textContent=selectedBrand+" Collection";
+      document.getElementById("catalog-count").textContent="";
+      document.getElementById("catalog-status").textContent="Pilih MEN atau LADIES.";
+      document.getElementById("catalog").innerHTML="";
+      document.getElementById("back-to-brands").style.display="inline-flex";
+      return;
     }
+
+    // Gender disimpan Admin pada field "gender".
+    // UNISEX ikut tampil pada MEN dan LADIES.
+    products=products.filter(p=>{
+      const g=String(p.gender||p.product_gender||p.collection||p.gender_collection||"").trim().toUpperCase();
+      return g===selectedGender || g==="UNISEX";
+    });
   }else{
     if(genderNav) genderNav.style.display="none";
     catNav.style.display="none";
@@ -820,6 +830,8 @@ function filterBrand(brand){
   selectedBrand=brand;
   selectedGender="";
   selectedCategory="ALL";
+  const genderNav=document.getElementById("gender-nav");
+  if(genderNav) genderNav.style.display="flex";
   document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",false));
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
