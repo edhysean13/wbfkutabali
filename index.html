@@ -369,21 +369,17 @@ body.wbf-event-mode .wbf-event-photo{
   color:#aaa;font-size:10px
 }
 </style>
-
 <style id="wbf-iphone-explore-note">
-#wbfIphoneExploreNote{display:none;width:100%;box-sizing:border-box;margin:0 0 12px;min-height:48px;background:#fff;color:#111;border:1px solid #ddd;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);align-items:center}
+#wbfIphoneExploreNote{display:none;width:100%;box-sizing:border-box;margin:0 0 10px;padding:7px 10px;background:#fff;color:#111;border:1px solid #ddd;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.07);align-items:center;justify-content:center;text-align:center}
 #wbfIphoneExploreNote.show{display:flex}
-#wbfIphoneExploreNote .wbf-iphone-track{display:flex;width:max-content;white-space:nowrap;animation:wbfIphoneTicker 30s linear infinite}
-#wbfIphoneExploreNote .wbf-iphone-copy{padding-right:110px;font-size:11px;line-height:48px;font-weight:600}
+#wbfIphoneExploreNote .wbf-iphone-copy{font-size:9px;line-height:1.35;font-weight:600}
 #wbfIphoneExploreNote .wbf-iphone-title{font-weight:900;animation:wbfIphoneBlink 2.8s ease-in-out infinite}
-#wbfIphoneExploreNote .wbf-iphone-icon{display:inline-block;margin-right:5px;animation:wbfIphonePulse 2.8s ease-in-out infinite}
-@keyframes wbfIphoneTicker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
-@keyframes wbfIphoneBlink{0%,100%{opacity:1}50%{opacity:.48}}
-@keyframes wbfIphonePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-@media(max-width:600px){#wbfIphoneExploreNote{min-height:48px;margin-bottom:10px}#wbfIphoneExploreNote .wbf-iphone-copy{font-size:10px;line-height:48px;padding-right:90px}}
-@media(prefers-reduced-motion:reduce){#wbfIphoneExploreNote .wbf-iphone-track,#wbfIphoneExploreNote .wbf-iphone-title,#wbfIphoneExploreNote .wbf-iphone-icon{animation:none}}
+#wbfIphoneExploreNote .wbf-iphone-icon{display:inline-block;margin-right:3px;animation:wbfIphonePulse 2.8s ease-in-out infinite}
+@keyframes wbfIphoneBlink{0%,100%{opacity:1}50%{opacity:.38}}
+@keyframes wbfIphonePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@media(max-width:600px){#wbfIphoneExploreNote .wbf-iphone-copy{font-size:9px}}
+@media(prefers-reduced-motion:reduce){#wbfIphoneExploreNote .wbf-iphone-title,#wbfIphoneExploreNote .wbf-iphone-icon{animation:none}}
 </style>
-
 </head>
 <body>
 
@@ -438,14 +434,7 @@ body.wbf-event-mode .wbf-event-photo{
 
 <section class="section" id="catalog-section">
   <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="collection-back" onclick="showBrands();return false;" style="display:none;align-self:center">BACK</a></div>
-
-<div id="wbfIphoneExploreNote" aria-label="Informasi khusus iPhone">
-  <div class="wbf-iphone-track">
-    <div class="wbf-iphone-copy"><span class="wbf-iphone-icon">📱</span><span class="wbf-iphone-title">KHUSUS iPHONE:</span><span> Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon. &nbsp; Caranya: <b>Share → Tambahkan ke Layar Utama</b></span></div>
-    <div class="wbf-iphone-copy" aria-hidden="true"><span class="wbf-iphone-icon">📱</span><span class="wbf-iphone-title">KHUSUS iPHONE:</span><span> Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon. &nbsp; Caranya: <b>Share → Tambahkan ke Layar Utama</b></span></div>
-  </div>
-</div>
-
+<div id="wbfIphoneExploreNote" aria-label="Informasi khusus iPhone"><div class="wbf-iphone-copy"><span class="wbf-iphone-icon">📱</span><span class="wbf-iphone-title">KHUSUS iPHONE:</span><span> Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon. Caranya: <b>Share → Tambahkan ke Layar Utama</b></span></div></div>
   <div class="category-nav" id="category-nav" style="display:none">
     <button data-category="ALL" class="active">SEMUA</button>
     <button data-category="ATASAN">ATASAN</button>
@@ -1510,13 +1499,8 @@ loadCustomerProducts();
   });
 })();
 </script>
-
 <script id="wbf-iphone-explore-script">
-(function(){
- function apply(){const n=document.getElementById("wbfIphoneExploreNote");if(!n)return;const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);if(ios)n.classList.add("show")}
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply();
-})();
+(function(){function apply(){const n=document.getElementById("wbfIphoneExploreNote");if(!n)return;const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);if(ios)n.classList.add("show")}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",apply);else apply()})();
 </script>
-
 </body>
 </html>
