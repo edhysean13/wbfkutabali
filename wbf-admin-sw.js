@@ -56,3 +56,32 @@ self.addEventListener("fetch", event => {
     )
   );
 });
+
+
+self.addEventListener("push", event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {}
+  event.waitUntil(
+    self.registration.showNotification(data.title || "WBF Admin", {
+      body: data.body || data.message || "Ada order baru.",
+      tag: data.tag || "wbf-admin-notification",
+      data: {url: data.url || "./admin.html"}
+    })
+  );
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const url = event.notification.data?.url || "./admin.html";
+  event.waitUntil(
+    clients.matchAll({type:"window", includeUncontrolled:true}).then(list => {
+      for (const client of list) {
+        if ("focus" in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
+});
