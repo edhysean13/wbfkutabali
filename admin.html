@@ -669,6 +669,7 @@ html, body {
 </style>
 
 <style id="wbf-brand-gender-size-fix">#brandGenderFilters .gender-filter,#brandCategoryFilters .category-filter,#brandSizeFilters .size-filter{cursor:pointer}#brandSizeFilters .size-filter{display:inline-block;min-width:38px;text-align:center;padding:7px 9px!important;font-size:10px!important}#brandSizeFilters .size-filter.active{background:#fff!important;color:#111!important}</style>
+
 </head>
 <body>
 <section id="login" class="wrap">
@@ -837,7 +838,28 @@ html, body {
 <option value="BAG">BAG</option>
 </select>
 <input id="productEditId" type="hidden" value="">
-<label>Size</label><input id="productSize" type="text" placeholder="Contoh: S / M / L / XL">
+<label>Size</label>
+<input id="productSize" type="hidden" value="">
+<select id="productSizeSelect" style="width:100%;height:52px;border:1px solid #383838;border-radius:10px;background:#080808;color:#fff;padding:0 14px;font-size:16px">
+<option value="">Pilih Size</option>
+<option value="ALL / ONE SIZE">ALL / ONE SIZE</option>
+<optgroup label="S, M, L, XL, XXL">
+<option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
+</optgroup>
+<optgroup label="6, 8, 10, 12, 14">
+<option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="14">14</option>
+</optgroup>
+<optgroup label="30, 32, 34, 36, 38">
+<option value="30">30</option><option value="32">32</option><option value="34">34</option><option value="36">36</option><option value="38">38</option>
+</optgroup>
+<optgroup label="36, 37, 38, 39, 40">
+<option value="36">36</option><option value="37">37</option><option value="38">38</option><option value="39">39</option><option value="40">40</option>
+</optgroup>
+<optgroup label="40, 41, 42, 43, 44, 45">
+<option value="40">40</option><option value="41">41</option><option value="42">42</option><option value="43">43</option><option value="44">44</option><option value="45">45</option>
+</optgroup>
+</select>
+<div class="muted" style="margin-top:5px">Pilih size sesuai produk. Data size lama tetap dipertahankan saat edit jika tidak diubah.</div>
 <label>Color</label><input id="productColor" type="text" placeholder="Contoh: Hitam / Putih">
 <label>Price</label><input id="productPrice" type="number" placeholder="Harga">
 <label>Discount (%)</label><input id="productDiscount" type="number" min="0" max="100" placeholder="0">
@@ -1501,6 +1523,42 @@ async function refreshProductCount(){
 
 let editingProductId="";
 
+let originalProductSizes = null;
+let productSizeChanged = false;
+
+function setRegisterSizeValue(values){
+  const hidden=document.getElementById("productSize");
+  const select=document.getElementById("productSizeSelect");
+  if(!hidden||!select)return;
+  const arr=(Array.isArray(values)?values:[values]).map(v=>String(v??"").trim()).filter(Boolean);
+  const first=arr.length===1?arr[0]:"";
+  if(first && [...select.options].some(o=>o.value===first)) select.value=first;
+  else select.value="";
+  hidden.value=arr.join(" / ");
+}
+
+function syncRegisterSizes(){
+  const hidden=document.getElementById("productSize"),select=document.getElementById("productSizeSelect");
+  if(!hidden||!select)return;
+  if(productSizeChanged){ hidden.value=select.value||""; }
+}
+
+function openProductFormForRegister(){
+  editingProductId="";
+  originalProductSizes=null;
+  productSizeChanged=false;
+  document.getElementById("productEditId").value="";
+  document.getElementById("productForm").classList.remove("hidden");
+  document.getElementById("saveProductBtn").textContent="SAVE PRODUCT";
+  document.getElementById("cancelEditBtn").classList.add("hidden");
+  document.getElementById("productBrand").disabled=false;
+  document.getElementById("productSku").disabled=false;
+  document.getElementById("productNewArrival").checked=false;
+  document.getElementById("productSpecialPromo").checked=false;
+  document.getElementById("productGender").value="MEN";
+  setRegisterSizeValue([]);
+}
+
 function openProductFormForRegister(){
   editingProductId="";
   document.getElementById("productEditId").value="";
@@ -1512,6 +1570,7 @@ function openProductFormForRegister(){
   document.getElementById("productNewArrival").checked=false;
   document.getElementById("productSpecialPromo").checked=false;
   document.getElementById("productGender").value="MEN";
+  renderRegisterSizePicker([]);
 }
 
 function editProduct(productId, products){
@@ -1526,7 +1585,9 @@ function editProduct(productId, products){
   document.getElementById("productName").value=p.name||"";
   document.getElementById("productGender").value=(p.gender||"MEN").toUpperCase();
   document.getElementById("productCategory").value=p.category||selectedCategory||"";
-  document.getElementById("productSize").value=(p.sizes||[]).join(" / ");
+  originalProductSizes=Array.isArray(p.sizes)?p.sizes.map(v=>String(v).trim()).filter(Boolean):[];
+  productSizeChanged=false;
+  setRegisterSizeValue(originalProductSizes);
   document.getElementById("productColor").value=(p.colors||[]).join(" / ");
   document.getElementById("productPrice").value=p.price??"";
   document.getElementById("productDiscount").value=p.discount??0;
@@ -1542,6 +1603,11 @@ function editProduct(productId, products){
   document.getElementById("productForm").classList.remove("hidden");
   document.getElementById("productForm").scrollIntoView({behavior:"smooth",block:"start"});
 }
+
+document.getElementById("productSizeSelect").addEventListener("change",()=>{
+  productSizeChanged=true;
+  syncRegisterSizes();
+});
 
 function renderProductPhotoPreview(urls,existing=false){
   const preview=document.getElementById("productPhotoPreview");
@@ -1560,6 +1626,8 @@ document.getElementById("productPhoto").addEventListener("change",()=>{
 
 function cancelEditProduct(){
   editingProductId="";
+  originalProductSizes=null;
+  productSizeChanged=false;
   document.getElementById("productEditId").value="";
   document.getElementById("productForm").classList.add("hidden");
   document.getElementById("cancelEditBtn").classList.add("hidden");
@@ -1572,12 +1640,15 @@ function cancelEditProduct(){
 }
 
 async function saveProductToDatabase(){
+  syncRegisterSizes();
   const brand=document.getElementById("productBrand").value;
   const category=document.getElementById("productCategory").value;
   const gender=document.getElementById("productGender").value||"MEN";
   const sku=document.getElementById("productSku").value.trim();
   const name=document.getElementById("productName").value.trim();
-  const size=document.getElementById("productSize").value.trim();
+  const size=(editingProductId && !productSizeChanged && Array.isArray(originalProductSizes))
+    ? originalProductSizes.join(" / ")
+    : document.getElementById("productSize").value.trim();
   const color=document.getElementById("productColor").value.trim();
   const price=Number(document.getElementById("productPrice").value);
   const discount=Number(document.getElementById("productDiscount").value||0);
@@ -1669,6 +1740,8 @@ async function saveProductToDatabase(){
     alert(editingProductId?"Perubahan product berhasil disimpan.":"Product berhasil disimpan.");
 
     editingProductId="";
+    originalProductSizes=null;
+    productSizeChanged=false;
     document.getElementById("productEditId").value="";
     document.getElementById("productBrand").disabled=false;
     document.getElementById("productSku").disabled=false;
