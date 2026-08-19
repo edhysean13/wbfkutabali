@@ -381,7 +381,7 @@ body.wbf-event-mode .wbf-event-photo{
 @media(prefers-reduced-motion:reduce){#wbfIphoneExploreNote .wbf-iphone-title,#wbfIphoneExploreNote .wbf-iphone-icon{animation:none}}
 
 <style id="wbf-customer-gender-filter">
-.gender-nav{display:none;gap:7px;overflow-x:auto;padding:2px 0 8px;margin-bottom:0}
+.gender-nav{display:none;gap:7px;overflow-x:auto;padding:2px 0 8px;margin:0 0 4px}
 .gender-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 14px;font-weight:700;font-size:11px;min-height:36px}
 .gender-nav button.active{background:#fff;color:#111}
 </style>
@@ -441,9 +441,9 @@ body.wbf-event-mode .wbf-event-photo{
 <section class="section" id="catalog-section">
   <div class="section-head"><h2 id="catalog-title">New Arrival</h2><span class="muted" id="catalog-count">Katalog</span><a href="#brands" id="back-to-brands" class="collection-back" onclick="showBrands();return false;" style="display:none;align-self:center">BACK</a></div>
 <div id="wbfIphoneExploreNote" aria-label="Informasi khusus iPhone"><div class="wbf-iphone-copy"><span class="wbf-iphone-icon">📱</span><span class="wbf-iphone-title">KHUSUS iPHONE:</span><span> Instal WBF ke Layar Utama untuk memudahkan pencarian product &amp; diskon. Caranya: <b>Share → Tambahkan ke Layar Utama</b></span></div></div>
-  <div class="gender-nav" id="gender-nav">
-    <button data-gender="MEN" class="active">MEN</button>
-    <button data-gender="LADIES">LADIES</button>
+  <div class="gender-nav" id="gender-nav" style="display:none">
+    <button type="button" data-gender="MEN">MEN</button>
+    <button type="button" data-gender="LADIES">LADIES</button>
   </div>
   <div class="category-nav" id="category-nav" style="display:none">
     <button data-category="ALL" class="active">SEMUA</button>
@@ -652,20 +652,18 @@ function renderCatalog(){
     if(genderNav) genderNav.style.display="flex";
     catNav.style.display=selectedGender?"flex":"none";
 
-    // Setelah memilih Brand, customer WAJIB memilih MEN atau LADIES
-    // sebelum produk ditampilkan.
+    // Setelah memilih Brand, customer harus memilih MEN atau LADIES dulu.
     if(!selectedGender){
-      products=[];
       document.getElementById("catalog-title").textContent=selectedBrand+" Collection";
-      document.getElementById("catalog-count").textContent="";
-      document.getElementById("catalog-status").textContent="Pilih MEN atau LADIES.";
-      document.getElementById("catalog").innerHTML="";
+      count.textContent="";
+      status.textContent="Pilih MEN atau LADIES";
+      catalog.innerHTML="";
       document.getElementById("back-to-brands").style.display="inline-flex";
       return;
     }
 
-    // Gender disimpan Admin pada field "gender".
-    // UNISEX ikut tampil pada MEN dan LADIES.
+    // Gender berasal dari field gender pada produk Admin. UNISEX tampil di
+    // kedua pilihan agar produk unisex tidak hilang.
     products=products.filter(p=>{
       const g=String(p.gender||p.product_gender||p.collection||p.gender_collection||"").trim().toUpperCase();
       return g===selectedGender || g==="UNISEX";
