@@ -31,24 +31,28 @@
 
   async function saveSubscription(sub) {
     const keys = sub.toJSON().keys || {};
-    const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/register_push_subscription", {
+    const body = {
+      device_id: deviceId(),
+      role: getRole(),
+      customer_phone: getPhone(),
+      endpoint: sub.endpoint,
+      p256dh: keys.p256dh,
+      auth: keys.auth,
+      user_agent: navigator.userAgent,
+      active: true
+    };
+
+    const res = await fetch(SUPABASE_URL + "/rest/v1/push_subscriptions", {
       method: "POST",
       headers: {
         "apikey": SUPABASE_KEY,
         "Authorization": "Bearer " + SUPABASE_KEY,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal"
       },
-      body: JSON.stringify({
-        p_device_id: deviceId(),
-        p_role: getRole(),
-        p_customer_phone: getPhone(),
-        p_endpoint: sub.endpoint,
-        p_p256dh: keys.p256dh,
-        p_auth: keys.auth,
-        p_user_agent: navigator.userAgent,
-        p_active: true
-      })
+      body: JSON.stringify(body)
     });
+
     if (!res.ok) {
       const text = await res.text();
       throw new Error(text || ("HTTP " + res.status));
@@ -80,17 +84,8 @@
       updateViaCache: "none"
     });
 
-    // Force a fresh service-worker update check whenever the app opens.
-    try { await reg.update(); } catch (_) {}
-
-    // If a new worker is waiting, activate it immediately.
-    if (reg.waiting) {
-      try { reg.waiting.postMessage({ type: "SKIP_WAITING" }); } catch (_) {}
-    }
-
-    // Reload only when an already-controlled PWA receives a new worker.
-    // This makes the newly deployed index/JS/CSS become active without
-    // requiring the user to remove and reinstall the Home Screen app.
+    // Install the reload listener BEFORE triggering activation.
+    // This prevents a fast SKIP_WAITING/controllerchange from being missed.
     if (navigator.serviceWorker.controller && !window.__WBF_SW_RELOAD_LISTENER__) {
       window.__WBF_SW_RELOAD_LISTENER__ = true;
       navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -98,6 +93,14 @@
         window.__WBF_SW_RELOADED__ = true;
         window.location.reload();
       });
+    }
+
+    // Force a fresh service-worker update check whenever the app opens.
+    try { await reg.update(); } catch (_) {}
+
+    // If a new worker is waiting, activate it immediately.
+    if (reg.waiting) {
+      try { reg.waiting.postMessage({ type: "SKIP_WAITING" }); } catch (_) {}
     }
 
     return reg;
