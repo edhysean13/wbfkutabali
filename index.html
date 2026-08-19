@@ -1457,14 +1457,16 @@ loadCustomerProducts();
     if(!banner||!enable) return;
 
     const dismissed=localStorage.getItem("wbf_push_banner_dismissed")==="1";
-    const isRegistered=localStorage.getItem("wbf_push_registered")==="1";
 
     function showState(){
       const ok=localStorage.getItem("wbf_push_registered")==="1";
       if(ok){
         banner.classList.remove("show");
         if(active) active.style.display="block";
-      }else if(!dismissed){
+      }else{
+        // Always make the activation banner available until notification
+        // registration succeeds. A stale dismissed flag from earlier tests
+        // must not hide the button.
         banner.classList.add("show");
       }
     }
@@ -1491,7 +1493,6 @@ loadCustomerProducts();
     });
 
     close.addEventListener("click",function(){
-      localStorage.setItem("wbf_push_banner_dismissed","1");
       banner.classList.remove("show");
     });
 
