@@ -668,22 +668,9 @@ html, body {
 .wbf-photo-preview-item div{padding:4px;font-size:9px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 
-
-<style id="wbf-admin-push-ui">
-#wbfAdminPush{position:fixed;right:14px;bottom:14px;z-index:40000;display:none;align-items:center;gap:8px;background:#111;border:1px solid #333;border-radius:12px;padding:10px 12px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
-#wbfAdminPush.show{display:flex}
-#wbfAdminPush button{width:auto!important;margin:0!important;padding:8px 10px!important}
-#wbfAdminPush .push-copy{font-size:11px;color:#aaa}
-#wbfAdminPush .push-copy b{display:block;color:#fff;font-size:12px;margin-bottom:2px}
-</style>
+<style id="wbf-brand-gender-size-fix">#brandGenderFilters .gender-filter,#brandCategoryFilters .category-filter,#brandSizeFilters .size-filter{cursor:pointer}#brandSizeFilters .size-filter{display:inline-block;min-width:38px;text-align:center;padding:7px 9px!important;font-size:10px!important}#brandSizeFilters .size-filter.active{background:#fff!important;color:#111!important}</style>
 </head>
 <body>
-
-<div id="wbfAdminPush">
-  <div class="push-copy"><b>🔔 Notifikasi Admin</b>Aktifkan untuk menerima order baru.</div>
-  <button id="wbfAdminPushEnable" type="button">AKTIFKAN</button>
-</div>
-
 <section id="login" class="wrap">
 <div class="box">
 <div class="logo">WBF</div>
@@ -799,7 +786,12 @@ html, body {
 <div><div class="muted">WBF ADMIN</div><h1 id="brandDetailTitle">BRAND</h1></div>
 <button class="back" id="brandDetailBackBtn">BACK</button>
 </div>
-<div class="brand-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+<div class="brand-grid" id="brandGenderFilters" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+<div class="brand-card gender-filter" data-gender="MEN">MEN</div>
+<div class="brand-card gender-filter" data-gender="LADIES">LADIES</div>
+<div class="brand-card gender-filter" data-gender="UNISEX">UNISEX</div>
+</div>
+<div class="brand-grid" id="brandCategoryFilters" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px;display:none">
 <div class="brand-card category-filter" data-category="ATASAN">ATASAN</div>
 <div class="brand-card category-filter" data-category="BAWAHAN">BAWAHAN</div>
 <div class="brand-card category-filter" data-category="AKSESORIS">AKSESORIS</div>
@@ -807,6 +799,7 @@ html, body {
 <div class="brand-card category-filter" data-category="SANDAL">SANDAL</div>
 <div class="brand-card category-filter" data-category="BAG">BAG</div>
 </div>
+<div id="brandSizeFilters" style="display:none;overflow-x:auto;gap:6px;margin-top:8px;padding:2px 0 3px;white-space:nowrap"></div>
 <button id="brandRegisterBtn" type="button" style="margin-top:18px">+ REGISTER PRODUCT</button>
 </div>
 <div id="brandProductsList" style="margin-top:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;align-items:start"></div>
@@ -945,8 +938,12 @@ function restoreView(){
   }
   else if(view==="brand"){
     selectedBrand=localStorage.getItem("wbf_admin_brand")||"VOLCOM";
+    selectedGender=localStorage.getItem("wbf_admin_gender")||"";
     selectedCategory=localStorage.getItem("wbf_admin_category")||"";
+    selectedSize="";
     brandDetailTitle.textContent=selectedBrand;
+    const gf=document.getElementById("brandGenderFilters"),cf=document.getElementById("brandCategoryFilters");
+    if(gf)gf.style.display="grid";if(cf)cf.style.display=selectedGender?"grid":"none";
     dashboardHome.classList.add("hidden");
     brandDetailPage.classList.remove("hidden");
     if(selectedCategory){
@@ -1363,13 +1360,19 @@ const brandDetailPage=document.getElementById("brandDetailPage");
 const brandDetailTitle=document.getElementById("brandDetailTitle");
 const brandProductsList=document.getElementById("brandProductsList");
 let selectedBrand="";
+let selectedGender="";
 let selectedCategory="";
+let selectedSize="";
 
 function openBrand(brand){
 selectedBrand=brand;
+selectedGender="";
 selectedCategory="";
+selectedSize="";
 brandDetailTitle.textContent=brand;
-brandProductsList.innerHTML='<div class="muted">Pilih kategori untuk melihat SKU.</div>';
+brandProductsList.innerHTML='<div class="muted">Pilih MEN / LADIES untuk melihat kategori.</div>';
+const gf=document.getElementById("brandGenderFilters"),cf=document.getElementById("brandCategoryFilters"),sf=document.getElementById("brandSizeFilters");
+if(gf)gf.style.display="grid";if(cf)cf.style.display="none";if(sf){sf.style.display="none";sf.innerHTML="";}
 dashboardHome.classList.add("hidden");
 brandsPage.classList.add("hidden");
 brandDetailPage.classList.remove("hidden");
@@ -1379,14 +1382,18 @@ document.querySelectorAll(".clickable-brand").forEach(el=>{
 el.addEventListener("click",()=>openBrand(el.dataset.brand));
 });
 
-document.querySelectorAll(".category-filter").forEach(el=>{
-el.addEventListener("click",()=>{
-selectedCategory=el.dataset.category;
-localStorage.setItem("wbf_admin_category",selectedCategory);
-saveView("brand");
-loadBrandProducts();
-});
-});
+document.querySelectorAll(".gender-filter").forEach(el=>el.addEventListener("click",()=>{
+selectedGender=el.dataset.gender;selectedCategory="";selectedSize="";
+localStorage.setItem("wbf_admin_gender",selectedGender);localStorage.removeItem("wbf_admin_category");
+const cf=document.getElementById("brandCategoryFilters"),sf=document.getElementById("brandSizeFilters");
+if(cf)cf.style.display="grid";if(sf){sf.style.display="none";sf.innerHTML="";}
+brandProductsList.innerHTML='<div class="muted">Pilih kategori untuk melihat SKU.</div>';saveView("brand");
+}));
+
+document.querySelectorAll(".category-filter").forEach(el=>el.addEventListener("click",()=>{
+selectedCategory=el.dataset.category;selectedSize="";localStorage.setItem("wbf_admin_category",selectedCategory);
+const sf=document.getElementById("brandSizeFilters");if(sf){sf.style.display="none";sf.innerHTML="";}saveView("brand");loadBrandProducts();
+}));
 
 document.getElementById("brandDetailBackBtn").addEventListener("click",()=>{
 brandDetailPage.classList.add("hidden");
@@ -1401,6 +1408,7 @@ brandDetailPage.classList.add("hidden");
 openProductFormForRegister();
 document.getElementById("productBrand").value=selectedBrand;
 document.getElementById("productBrand").disabled=true;
+if(selectedGender) document.getElementById("productGender").value=selectedGender;
 if(selectedCategory) document.getElementById("productCategory").value=selectedCategory;
 });
 
@@ -1449,49 +1457,31 @@ productForm.classList.toggle("hidden");
 
 
 async function loadBrandProducts(){
-  if(!selectedBrand || !selectedCategory) return;
-  const token=authToken();
-  brandProductsList.innerHTML='<div class="muted">Memuat SKU...</div>';
+  if(!selectedBrand||!selectedGender||!selectedCategory)return;
+  const token=authToken();brandProductsList.innerHTML='<div class="muted">Memuat SKU...</div>';
   try{
-    const brandId=getBrandId(selectedBrand);
-    if(!brandId) throw new Error("Brand tidak ditemukan.");
-    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brand_products",{
-      method:"POST",
-      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
-      body:JSON.stringify({p_brand_id:brandId,p_category:selectedCategory})
-    });
-    const products=await res.json();
-    if(!res.ok) throw new Error(products.message||"Gagal mengambil produk.");
-    if(!products.length){
-      brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+selectedBrand+' · '+selectedCategory+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';
-      return;
-    }
-    brandProductsList.innerHTML=products.map(p=>{
-      const finalPrice=Math.max(0,Number(p.price)*(1-Number(p.discount||0)/100));
-      const img=p.image_url
-  ? '<img class="product-card-photo" src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.name||'Product')+'" loading="lazy">'
-  : '<div class="product-card-no-photo">NO PHOTO</div>';
-      return '<div class="brand-card product-card" style="text-align:left">'+img+
-        '<div class="muted">'+selectedBrand+' · '+p.category+'</div>'+
-        '<div style="font-size:18px;margin:6px 0">'+escapeHtml(p.name)+'</div>'+
-        '<div class="muted">SKU: '+escapeHtml(p.sku)+'</div>'+
-        '<div style="margin-top:8px">Size: '+escapeHtml((p.sizes||[]).join(" / "))+'</div>'+
-        '<div>Color: '+escapeHtml((p.colors||[]).join(" / "))+'</div>'+
-        '<div style="margin-top:8px">Harga: Rp '+Number(p.price).toLocaleString("id-ID")+'</div>'+
-        '<div>Discount: '+Number(p.discount||0)+'%</div>'+
-        '<div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div>'+
-        '<div style="margin-top:7px;font-size:10px;font-weight:800;color:'+(p.is_new_arrival?'#7ee787':'#888')+'">'+(p.is_new_arrival?'✓ NEW ARRIVAL':'— BUKAN NEW ARRIVAL')+'</div>'+
-        '<div style="margin-top:4px;font-size:10px;font-weight:800;color:'+(p.is_special_promo?'#ffcc66':'#888')+'">'+(p.is_special_promo?'✓ SPECIAL PROMO':'— BUKAN SPECIAL PROMO')+'</div>'+
-        '<button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:12px">EDIT SKU</button>'+
-        '</div>';
-    }).join("");
-    document.querySelectorAll(".edit-product-btn").forEach(btn=>{
-      btn.addEventListener("click",()=>editProduct(btn.dataset.productId, products));
-    });
-  }catch(e){
-    brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat SKU: '+escapeHtml(e.message)+'</div>';
-  }
+    const brandId=getBrandId(selectedBrand);if(!brandId)throw new Error("Brand tidak ditemukan.");
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brand_products",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({p_brand_id:brandId,p_category:selectedCategory})});
+    const products=await res.json();if(!res.ok)throw new Error(products.message||"Gagal mengambil produk.");
+    const gendered=products.filter(p=>String(p.gender||"").toUpperCase()===selectedGender);
+    const sizes=[...new Set(gendered.flatMap(p=>Array.isArray(p.sizes)?p.sizes:[]).map(v=>String(v).trim()).filter(Boolean))];
+    const sf=document.getElementById("brandSizeFilters");
+    if(sf){sf.innerHTML='<button type="button" class="brand-card size-filter active" data-size="">SEMUA</button>'+sizes.map(sz=>'<button type="button" class="brand-card size-filter" data-size="'+escapeHtml(sz)+'">'+escapeHtml(sz)+'</button>').join("");sf.style.display=sizes.length?"flex":"none";sf.querySelectorAll(".size-filter").forEach(btn=>btn.addEventListener("click",()=>{selectedSize=btn.dataset.size||"";sf.querySelectorAll(".size-filter").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderBrandProducts(gendered);}));}
+    renderBrandProducts(gendered);
+  }catch(e){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat SKU: '+escapeHtml(e.message)+'</div>';}
 }
+
+function renderBrandProducts(products){
+  const filtered=selectedSize?products.filter(p=>(p.sizes||[]).some(sz=>String(sz).trim()===selectedSize)):products;
+  if(!filtered.length){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+escapeHtml(selectedBrand)+' · '+escapeHtml(selectedGender)+' · '+escapeHtml(selectedCategory)+(selectedSize?' · '+escapeHtml(selectedSize):'')+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';return;}
+  brandProductsList.innerHTML=filtered.map(p=>{
+    const finalPrice=Math.max(0,Number(p.price)*(1-Number(p.discount||0)/100));
+    const img=p.image_url?'<img class="product-card-photo" src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.name||'Product')+'" loading="lazy">':'<div class="product-card-no-photo">NO PHOTO</div>';
+    return '<div class="brand-card product-card" style="text-align:left">'+img+'<div class="muted">'+escapeHtml(selectedBrand)+' · '+escapeHtml(p.category)+'</div><div style="font-size:18px;margin:6px 0">'+escapeHtml(p.name)+'</div><div class="muted">SKU: '+escapeHtml(p.sku)+'</div><div style="margin-top:8px">Size: '+escapeHtml((p.sizes||[]).join(" / "))+'</div><div>Color: '+escapeHtml((p.colors||[]).join(" / "))+'</div><div style="margin-top:8px">Harga: Rp '+Number(p.price).toLocaleString("id-ID")+'</div><div>Discount: '+Number(p.discount||0)+'%</div><div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div><div style="margin-top:7px;font-size:10px;font-weight:800;color:'+(p.is_new_arrival?'#7ee787':'#888')+'">'+(p.is_new_arrival?'✓ NEW ARRIVAL':'— BUKAN NEW ARRIVAL')+'</div><div style="margin-top:4px;font-size:10px;font-weight:800;color:'+(p.is_special_promo?'#ffcc66':'#888')+'">'+(p.is_special_promo?'✓ SPECIAL PROMO':'— BUKAN SPECIAL PROMO')+'</div><button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:12px">EDIT SKU</button></div>';
+  }).join("");
+  brandProductsList.querySelectorAll(".edit-product-btn").forEach(btn=>btn.addEventListener("click",()=>editProduct(btn.dataset.productId,products)));
+}
+
 function escapeHtml(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
@@ -1890,78 +1880,6 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 
-
-<script id="wbf-admin-push-script">
-(function(){
-  const SUPABASE_URL="https://wjeyyklbcrqxawoxlphk.supabase.co";
-  const SUPABASE_KEY="sb_publishable_d26AD3NNlXOW3oVuJOgVNg_6vNoSb-E";
-  const VAPID_PUBLIC_KEY="BPOg7dQmv4KW1Z25qYuVg-cJtsiEO0cRoDtIvWY6VAhO249WkGDiaQrS24Xv2NPC0CAx5FOUeCXIGKS0n2q5BcQ";
-
-  function b64(s){
-    const p="=".repeat((4-s.length%4)%4);
-    const raw=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));
-    return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
-  }
-  function deviceId(){
-    let id=localStorage.getItem("wbf_push_device_id");
-    if(!id){id=(crypto.randomUUID?crypto.randomUUID():"wbf-admin-"+Date.now()+"-"+Math.random().toString(36).slice(2));localStorage.setItem("wbf_push_device_id",id);}
-    return id;
-  }
-  async function registerAdminPush(){
-    if(!("serviceWorker" in navigator) || !("PushManager" in window))
-      throw new Error("Notifikasi belum tersedia. Buka WBF Admin dari ikon Home Screen.");
-    if(!("Notification" in window))
-      throw new Error("Notifikasi belum tersedia. Buka WBF Admin dari ikon Home Screen.");
-    if(Notification.permission!=="granted"){
-      const p=await Notification.requestPermission();
-      if(p!=="granted") throw new Error("Izin notifikasi ditolak.");
-    }
-
-    const reg=await navigator.serviceWorker.ready;
-    let sub=await reg.pushManager.getSubscription();
-    if(!sub){
-      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(VAPID_PUBLIC_KEY)});
-    }
-    const keys=sub.toJSON().keys||{};
-    const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/register_push_subscription",{
-      method:"POST",
-      headers:{
-        apikey:SUPABASE_KEY,
-        Authorization:"Bearer "+SUPABASE_KEY,
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        p_device_id:deviceId(),
-        p_role:"admin",
-        p_customer_phone:null,
-        p_endpoint:sub.endpoint,
-        p_p256dh:keys.p256dh,
-        p_auth:keys.auth,
-        p_user_agent:navigator.userAgent,
-        p_active:true
-      })
-    });
-    if(!res.ok) throw new Error((await res.text())||("HTTP "+res.status));
-    localStorage.setItem("wbf_push_registered","1");
-    localStorage.setItem("wbf_push_role","admin");
-    return true;
-  }
-
-  function setup(){
-    const box=document.getElementById("wbfAdminPush"),btn=document.getElementById("wbfAdminPushEnable");
-    if(!box||!btn)return;
-    const refresh=()=>box.classList.toggle("show",localStorage.getItem("wbf_push_registered")!=="1"||localStorage.getItem("wbf_push_role")!=="admin");
-    btn.onclick=async()=>{
-      btn.disabled=true;btn.textContent="MEMPROSES...";
-      try{await registerAdminPush();box.classList.remove("show");alert("Notifikasi Admin berhasil diaktifkan.");}
-      catch(e){alert(e?.message||"Notifikasi gagal diaktifkan.");}
-      finally{btn.disabled=false;btn.textContent="AKTIFKAN";refresh();}
-    };
-    refresh();
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",setup);else setup();
-})();
-</script>
 </body>
 </html>
 <script>
