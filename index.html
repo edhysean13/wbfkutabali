@@ -615,6 +615,36 @@ function apiHeaders(){
   return {"apikey":WBF_SUPABASE_KEY,"Content-Type":"application/json"};
 }
 
+/* WBF VISITOR COUNTER
+   Counts a browser/PWA as one visitor identity and records a new visit
+   at most once every 30 minutes. No IP address or personal data is stored. */
+async function wbfRecordVisitorVisit(){
+  try{
+    let visitorId=localStorage.getItem("wbf_visitor_id");
+    if(!visitorId){
+      visitorId=crypto.randomUUID?crypto.randomUUID():"wbf-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+      localStorage.setItem("wbf_visitor_id",visitorId);
+    }
+    const now=Date.now();
+    const last=Number(localStorage.getItem("wbf_visitor_last_visit")||0);
+    if(last && now-last<30*60*1000) return;
+    const isPwa=window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches || navigator.standalone===true;
+    const res=await fetch(WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_record_visit",{
+      method:"POST",
+      headers:apiHeaders(),
+      body:JSON.stringify({
+        p_visitor_id:visitorId,
+        p_source:isPwa?"pwa":"web",
+        p_path:location.pathname+location.hash
+      })
+    });
+    if(res.ok) localStorage.setItem("wbf_visitor_last_visit",String(now));
+  }catch(e){
+    // Visitor statistics must never block or alter the shop.
+    console.warn("WBF visitor counter unavailable:",e);
+  }
+}
+
 function renderCustomerBrands(){
   const grid=document.getElementById("customer-brands-grid");
   if(!grid)return;
@@ -1565,6 +1595,7 @@ showHome();
 updateCartBadge();
 loadCustomerBrands();
 loadCustomerProducts();
+wbfRecordVisitorVisit();
 
 /* WBF LIVE CUSTOMER CATALOG SYNC
    Keeps the installed PWA in sync with admin changes without reinstalling.

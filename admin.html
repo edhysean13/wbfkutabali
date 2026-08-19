@@ -622,6 +622,15 @@ html, body {
 </style>
 
 <style id="wbf-sales-report-style">
+#wbfVisitorStats{margin-top:14px}
+.wbf-visitor-title{font-size:15px;font-weight:800;margin-bottom:3px}
+.wbf-visitor-sub{color:#888;font-size:10px;margin-bottom:9px}
+.wbf-visitor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.wbf-visitor-box{background:#121212;border:1px solid #292929;border-radius:9px;padding:10px}
+.wbf-visitor-box .num{font-size:20px}
+.wbf-visitor-box .label{color:#888;font-size:9px;margin-top:2px}
+@media(max-width:600px){.wbf-visitor-grid{grid-template-columns:repeat(2,1fr)}}
+
 .wbf-sales-report{margin:16px 0 4px;padding:14px;border:1px solid #292929;border-radius:12px;background:#111}
 .wbf-sales-title{font-size:20px;font-weight:900}
 .wbf-sales-sub{color:#999;margin:4px 0 12px;font-size:13px}
@@ -702,6 +711,18 @@ html, body {
 <div class="card clickable" id="storeBankCard"><div class="num" style="font-size:18px">—</div><div class="muted">REKENING TOKO</div></div>
 <div class="card clickable" id="eventsCard"><div class="num" id="eventCount">0</div><div class="muted">EVENT / PROMO</div></div>
 </div>
+<section id="wbfVisitorStats" class="wbf-visitor-stats">
+  <div class="wbf-visitor-title">📊 VISITOR STATISTICS</div>
+  <div class="wbf-visitor-sub">Pengunjung dihitung dari browser/PWA. 1 perangkat = 1 visitor unik.</div>
+  <div class="wbf-visitor-grid">
+    <div class="wbf-visitor-box"><div class="num" id="visitorTodayUnique">0</div><div class="label">UNIQUE HARI INI</div></div>
+    <div class="wbf-visitor-box"><div class="num" id="visitorTodayVisits">0</div><div class="label">VISIT HARI INI</div></div>
+    <div class="wbf-visitor-box"><div class="num" id="visitorWeekUnique">0</div><div class="label">UNIQUE 7 HARI</div></div>
+    <div class="wbf-visitor-box"><div class="num" id="visitorMonthUnique">0</div><div class="label">UNIQUE BULAN INI</div></div>
+    <div class="wbf-visitor-box"><div class="num" id="visitorTotalUnique">0</div><div class="label">TOTAL UNIQUE</div></div>
+    <div class="wbf-visitor-box"><div class="num" id="visitorOnlineNow">0</div><div class="label">AKTIF ±5 MENIT</div></div>
+  </div>
+</section>
 <section id="wbfSalesReport" class="wbf-sales-report">
   <div class="wbf-sales-title">LAPORAN PENJUALAN</div>
   <div class="wbf-sales-sub">Cek omzet berdasarkan periode dan brand.</div>
@@ -941,6 +962,7 @@ function restoreView(){
   login.classList.add("hidden");
   dash.classList.remove("hidden");
   refreshOrderCount();
+  refreshVisitorStats();
   const view=localStorage.getItem("wbf_admin_view")||"dashboard";
   if(view==="brands"){dashboardHome.classList.add("hidden");brandsPage.classList.remove("hidden");loadBrands();refreshProductCount();}
   else if(view==="store-bank"){
@@ -1036,6 +1058,7 @@ localStorage.setItem("wbf_admin_view","dashboard");
 login.classList.add("hidden");dash.classList.remove("hidden");
 await refreshProductCount();
 await refreshOrderCount();
+await refreshVisitorStats();
 }catch(e){showError("Koneksi gagal: "+e.message)}
 finally{btn.disabled=false;btn.textContent="LOGIN"}
 }
@@ -1522,6 +1545,27 @@ function renderBrandProducts(products){
 function escapeHtml(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
+async function refreshVisitorStats(){
+  const token=authToken();
+  if(!token)return;
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_visitor_stats",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:"{}"
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.message||data.details||"Gagal memuat statistik visitor.");
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=Number(v||0).toLocaleString("id-ID")};
+    set("visitorTodayUnique",data.today_unique);
+    set("visitorTodayVisits",data.today_visits);
+    set("visitorWeekUnique",data.week_unique);
+    set("visitorMonthUnique",data.month_unique);
+    set("visitorTotalUnique",data.total_unique);
+    set("visitorOnlineNow",data.online_now);
+  }catch(e){console.warn("WBF visitor stats gagal:",e)}
+}
+
 async function refreshProductCount(){
   const token=authToken();
   try{
@@ -2304,4 +2348,12 @@ async function wbfLookupPaymentCustomer(){
 }
 document.getElementById("wbfPaymentLookupBtn")?.addEventListener("click",wbfLookupPaymentCustomer);
 document.getElementById("wbfPaymentLookupPhone")?.addEventListener("keydown",e=>{if(e.key==="Enter")wbfLookupPaymentCustomer();});
+</script>
+
+<script>
+setInterval(()=>{
+  const d=document.getElementById("dashboard");
+  const h=document.getElementById("dashboardHome");
+  if(d&&h&&!d.classList.contains("hidden")&&!h.classList.contains("hidden")) refreshVisitorStats();
+},60000);
 </script>
