@@ -677,7 +677,7 @@ html, body {
 .wbf-photo-preview-item div{padding:4px;font-size:9px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 
-<style id="wbf-brand-gender-size-fix">#brandGenderFilters .gender-filter,#brandCategoryFilters .category-filter,#brandSizeFilters .size-filter{cursor:pointer}#brandSizeFilters .size-filter{display:inline-block;min-width:38px;text-align:center;padding:7px 9px!important;font-size:10px!important}#brandSizeFilters .size-filter.active{background:#fff!important;color:#111!important}</style>
+<style id="wbf-brand-gender-size-fix">#brandGenderFilters .gender-filter,#brandCategoryFilters .category-filter{cursor:pointer}#brandGenderFilters .gender-filter.active,#brandCategoryFilters .category-filter.active{background:#fff!important;color:#111!important;border-color:#fff!important}</style>
 
 </head>
 <body>
@@ -821,7 +821,6 @@ html, body {
 <div class="brand-card category-filter" data-category="SANDAL">SANDAL</div>
 <div class="brand-card category-filter" data-category="BAG">BAG</div>
 </div>
-<div id="brandSizeFilters" style="display:none;overflow-x:auto;gap:6px;margin-top:8px;padding:2px 0 3px;white-space:nowrap"></div>
 <button id="brandRegisterBtn" type="button" style="margin-top:18px">+ REGISTER PRODUCT</button>
 </div>
 <div id="brandProductsList" style="margin-top:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;align-items:start"></div>
@@ -974,10 +973,11 @@ function restoreView(){
     selectedBrand=localStorage.getItem("wbf_admin_brand")||"VOLCOM";
     selectedGender=localStorage.getItem("wbf_admin_gender")||"";
     selectedCategory=localStorage.getItem("wbf_admin_category")||"";
-    selectedSize="";
     brandDetailTitle.textContent=selectedBrand;
     const gf=document.getElementById("brandGenderFilters"),cf=document.getElementById("brandCategoryFilters");
     if(gf)gf.style.display="grid";if(cf)cf.style.display=selectedGender?"grid":"none";
+    document.querySelectorAll(".gender-filter").forEach(x=>x.classList.toggle("active",x.dataset.gender===selectedGender));
+    document.querySelectorAll(".category-filter").forEach(x=>x.classList.toggle("active",x.dataset.category===selectedCategory));
     dashboardHome.classList.add("hidden");
     brandDetailPage.classList.remove("hidden");
     if(selectedCategory){
@@ -1397,17 +1397,15 @@ const brandProductsList=document.getElementById("brandProductsList");
 let selectedBrand="";
 let selectedGender="";
 let selectedCategory="";
-let selectedSize="";
 
 function openBrand(brand){
 selectedBrand=brand;
 selectedGender="";
 selectedCategory="";
-selectedSize="";
 brandDetailTitle.textContent=brand;
 brandProductsList.innerHTML='<div class="muted">Pilih MEN / LADIES untuk melihat kategori.</div>';
-const gf=document.getElementById("brandGenderFilters"),cf=document.getElementById("brandCategoryFilters"),sf=document.getElementById("brandSizeFilters");
-if(gf)gf.style.display="grid";if(cf)cf.style.display="none";if(sf){sf.style.display="none";sf.innerHTML="";}
+const gf=document.getElementById("brandGenderFilters"),cf=document.getElementById("brandCategoryFilters");
+if(gf)gf.style.display="grid";if(cf)cf.style.display="none";
 dashboardHome.classList.add("hidden");
 brandsPage.classList.add("hidden");
 brandDetailPage.classList.remove("hidden");
@@ -1418,16 +1416,20 @@ el.addEventListener("click",()=>openBrand(el.dataset.brand));
 });
 
 document.querySelectorAll(".gender-filter").forEach(el=>el.addEventListener("click",()=>{
-selectedGender=el.dataset.gender;selectedCategory="";selectedSize="";
+selectedGender=el.dataset.gender;selectedCategory="";
+document.querySelectorAll(".gender-filter").forEach(x=>x.classList.remove("active"));el.classList.add("active");
+document.querySelectorAll(".category-filter").forEach(x=>x.classList.remove("active"));
 localStorage.setItem("wbf_admin_gender",selectedGender);localStorage.removeItem("wbf_admin_category");
-const cf=document.getElementById("brandCategoryFilters"),sf=document.getElementById("brandSizeFilters");
-if(cf)cf.style.display="grid";if(sf){sf.style.display="none";sf.innerHTML="";}
+const cf=document.getElementById("brandCategoryFilters");
+if(cf)cf.style.display="grid";
 brandProductsList.innerHTML='<div class="muted">Pilih kategori untuk melihat SKU.</div>';saveView("brand");
 }));
 
 document.querySelectorAll(".category-filter").forEach(el=>el.addEventListener("click",()=>{
-selectedCategory=el.dataset.category;selectedSize="";localStorage.setItem("wbf_admin_category",selectedCategory);
-const sf=document.getElementById("brandSizeFilters");if(sf){sf.style.display="none";sf.innerHTML="";}saveView("brand");loadBrandProducts();
+selectedCategory=el.dataset.category;
+document.querySelectorAll(".category-filter").forEach(x=>x.classList.remove("active"));el.classList.add("active");
+localStorage.setItem("wbf_admin_category",selectedCategory);
+saveView("brand");loadBrandProducts();
 }));
 
 document.getElementById("brandDetailBackBtn").addEventListener("click",()=>{
@@ -1499,41 +1501,13 @@ async function loadBrandProducts(){
     const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brand_products",{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({p_brand_id:brandId,p_category:selectedCategory})});
     const products=await res.json();if(!res.ok)throw new Error(products.message||"Gagal mengambil produk.");
     const gendered=products.filter(p=>String(p.gender||"").toUpperCase()===selectedGender);
-    const sizeGroups=[
-      {label:"ALL / ONE SIZE", values:["ALL","ONE SIZE","ALL / ONE SIZE"]},
-      {label:"S, M, L, XL, XXL", values:["S","M","L","XL","XXL"]},
-      {label:"6, 8, 10, 12, 14", values:["6","8","10","12","14"]},
-      {label:"30, 32, 34, 36, 38", values:["30","32","34","36","38"]},
-      {label:"36, 37, 38, 39, 40", values:["36","37","38","39","40"]},
-      {label:"40, 41, 42, 43, 44, 45", values:["40","41","42","43","44","45"]}
-    ];
-    const sf=document.getElementById("brandSizeFilters");
-    if(sf){
-      const norm=p=>(Array.isArray(p.sizes)?p.sizes:[]).map(v=>String(v).trim().toUpperCase());
-      const available=sizeGroups.filter(g=>gendered.some(p=>{const ps=norm(p);return g.values.some(v=>ps.includes(v));}));
-      sf.innerHTML='<button type="button" class="brand-card size-filter active" data-size="">SEMUA</button>'+available.map(g=>'<button type="button" class="brand-card size-filter" data-size="'+escapeHtml(g.label)+'">'+escapeHtml(g.label)+'</button>').join("");
-      sf.style.display=available.length?"flex":"none";
-      sf.querySelectorAll(".size-filter").forEach(btn=>btn.addEventListener("click",()=>{selectedSize=btn.dataset.size||"";sf.querySelectorAll(".size-filter").forEach(x=>x.classList.remove("active"));btn.classList.add("active");renderBrandProducts(gendered);}));
-    }
     renderBrandProducts(gendered);
   }catch(e){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">Gagal memuat SKU: '+escapeHtml(e.message)+'</div>';}
 }
 
 function renderBrandProducts(products){
-  const sizeGroupMap={
-    "ALL / ONE SIZE":["ALL","ONE SIZE","ALL / ONE SIZE"],
-    "S, M, L, XL, XXL":["S","M","L","XL","XXL"],
-    "6, 8, 10, 12, 14":["6","8","10","12","14"],
-    "30, 32, 34, 36, 38":["30","32","34","36","38"],
-    "36, 37, 38, 39, 40":["36","37","38","39","40"],
-    "40, 41, 42, 43, 44, 45":["40","41","42","43","44","45"]
-  };
-  const filtered=selectedSize?products.filter(p=>{
-    const wanted=sizeGroupMap[selectedSize]||[selectedSize];
-    const actual=(Array.isArray(p.sizes)?p.sizes:[]).map(v=>String(v).trim().toUpperCase());
-    return wanted.some(v=>actual.includes(v));
-  }):products;
-  if(!filtered.length){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+escapeHtml(selectedBrand)+' · '+escapeHtml(selectedGender)+' · '+escapeHtml(selectedCategory)+(selectedSize?' · '+escapeHtml(selectedSize):'')+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';return;}
+  const filtered=products;
+  if(!filtered.length){brandProductsList.innerHTML='<div class="brand-card" style="text-align:left">'+escapeHtml(selectedBrand)+' · '+escapeHtml(selectedGender)+' · '+escapeHtml(selectedCategory)+'<br><span class="muted">Belum ada SKU terdaftar.</span></div>';return;}
   brandProductsList.innerHTML=filtered.map(p=>{
     const finalPrice=Math.max(0,Number(p.price)*(1-Number(p.discount||0)/100));
     const img=p.image_url?'<img class="product-card-photo" src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.name||'Product')+'" loading="lazy">':'<div class="product-card-no-photo">NO PHOTO</div>';
