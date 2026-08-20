@@ -55,6 +55,13 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
 .info{padding:11px}.tag{font-size:10px;color:#e21b23;font-weight:bold;letter-spacing:1px}.name{font-weight:bold;margin:7px 0}.sku{color:#888;font-size:11px;margin:4px 0}.meta{color:#ddd;font-size:11px;line-height:1.5}.price{font-size:15px;font-weight:bold;margin-top:6px}.old-price{text-decoration:line-through;color:#777;font-size:11px}.sale-price{font-size:16px;font-weight:800}
 .order{width:100%;margin-top:10px;padding:9px;border:0;border-radius:7px;background:#e21b23;color:#fff;font-weight:bold}
 .gender-nav{display:none;gap:8px;padding:2px 0 8px}.gender-nav button{flex:1;white-space:nowrap;border:1px solid #e21b23;background:#e21b23;color:#fff;border-radius:8px;padding:10px 14px;font-weight:800;font-size:13px}.gender-nav button.active{background:#fff;color:#111;border-color:#fff}.category-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}.category-nav button{white-space:nowrap;border:0;background:#e21b23;color:#fff;border-radius:7px;padding:8px 12px;font-weight:700;font-size:11px}.category-nav button.active{background:#fff;color:#111}
+/* Discount filter: compact secondary controls for collection browsing */
+.discount-nav{display:none;gap:6px;overflow-x:auto;padding:0 0 8px;scrollbar-width:none}
+.discount-nav::-webkit-scrollbar{display:none}
+.discount-nav button{flex:0 0 auto;white-space:nowrap;border:1px solid #3a3a3a;background:#151515;color:#fff;border-radius:999px;padding:7px 11px;font-weight:800;font-size:10px;min-height:32px;cursor:pointer}
+.discount-nav button.active{background:#fff;color:#111;border-color:#fff}
+.discount-nav button.discount-sale{border-color:#555}
+@media(max-width:600px){.discount-nav{gap:5px}.discount-nav button{padding:6px 10px;font-size:10px;min-height:30px}}
 .catalog-status{color:#888;font-size:12px;padding:8px 0}
 @media(max-width:800px){.products{grid-template-columns:repeat(3,1fr);gap:7px}.info{padding:7px}.name{font-size:12px}.sku,.meta{font-size:9px}.price{font-size:12px}.sale-price{font-size:13px}.old-price{font-size:9px}.order{padding:7px;font-size:10px}.photo{aspect-ratio:1/1}}
 .info-box{margin-top:32px;padding:20px;border:1px solid #282828;background:#111;border-radius:14px;color:#bdbdbd;line-height:1.6}
@@ -488,6 +495,14 @@ body.wbf-event-mode .wbf-event-photo{
     <button data-category="SANDAL">SANDAL</button>
     <button data-category="BAG">BAG</button>
   </div>
+  <div class="discount-nav" id="discount-nav" aria-label="Filter New Arrival dan diskon">
+    <button type="button" data-discount="NEW" class="active">NEW ARRIVAL</button>
+    <button type="button" data-discount="30" class="discount-sale">30%</button>
+    <button type="button" data-discount="50" class="discount-sale">50%</button>
+    <button type="button" data-discount="60" class="discount-sale">60%</button>
+    <button type="button" data-discount="70" class="discount-sale">70%</button>
+    <button type="button" data-discount="80" class="discount-sale">80%</button>
+  </div>
   <div class="catalog-status" id="catalog-status">Memuat produk...</div>
   <div class="products" id="catalog"></div>
 </section>
@@ -606,6 +621,7 @@ let allProducts=[];
 let selectedBrand="";
 let selectedGender="";
 let selectedCategory="ALL";
+let selectedDiscount="NEW";
 
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
@@ -613,36 +629,6 @@ function esc(v){
 function money(v){return Number(v||0).toLocaleString("id-ID")}
 function apiHeaders(){
   return {"apikey":WBF_SUPABASE_KEY,"Content-Type":"application/json"};
-}
-
-/* WBF VISITOR COUNTER
-   Counts a browser/PWA as one visitor identity and records a new visit
-   at most once every 30 minutes. No IP address or personal data is stored. */
-async function wbfRecordVisitorVisit(){
-  try{
-    let visitorId=localStorage.getItem("wbf_visitor_id");
-    if(!visitorId){
-      visitorId=crypto.randomUUID?crypto.randomUUID():"wbf-"+Date.now()+"-"+Math.random().toString(36).slice(2);
-      localStorage.setItem("wbf_visitor_id",visitorId);
-    }
-    const now=Date.now();
-    const last=Number(localStorage.getItem("wbf_visitor_last_visit")||0);
-    if(last && now-last<30*60*1000) return;
-    const isPwa=window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches || navigator.standalone===true;
-    const res=await fetch(WBF_SUPABASE_URL+"/rest/v1/rpc/wbf_record_visit",{
-      method:"POST",
-      headers:apiHeaders(),
-      body:JSON.stringify({
-        p_visitor_id:visitorId,
-        p_source:isPwa?"pwa":"web",
-        p_path:location.pathname+location.hash
-      })
-    });
-    if(res.ok) localStorage.setItem("wbf_visitor_last_visit",String(now));
-  }catch(e){
-    // Visitor statistics must never block or alter the shop.
-    console.warn("WBF visitor counter unavailable:",e);
-  }
 }
 
 function renderCustomerBrands(){
@@ -792,6 +778,7 @@ function renderCatalog(){
   const status=document.getElementById("catalog-status");
   const count=document.getElementById("catalog-count");
   const catNav=document.getElementById("category-nav");
+  const discountNav=document.getElementById("discount-nav");
 
   let products=allProducts;
   const genderNav=document.getElementById("gender-nav");
@@ -800,10 +787,12 @@ function renderCatalog(){
     genderNav.style.display="flex";
     if(!selectedGender){
       catNav.style.display="none";
+      if(discountNav)discountNav.style.display="none";
       products=[];
       status.textContent="Pilih MEN atau LADIES.";
     }else{
       catNav.style.display="flex";
+      if(discountNav)discountNav.style.display="flex";
       products=products.filter(p=>{
         const g=String(p.gender||p.product_gender||p.collection||p.gender_collection||"").trim().toUpperCase();
         return g===selectedGender || g==="UNISEX";
@@ -812,6 +801,7 @@ function renderCatalog(){
   }else{
     genderNav.style.display="none";
     catNav.style.display="none";
+    if(discountNav)discountNav.style.display="none";
 
     // HOME = hanya product yang dipilih sebagai NEW ARRIVAL.
     // Mendukung beberapa nama field agar tetap kompatibel dengan RPC lama/baru.
@@ -854,8 +844,25 @@ function renderCatalog(){
     products=products.filter(p=>(p.category||"").toUpperCase()===selectedCategory);
   }
 
+  // Collection filter: NEW ARRIVAL only when explicitly marked AND has no discount.
+  // Discount buttons match the exact discount percentage registered in Admin.
+  if(selectedBrand){
+    if(selectedDiscount==="NEW"){
+      products=products.filter(p=>{
+        const newArrival = p.is_new_arrival===true || p.is_new_arrival===1 || p.is_new_arrival==="true" ||
+          p.new_arrival===true || p.new_arrival===1 || p.new_arrival==="true" ||
+          p.isNewArrival===true || p.isNewArrival===1 || p.isNewArrival==="true" ||
+          p.newArrival===true || p.newArrival===1 || p.newArrival==="true";
+        return newArrival && Number(p.discount||0)===0;
+      });
+    }else{
+      const target=Number(selectedDiscount);
+      products=products.filter(p=>Number(p.discount||0)===target);
+    }
+  }
+
   const title=selectedBrand
-    ? selectedBrand+" Collection"+(selectedCategory!=="ALL"?" · "+selectedCategory:"")
+    ? selectedBrand+" Collection"+(selectedCategory!=="ALL"?" · "+selectedCategory:"")+(selectedDiscount==="NEW"?" · NEW ARRIVAL":" · "+selectedDiscount+"% OFF")
     : "New Arrival";
   document.getElementById("catalog-title").textContent=title;
   count.textContent=products.length+" Produk";
@@ -969,12 +976,14 @@ function filterBrand(brand){
   selectedBrand=brand;
   selectedGender="";
   selectedCategory="ALL";
+  selectedDiscount="NEW";
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
   document.getElementById("brands").style.display="none";
   document.getElementById("special-promo-section").style.display="none";
   document.getElementById("catalog-section").style.display="block";
   document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
+  document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b.dataset.discount==="NEW"));
   renderCatalog();
   document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -983,8 +992,10 @@ document.querySelectorAll("#gender-nav button").forEach(btn=>{
   btn.addEventListener("click",()=>{
     selectedGender=btn.dataset.gender;
     selectedCategory="ALL";
+    selectedDiscount="NEW";
     document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",b===btn));
     document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
+    document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b.dataset.discount==="NEW"));
     renderCatalog();
   });
 });
@@ -993,6 +1004,14 @@ document.querySelectorAll(".category-nav button").forEach(btn=>{
   btn.addEventListener("click",()=>{
     selectedCategory=btn.dataset.category;
     document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b===btn));
+    renderCatalog();
+  });
+});
+
+document.querySelectorAll("#discount-nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    selectedDiscount=btn.dataset.discount||"NEW";
+    document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b===btn));
     renderCatalog();
   });
 });
@@ -1595,7 +1614,6 @@ showHome();
 updateCartBadge();
 loadCustomerBrands();
 loadCustomerProducts();
-wbfRecordVisitorVisit();
 
 /* WBF LIVE CUSTOMER CATALOG SYNC
    Keeps the installed PWA in sync with admin changes without reinstalling.
