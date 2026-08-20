@@ -1537,10 +1537,37 @@ function renderBrandProducts(products){
   brandProductsList.innerHTML=filtered.map(p=>{
     const finalPrice=Math.max(0,Number(p.price)*(1-Number(p.discount||0)/100));
     const img=p.image_url?'<img class="product-card-photo" src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.name||'Product')+'" loading="lazy">':'<div class="product-card-no-photo">NO PHOTO</div>';
-    return '<div class="brand-card product-card" style="text-align:left">'+img+'<div class="muted">'+escapeHtml(selectedBrand)+' · '+escapeHtml(p.category)+'</div><div style="font-size:18px;margin:6px 0">'+escapeHtml(p.name)+'</div><div class="muted">SKU: '+escapeHtml(p.sku)+'</div><div style="margin-top:8px">Size: '+escapeHtml((p.sizes||[]).join(" / "))+'</div><div>Color: '+escapeHtml((p.colors||[]).join(" / "))+'</div><div style="margin-top:8px">Harga: Rp '+Number(p.price).toLocaleString("id-ID")+'</div><div>Discount: '+Number(p.discount||0)+'%</div><div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div><div style="margin-top:7px;font-size:10px;font-weight:800;color:'+(p.is_new_arrival?'#7ee787':'#888')+'">'+(p.is_new_arrival?'✓ NEW ARRIVAL':'— BUKAN NEW ARRIVAL')+'</div><div style="margin-top:4px;font-size:10px;font-weight:800;color:'+(p.is_special_promo?'#ffcc66':'#888')+'">'+(p.is_special_promo?'✓ SPECIAL PROMO':'— BUKAN SPECIAL PROMO')+'</div><button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:12px">EDIT SKU</button></div>';
+    return '<div class="brand-card product-card" style="text-align:left">'+img+'<div class="muted">'+escapeHtml(selectedBrand)+' · '+escapeHtml(p.category)+'</div><div style="font-size:18px;margin:6px 0">'+escapeHtml(p.name)+'</div><div class="muted">SKU: '+escapeHtml(p.sku)+'</div><div style="margin-top:8px">Size: '+escapeHtml((p.sizes||[]).join(" / "))+'</div><div>Color: '+escapeHtml((p.colors||[]).join(" / "))+'</div><div style="margin-top:8px">Harga: Rp '+Number(p.price).toLocaleString("id-ID")+'</div><div>Discount: '+Number(p.discount||0)+'%</div><div style="font-weight:800;margin-top:4px">Harga jual: Rp '+finalPrice.toLocaleString("id-ID")+'</div><div style="margin-top:7px;font-size:10px;font-weight:800;color:'+(p.is_new_arrival?'#7ee787':'#888')+'">'+(p.is_new_arrival?'✓ NEW ARRIVAL':'— BUKAN NEW ARRIVAL')+'</div><div style="margin-top:4px;font-size:10px;font-weight:800;color:'+(p.is_special_promo?'#ffcc66':'#888')+'">'+(p.is_special_promo?'✓ SPECIAL PROMO':'— BUKAN SPECIAL PROMO')+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px"><button type="button" class="edit-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:0">EDIT SKU</button><button type="button" class="delete-product-btn" data-product-id="'+escapeHtml(p.id)+'" style="margin-top:0;background:#7d1117">HAPUS</button></div></div>';
   }).join("");
   brandProductsList.querySelectorAll(".edit-product-btn").forEach(btn=>btn.addEventListener("click",()=>editProduct(btn.dataset.productId,products)));
+  brandProductsList.querySelectorAll(".delete-product-btn").forEach(btn=>btn.addEventListener("click",()=>deleteProduct(btn.dataset.productId,products)));
 }
+
+async function deleteProduct(productId,products){
+  const product=(products||[]).find(p=>String(p.id)===String(productId));
+  if(!product)return;
+  const sku=String(product.sku||"").trim();
+  const name=String(product.name||"").trim();
+  const label=sku+(name?" - "+name:"");
+  if(!confirm("Hapus product ini?\n\n"+label+"\n\nProduct yang dihapus tidak akan tampil lagi di katalog."))return;
+  const token=authToken();
+  if(!token){alert("Session admin tidak ditemukan.");return;}
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_delete_product",{
+      method:"POST",
+      headers:{"apikey":KEY,"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({p_product_id:productId})
+    });
+    const data=await res.json().catch(()=>null);
+    if(!res.ok)throw new Error(data?.message||data?.details||"Gagal menghapus product.");
+    alert("Product berhasil dihapus.");
+    await refreshProductCount();
+    await loadBrandProducts();
+  }catch(e){
+    alert("Gagal menghapus product: "+e.message);
+  }
+}
+
 
 function escapeHtml(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
