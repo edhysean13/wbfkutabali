@@ -21,35 +21,35 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
 .brands{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
 .brand{white-space:nowrap;padding:13px 20px;border:0;background:#e21b23;color:#fff;border-radius:8px;font-weight:bold;cursor:pointer}
 .brand:hover{background:#b9141b}
-.products{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.special-promo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.special-promo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .special-promo-section{margin-top:28px}
 .special-promo-section .section-head h2{font-size:24px}
 .special-promo-note{color:#888;font-size:12px}
 .special-promo-empty{grid-column:1/-1;color:#777;padding:20px 0;text-align:center;border:1px solid #282828;border-radius:12px;background:#111}
 .special-promo-grid .card{
-  background:#071a2e;
-  border:1px solid #1688d8;
-  box-shadow:0 0 0 1px rgba(22,136,216,.18);
+  background:#8fd8ff;
+  border:1px solid #54bff2;
+  box-shadow:0 0 0 1px rgba(84,191,242,.18);
   position:relative;
 }
 .special-promo-grid .card .tag{
   display:inline-block;
-  background:#1688d8;
+  background:#54bff2;
   color:#fff;
   padding:4px 7px;
   border-radius:5px;
   letter-spacing:.8px;
 }
 .special-promo-grid .card .sale-price{
-  color:#5ec5ff;
+  color:#087db8;
 }
 .special-promo-grid .card .old-price{
   color:#777;
 }
 @media(max-width:800px){
-  .products{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-  .special-promo-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .products{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+  .special-promo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 }
 .card{background:#121212;border:1px solid #282828;border-radius:12px;overflow:hidden}.photo{aspect-ratio:1/1;background:#1a1a1a;color:#888;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover;display:block}
 .info{padding:11px}.tag{font-size:10px;color:#e21b23;font-weight:bold;letter-spacing:1px}.name{font-weight:bold;margin:7px 0}.sku{color:#888;font-size:11px;margin:4px 0}.meta{color:#ddd;font-size:11px;line-height:1.5}.price{font-size:15px;font-weight:bold;margin-top:6px}.old-price{text-decoration:line-through;color:#777;font-size:11px}.sale-price{font-size:16px;font-weight:800}
@@ -63,10 +63,10 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
 .discount-nav button.discount-sale{border-color:#555}
 @media(max-width:600px){.discount-nav{gap:5px}.discount-nav button{padding:6px 10px;font-size:10px;min-height:30px}}
 .catalog-status{color:#888;font-size:12px;padding:8px 0}
-@media(max-width:800px){.products{grid-template-columns:repeat(3,1fr);gap:7px}.info{padding:7px}.name{font-size:12px}.sku,.meta{font-size:9px}.price{font-size:12px}.sale-price{font-size:13px}.old-price{font-size:9px}.order{padding:7px;font-size:10px}.photo{aspect-ratio:1/1}}
+@media(max-width:800px){.products{grid-template-columns:repeat(4,1fr);gap:7px}.info{padding:7px}.name{font-size:12px}.sku,.meta{font-size:9px}.price{font-size:12px}.sale-price{font-size:13px}.old-price{font-size:9px}.order{padding:7px;font-size:10px}.photo{aspect-ratio:1/1}}
 .info-box{margin-top:32px;padding:20px;border:1px solid #282828;background:#111;border-radius:14px;color:#bdbdbd;line-height:1.6}
 footer{margin-top:55px;border-top:1px solid #222;padding:32px 5%;text-align:center;color:#777}
-@media(max-width:800px){.products{grid-template-columns:repeat(3,1fr)}.hero{margin:12px;border-radius:18px}}
+@media(max-width:800px){.products{grid-template-columns:repeat(4,1fr)}.hero{margin:12px;border-radius:18px}}
 @media(max-width:500px){header{padding:8px 14px}.container{padding:0 14px}.hero{padding:35px 22px;min-height:350px}.photo{aspect-ratio:1/1;height:auto}}
 .nav a{display:inline-block;padding:10px 15px;border:1px solid #333;border-radius:8px;background:#151515;color:#fff;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.6px}.nav a:hover{background:#e21b23;border-color:#e21b23}
 .main-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap;margin-top:18px}
