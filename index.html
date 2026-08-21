@@ -388,6 +388,14 @@ body.wbf-event-mode .wbf-event-photo{
 .wbf-gallery-details .detail-sale{font-size:21px;font-weight:900;color:#fff}
 .wbf-gallery-details .detail-discount{background:#e21b23;color:#fff;border-radius:6px;padding:5px 8px;font-size:12px;font-weight:800}
 .wbf-gallery-details .detail-order{width:100%;margin-top:12px;padding:11px;border:0;border-radius:8px;background:#e21b23;color:#fff;font-weight:800;font-size:13px;cursor:pointer}
+@media(min-width:601px){
+  .wbf-gallery-stage{padding:0 24px;box-sizing:border-box}
+  .wbf-gallery-image{max-width:calc(100vw - 430px);max-height:88vh;margin-right:370px}
+  .wbf-gallery-details{left:auto;right:24px;top:50%;bottom:auto;transform:translateY(-50%);width:340px;max-height:78vh;box-sizing:border-box}
+  .wbf-gallery-prev{left:24px}
+  .wbf-gallery-next{right:390px}
+  .wbf-gallery-counter{left:calc(50% - 185px)}
+}
 @media(max-width:600px){.wbf-gallery-details{bottom:10px;width:calc(100% - 20px);padding:13px 14px 12px;max-height:43vh}.wbf-gallery-details .detail-name{font-size:20px}.wbf-gallery-details .detail-specs{font-size:12px;grid-template-columns:60px 1fr}.wbf-gallery-details .detail-sale{font-size:18px}.wbf-gallery-image{max-height:53vh;margin-top:-18vh}}
 @media(max-width:600px){.wbf-gallery-image{max-width:100vw;max-height:82vh}.wbf-gallery-prev,.wbf-gallery-next{width:38px!important;height:38px!important;font-size:23px!important}.wbf-gallery-prev{left:8px}.wbf-gallery-next{right:8px}}
 .photo{cursor:zoom-in}
