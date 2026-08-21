@@ -1221,12 +1221,16 @@ function openAddToCartVariant(p){
   document.getElementById("wbfOrderProduct").innerHTML=
     image+'<div><b>'+esc(p.name||"Product")+'</b><div style="font-size:12px;color:#aaa;margin-top:4px">Isi size dan jumlah sebelum masuk Cart</div></div>';
 
-  // Size is intentionally blank and typed manually by the customer.
-  // Registered product data does not supply size/color anymore.
+  // Size follows the sizes registered for this product.
   const sf=document.getElementById("wbfSizeField");
   const ss=document.getElementById("wbfOrderSize");
+  const registeredSizes=Array.isArray(p.sizes)
+    ? p.sizes.filter(Boolean).join(" / ")
+    : String(p.sizes||"").trim();
+  const sizeExample=registeredSizes || "M / L / XL";
   sf.style.display="";
   ss.value="";
+  ss.placeholder="Ketik size, contoh: "+sizeExample;
 
   document.getElementById("wbfCustomerName").parentElement.style.display="none";
   document.getElementById("wbfCustomerPhone").parentElement.style.display="none";
@@ -1419,9 +1423,16 @@ function orderProduct(productId){
   const sf=document.getElementById("wbfSizeField");
   const cf=document.getElementById("wbfColorField");
   const ss=document.getElementById("wbfOrderSize");
+  const registeredSizes=Array.isArray(p.sizes)
+    ? p.sizes.filter(Boolean).join(" / ")
+    : String(p.sizes||"").trim();
+  const sizeExample=registeredSizes || "M / L / XL";
   if(sf){ sf.style.display="block"; }
   if(cf){ cf.style.display="none"; }
-  if(ss){ ss.outerHTML='<input id="wbfOrderSize" type="text" placeholder="Ketik size, contoh M / L / XL" style="width:100%;font-size:16px">'; }
+  if(ss){
+    ss.value="";
+    ss.placeholder="Ketik size, contoh: "+sizeExample;
+  }
 
   document.getElementById("wbfCustomerName").value="";
   document.getElementById("wbfCustomerPhone").value="";
