@@ -520,7 +520,8 @@ body.wbf-event-mode .wbf-event-photo{
     <button data-category="BAG">BAG</button>
   </div>
   <div class="discount-nav" id="discount-nav" aria-label="Filter New Arrival dan diskon">
-    <button type="button" data-discount="NEW" class="active">NEW ARRIVAL</button>
+    <button type="button" data-discount="ALL" class="active">SEMUA</button>
+    <button type="button" data-discount="NEW">NEW ARRIVAL</button>
     <button type="button" data-discount="30" class="discount-sale">30%</button>
     <button type="button" data-discount="50" class="discount-sale">50%</button>
     <button type="button" data-discount="60" class="discount-sale">60%</button>
@@ -646,7 +647,7 @@ let allProducts=[];
 let selectedBrand="";
 let selectedGender="";
 let selectedCategory="ALL";
-let selectedDiscount="NEW";
+let selectedDiscount="ALL";
 
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
@@ -849,13 +850,15 @@ function renderCatalog(){
   let products=allProducts;
   const genderNav=document.getElementById("gender-nav");
   if(selectedBrand){
+    // Saat BRAND dibuka, tampilkan SEMUA product brand tersebut terlebih dahulu.
+    // Gender (MEN/LADIES) baru menjadi filter setelah user memilihnya.
     products=products.filter(p=>p.brand_id===WBF_BRANDS[selectedBrand]);
     genderNav.style.display="flex";
+
     if(!selectedGender){
       catNav.style.display="none";
       if(discountNav)discountNav.style.display="none";
-      products=[];
-      status.textContent="Pilih MEN atau LADIES.";
+      status.textContent="";
     }else{
       catNav.style.display="flex";
       if(discountNav)discountNav.style.display="flex";
@@ -912,7 +915,7 @@ function renderCatalog(){
 
   // Collection filter: NEW ARRIVAL only when explicitly marked AND has no discount.
   // Discount buttons match the exact discount percentage registered in Admin.
-  if(selectedBrand){
+  if(selectedBrand && selectedDiscount!=="ALL"){
     if(selectedDiscount==="NEW"){
       products=products.filter(p=>{
         const newArrival = p.is_new_arrival===true || p.is_new_arrival===1 || p.is_new_arrival==="true" ||
@@ -928,7 +931,7 @@ function renderCatalog(){
   }
 
   const title=selectedBrand
-    ? selectedBrand+" Collection"+(selectedCategory!=="ALL"?" · "+selectedCategory:"")+(selectedDiscount==="NEW"?" · NEW ARRIVAL":" · "+selectedDiscount+"% OFF")
+    ? selectedBrand+" Collection"+(selectedCategory!=="ALL"?" · "+selectedCategory:"")+(selectedDiscount==="ALL"?"":" · "+(selectedDiscount==="NEW"?"NEW ARRIVAL":selectedDiscount+"% OFF"))
     : "New Arrival";
   document.getElementById("catalog-title").textContent=title;
   count.textContent=products.length+" Produk";
@@ -1043,14 +1046,14 @@ function filterBrand(brand){
   selectedBrand=brand;
   selectedGender="";
   selectedCategory="ALL";
-  selectedDiscount="NEW";
+  selectedDiscount="ALL";
   document.querySelector(".hero").style.display="none";
   document.getElementById("main-navigation").style.display="none";
   document.getElementById("brands").style.display="none";
   document.getElementById("special-promo-section").style.display="none";
   document.getElementById("catalog-section").style.display="block";
   document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
-  document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b.dataset.discount==="NEW"));
+  document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b.dataset.discount==="ALL"));
   renderCatalog();
   document.getElementById("catalog-section").scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -1059,10 +1062,10 @@ document.querySelectorAll("#gender-nav button").forEach(btn=>{
   btn.addEventListener("click",()=>{
     selectedGender=btn.dataset.gender;
     selectedCategory="ALL";
-    selectedDiscount="NEW";
+    selectedDiscount="ALL";
     document.querySelectorAll("#gender-nav button").forEach(b=>b.classList.toggle("active",b===btn));
     document.querySelectorAll(".category-nav button").forEach(b=>b.classList.toggle("active",b.dataset.category==="ALL"));
-    document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b.dataset.discount==="NEW"));
+    document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b.dataset.discount==="ALL"));
     renderCatalog();
   });
 });
@@ -1077,7 +1080,7 @@ document.querySelectorAll(".category-nav button").forEach(btn=>{
 
 document.querySelectorAll("#discount-nav button").forEach(btn=>{
   btn.addEventListener("click",()=>{
-    selectedDiscount=btn.dataset.discount||"NEW";
+    selectedDiscount=btn.dataset.discount||"ALL";
     document.querySelectorAll("#discount-nav button").forEach(b=>b.classList.toggle("active",b===btn));
     renderCatalog();
   });
