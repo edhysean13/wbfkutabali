@@ -46,13 +46,79 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
   flex:none;background:transparent;border:0;color:#fff;padding:0;
   font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;
 }
-.special-promo-page .special-promo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .special-promo-page .special-promo-grid{
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+}
+.special-promo-page .special-promo-grid .card{
+  border-radius:9px;
+}
+.special-promo-page .special-promo-grid .photo{
+  aspect-ratio:1/1;
+}
+.special-promo-page .special-promo-grid .info{
+  padding:6px;
+}
+.special-promo-page .special-promo-grid .tag{
+  display:block;
+  font-size:8px;
+  line-height:1.15;
+  padding:5px 3px;
+  text-align:center;
+  border-radius:5px;
+  margin:0;
+}
+.special-promo-page .special-promo-grid .name,
+.special-promo-page .special-promo-grid .sku,
+.special-promo-page .special-promo-grid .meta{
+  display:none;
+}
+.special-promo-page .special-promo-grid .price{
+  margin-top:6px;
+  font-size:9px;
+  line-height:1.2;
+  text-align:center;
+}
+.special-promo-page .special-promo-grid .old-price{
+  font-size:8px;
+  white-space:nowrap;
+}
+.special-promo-page .special-promo-grid .sale-price{
+  display:block;
+  font-size:10px;
+  line-height:1.2;
+  margin-top:2px;
+  white-space:nowrap;
+}
+.special-promo-page .special-promo-grid .price small{
+  display:none;
+}
+.special-promo-page .special-promo-grid .order{
+  margin-top:6px;
+  padding:6px 2px;
+  min-height:28px;
+  border-radius:6px;
+  font-size:8px;
+}
 @media(max-width:800px){
-  .special-promo-page .special-promo-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .special-promo-page .special-promo-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:6px;
+  }
 }
 @media(max-width:500px){
   .special-promo-button-copy strong{font-size:16px}
   .special-promo-page-head h2{font-size:22px}
+  .special-promo-page .special-promo-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:5px;
+  }
+  .special-promo-page .special-promo-grid .info{padding:5px 4px 6px}
+  .special-promo-page .special-promo-grid .tag{font-size:7px;padding:4px 2px}
+  .special-promo-page .special-promo-grid .price{font-size:8px;margin-top:5px}
+  .special-promo-page .special-promo-grid .old-price{font-size:7px}
+  .special-promo-page .special-promo-grid .sale-price{font-size:9px}
+  .special-promo-page .special-promo-grid .order{font-size:8px;padding:5px 1px;min-height:26px;margin-top:5px}
 }
 
 .special-promo-grid .card{
@@ -923,15 +989,8 @@ function renderSpecialPromoPage(){
     return '<article class="card">'+image+
       '<div class="info">'+
       '<div class="tag">SPECIAL PROMO</div>'+
-      '<div class="name">'+esc(p.name||"Product")+'</div>'+
-      '<div class="sku">SKU: '+esc(p.sku||"-")+'</div>'+
-      '<div class="meta">'+
-        (sizes?'Size: '+esc(sizes)+'<br>':'')+
-        (colors?'Color: '+esc(colors):'')+
-      '</div>'+
       '<div class="price">'+(discount>0?'<span class="old-price">Rp '+money(p.price)+'</span><br>':'')+
         '<span class="sale-price">Rp '+money(sale)+'</span>'+
-        (discount>0?' <small>('+discount+'% OFF)</small>':'')+
       '</div>'+
       '<button class="order" onclick="addToCart(\''+esc(p.id)+'\')">ORDER</button>'+
       '</div></article>';
