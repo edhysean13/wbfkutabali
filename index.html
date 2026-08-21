@@ -966,6 +966,7 @@ function renderCatalog(){
 
 
 function showHome(){
+  while(wbfActivityCount>0) endWbfActivity();
   document.body.classList.remove("wbf-event-mode");
   const os=document.getElementById("orders-section"); if(os)os.style.display="none";
   document.getElementById("brands")?.style.setProperty("display","");
@@ -1075,9 +1076,53 @@ document.querySelectorAll("#discount-nav button").forEach(btn=>{
 });
 
 
+let wbfActivityCount=0;
+let wbfActivityBannerWasVisible=false;
+let wbfActivityActiveWasVisible=false;
+function beginWbfActivity(){
+  if(wbfActivityCount===0){
+    const banner=document.getElementById("wbfPushBanner");
+    const active=document.getElementById("wbfPushActive");
+    wbfActivityBannerWasVisible=!!(banner && banner.classList.contains("show"));
+    wbfActivityActiveWasVisible=!!(active && getComputedStyle(active).display!=="none");
+    if(banner) banner.classList.remove("show");
+    if(active) active.style.display="none";
+  }
+  wbfActivityCount++;
+}
+function endWbfActivity(){
+  if(wbfActivityCount>0) wbfActivityCount--;
+  if(wbfActivityCount===0){
+    const banner=document.getElementById("wbfPushBanner");
+    const active=document.getElementById("wbfPushActive");
+    if(banner && wbfActivityBannerWasVisible) banner.classList.add("show");
+    if(active && wbfActivityActiveWasVisible) active.style.display="block";
+    wbfActivityBannerWasVisible=false;
+    wbfActivityActiveWasVisible=false;
+  }
+}
+
 let wbfGalleryImages=[];
 let wbfGalleryIndex=0;
 let wbfGalleryProduct=null;
+let wbfGalleryPushBannerWasVisible=false;
+let wbfGalleryPushActiveWasVisible=false;
+function hidePushUiForGallery(){
+  const banner=document.getElementById("wbfPushBanner");
+  const active=document.getElementById("wbfPushActive");
+  wbfGalleryPushBannerWasVisible=!!(banner && banner.classList.contains("show"));
+  wbfGalleryPushActiveWasVisible=!!(active && getComputedStyle(active).display!=="none");
+  if(banner) banner.classList.remove("show");
+  if(active) active.style.display="none";
+}
+function restorePushUiAfterGallery(){
+  const banner=document.getElementById("wbfPushBanner");
+  const active=document.getElementById("wbfPushActive");
+  if(banner && wbfGalleryPushBannerWasVisible) banner.classList.add("show");
+  if(active && wbfGalleryPushActiveWasVisible) active.style.display="block";
+  wbfGalleryPushBannerWasVisible=false;
+  wbfGalleryPushActiveWasVisible=false;
+}
 function getProductImages(p){
   return (Array.isArray(p?.image_urls)&&p.image_urls.length?p.image_urls:(p?.image_url?[p.image_url]:[])).filter(Boolean).slice(0,3);
 }
@@ -1088,6 +1133,7 @@ function openProductGallery(productId){
   wbfGalleryImages=getProductImages(p);
   if(!wbfGalleryImages.length)return;
   wbfGalleryIndex=0;
+  hidePushUiForGallery();
   const modal=document.getElementById("wbfProductGallery");
   modal.classList.add("show");
   modal.setAttribute("aria-hidden","false");
@@ -1120,6 +1166,7 @@ function closeProductGallery(){
   modal.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
   wbfGalleryProduct=null;
+  restorePushUiAfterGallery();
 }
 (function(){
   const stage=document.getElementById("wbfGalleryStage");
@@ -1196,6 +1243,7 @@ function openAddToCartVariant(p){
     submit.onclick=submitWbfOrder;
     openCart();
   };
+  beginWbfActivity();
   document.getElementById("wbfOrderModal").classList.add("show");
 }
 
@@ -1274,10 +1322,12 @@ function removeCartLine(i){
 
 function openCart(){
   renderCart();
+  beginWbfActivity();
   document.getElementById("wbfCartPanel").classList.add("show");
 }
 function closeCart(){
   document.getElementById("wbfCartPanel").classList.remove("show");
+  endWbfActivity();
 }
 
 function checkoutWbfCart(){
@@ -1298,6 +1348,7 @@ function checkoutWbfCart(){
   document.getElementById("wbfOrderSubmit").onclick=submitWbfCart;
   document.getElementById("wbfOrderFormWrap").style.display="block";
   document.getElementById("wbfOrderSuccess").style.display="none";
+  beginWbfActivity();
   document.getElementById("wbfOrderModal").classList.add("show");
 }
 
@@ -1367,11 +1418,13 @@ function orderProduct(productId){
   document.getElementById("wbfOrderQty").value="1";
   document.getElementById("wbfOrderFormWrap").style.display="block";
   document.getElementById("wbfOrderSuccess").style.display="none";
+  beginWbfActivity();
   document.getElementById("wbfOrderModal").classList.add("show");
 }
 
 function closeOrderModal(){
   document.getElementById("wbfOrderModal").classList.remove("show");
+  endWbfActivity();
 }
 
 async function submitWbfOrder(){
@@ -1449,6 +1502,7 @@ const MY_ORDER_STATUS={
   cancelled:"DIBATALKAN"
 };
 function openMyOrders(){
+  beginWbfActivity();
   document.getElementById("orders-section").style.display="block";
   document.getElementById("hero")?.classList?.add("hidden");
   document.getElementById("brands")?.style.setProperty("display","none");
@@ -1463,6 +1517,7 @@ function openMyOrders(){
 }
 function closeMyOrders(){
   document.getElementById("orders-section").style.display="none";
+  endWbfActivity();
 }
 async function loadMyOrders(){
   const phone=document.getElementById("myOrdersPhone").value.trim();
