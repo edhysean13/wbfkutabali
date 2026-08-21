@@ -1080,7 +1080,12 @@ const WBF_BRAND_IDS={
   "VOLCOM":"fc2b3b92-68d6-423e-b931-1870e08ac91d",
   "ZOMBIES":"13ba8be4-abe4-4f29-9173-219c33fef936"
 };
-function getBrandId(name){return WBF_BRAND_IDS[name]||"";}
+function getBrandId(name){
+  const target=String(name||"").trim();
+  if(!target)return "";
+  const dynamic=Array.isArray(brandRecords)?brandRecords.find(b=>String(b?.name||"").trim().toLowerCase()===target.toLowerCase()):null;
+  return dynamic?.id||WBF_BRAND_IDS[target]||"";
+}
 
 const login=document.getElementById("login");
 const dash=document.getElementById("dashboard");
@@ -1812,8 +1817,10 @@ async function saveProductToDatabase(){
   saveProductBtn.textContent=editingProductId?"MENYIMPAN PERUBAHAN...":"MENYIMPAN...";
   try{
     const token=authToken();
+    // Pastikan daftar brand terbaru sudah dimuat sebelum mencari ID brand.
+    await loadBrands();
     const brandId=getBrandId(brand);
-    if(!brandId) throw new Error("Brand tidak ditemukan.");
+    if(!brandId) throw new Error("Brand tidak ditemukan. Pastikan brand tersebut sudah tersimpan di daftar Brands.");
 
     const imageUrls=[];
     for(const photo of photos){
