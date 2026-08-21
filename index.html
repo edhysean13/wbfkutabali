@@ -474,7 +474,9 @@ body.wbf-event-mode .wbf-event-photo{
 .wbf-gallery-details{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:min(620px,calc(100% - 32px));max-height:42vh;overflow:auto;background:rgba(10,10,10,.96);border:1px solid #333;border-radius:16px;padding:16px 18px 14px;z-index:4;box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .wbf-gallery-details .detail-brand{color:#e21b23;font-size:13px;font-weight:800;letter-spacing:1.5px}
 .wbf-gallery-details .detail-name{font-size:24px;font-weight:800;margin:4px 0 6px}
-.wbf-gallery-details .detail-sku{color:#aaa;font-size:12px;margin-bottom:12px}
+.wbf-gallery-details .detail-sku-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;min-width:0}
+.wbf-gallery-details .detail-sku{color:#aaa;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbf-gallery-details .detail-brand-inline{color:#aaa;font-size:12px;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
 .wbf-gallery-details .detail-specs{display:grid;grid-template-columns:72px 1fr;gap:6px 10px;border-top:1px solid #292929;border-bottom:1px solid #292929;padding:11px 0;color:#ddd;font-size:13px;line-height:1.35}
 .wbf-gallery-details .detail-specs b{color:#888;font-weight:600}
 .wbf-gallery-details .detail-price{margin-top:11px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -1346,7 +1348,8 @@ function renderProductGallery(){
     const sale=Math.max(0,Number(p.price||0)*(1-discount/100));
     const sizes=(p.sizes||[]).join(" / ") || "-";
     const colors=(p.colors||[]).join(" / ") || "-";
-    d.innerHTML='<div class="detail-brand">'+esc(p.brand_name||p.brand||selectedBrand||"")+'</div>'+      '<div class="detail-name">'+esc(p.name||"Product")+'</div>'+      '<div class="detail-sku">SKU: '+esc(p.sku||"-")+'</div>'+      '<div class="detail-specs">'+        '<b>Kategori</b><span>'+esc(p.category||"-")+'</span>'+        '<b>Size</b><span>'+esc(sizes)+'</span>'+        '<b>Color</b><span>'+esc(colors)+'</span>'+      '</div>'+      '<div class="detail-price">'+        (discount>0?'<span class="detail-old">Rp '+money(p.price)+'</span>':'')+        '<span class="detail-sale">Rp '+money(sale)+'</span>'+        (discount>0?'<span class="detail-discount">'+discount+'% OFF</span>':'')+      '</div>'+      '<button class="detail-order" type="button" onclick="closeProductGallery();addToCart(\''+esc(p.id)+'\')">ORDER</button>';
+    const brand=String(p.brand_name||p.brand||selectedBrand||"").trim();
+    d.innerHTML='<div class="detail-name">'+esc(p.name||"Product")+'</div>'+      '<div class="detail-sku-row"><span class="detail-sku">SKU: '+esc(p.sku||"-")+'</span>'+(brand?'<span class="detail-brand-inline">'+esc(brand)+'</span>':'')+'</div>'+      '<div class="detail-specs">'+        '<b>Kategori</b><span>'+esc(p.category||"-")+'</span>'+        '<b>Size</b><span>'+esc(sizes)+'</span>'+        '<b>Color</b><span>'+esc(colors)+'</span>'+      '</div>'+      '<div class="detail-price">'+        (discount>0?'<span class="detail-old">Rp '+money(p.price)+'</span>':'')+        '<span class="detail-sale">Rp '+money(sale)+'</span>'+        (discount>0?'<span class="detail-discount">'+discount+'% OFF</span>':'')+      '</div>'+      '<button class="detail-order" type="button" onclick="closeProductGallery();addToCart(\''+esc(p.id)+'\')">ORDER</button>';
   }
 }
 function galleryPrev(){ if(wbfGalleryImages.length<2)return; wbfGalleryIndex=(wbfGalleryIndex-1+wbfGalleryImages.length)%wbfGalleryImages.length; renderProductGallery(); }
