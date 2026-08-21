@@ -1348,7 +1348,10 @@ function renderProductGallery(){
     const sale=Math.max(0,Number(p.price||0)*(1-discount/100));
     const sizes=(p.sizes||[]).join(" / ") || "-";
     const colors=(p.colors||[]).join(" / ") || "-";
-    const brand=String(p.brand_name||p.brand||selectedBrand||"").trim();
+    const brandFromList = Array.isArray(allBrands)
+      ? allBrands.find(b=>String(b.id)===String(p.brand_id))
+      : null;
+    const brand=String(p.brand_name||p.brand||brandFromList?.name||selectedBrand||"").trim();
     d.innerHTML='<div class="detail-name">'+esc(p.name||"Product")+'</div>'+      '<div class="detail-sku-row"><span class="detail-sku">SKU: '+esc(p.sku||"-")+'</span>'+(brand?'<span class="detail-brand-inline">'+esc(brand)+'</span>':'')+'</div>'+      '<div class="detail-specs">'+        '<b>Kategori</b><span>'+esc(p.category||"-")+'</span>'+        '<b>Size</b><span>'+esc(sizes)+'</span>'+        '<b>Color</b><span>'+esc(colors)+'</span>'+      '</div>'+      '<div class="detail-price">'+        (discount>0?'<span class="detail-old">Rp '+money(p.price)+'</span>':'')+        '<span class="detail-sale">Rp '+money(sale)+'</span>'+        (discount>0?'<span class="detail-discount">'+discount+'% OFF</span>':'')+      '</div>'+      '<button class="detail-order" type="button" onclick="closeProductGallery();addToCart(\''+esc(p.id)+'\')">ORDER</button>';
   }
 }
