@@ -1298,6 +1298,7 @@ function endWbfActivity(){
 let wbfGalleryImages=[];
 let wbfGalleryIndex=0;
 let wbfGalleryProduct=null;
+let wbfGalleryProducts=[];
 let wbfGalleryPushBannerWasVisible=false;
 let wbfGalleryPushActiveWasVisible=false;
 function hidePushUiForGallery(){
@@ -1319,9 +1320,33 @@ function restorePushUiAfterGallery(){
 function getProductImages(p){
   return (Array.isArray(p?.image_urls)&&p.image_urls.length?p.image_urls:(p?.image_url?[p.image_url]:[])).filter(Boolean).slice(0,3);
 }
-function openProductGallery(productId){
+function getGalleryProductSequence(){
+  // Ikuti urutan produk yang sedang dilihat customer.
+  const specialPage=document.getElementById("special-promo-page");
+  if(specialPage && specialPage.style.display!=="none") return getSpecialPromoProducts();
+
+  const catalog=document.getElementById("catalog");
+  if(catalog){
+    const ids=[...catalog.querySelectorAll(".product-gallery-trigger")]
+      .map(el=>String(el.dataset.productId||""))
+      .filter(Boolean);
+    if(ids.length){
+      const byId=new Map((Array.isArray(allProducts)?allProducts:[]).map(p=>[String(p.id),p]));
+      const list=ids.map(id=>byId.get(id)).filter(Boolean);
+      if(list.length) return list;
+    }
+  }
+
+  const specialSection=document.getElementById("special-promo-section");
+  if(specialSection && specialSection.style.display!=="none") return getSpecialPromoProducts().slice(0,6);
+  return Array.isArray(allProducts)?allProducts:[];
+}
+
+function openProductGallery(productId, preserveSequence=false){
   const p=allProducts.find(x=>String(x.id)===String(productId));
   if(!p)return;
+  if(!preserveSequence) wbfGalleryProducts=getGalleryProductSequence();
+  if(!wbfGalleryProducts.some(x=>String(x.id)===String(productId))) wbfGalleryProducts=[p];
   wbfGalleryProduct=p;
   wbfGalleryImages=getProductImages(p);
   if(!wbfGalleryImages.length)return;
@@ -1357,6 +1382,18 @@ function renderProductGallery(){
 }
 function galleryPrev(){ if(wbfGalleryImages.length<2)return; wbfGalleryIndex=(wbfGalleryIndex-1+wbfGalleryImages.length)%wbfGalleryImages.length; renderProductGallery(); }
 function galleryNext(){ if(wbfGalleryImages.length<2)return; wbfGalleryIndex=(wbfGalleryIndex+1)%wbfGalleryImages.length; renderProductGallery(); }
+function galleryProductPrev(){
+  if(wbfGalleryProducts.length<2)return;
+  const i=wbfGalleryProducts.findIndex(x=>String(x.id)===String(wbfGalleryProduct?.id));
+  const next=wbfGalleryProducts[(i-1+wbfGalleryProducts.length)%wbfGalleryProducts.length];
+  if(next) openProductGallery(next.id,true);
+}
+function galleryProductNext(){
+  if(wbfGalleryProducts.length<2)return;
+  const i=wbfGalleryProducts.findIndex(x=>String(x.id)===String(wbfGalleryProduct?.id));
+  const next=wbfGalleryProducts[(i+1)%wbfGalleryProducts.length];
+  if(next) openProductGallery(next.id,true);
+}
 function closeProductGallery(){
   const modal=document.getElementById("wbfProductGallery");
   modal.classList.remove("show");
@@ -1370,7 +1407,15 @@ function closeProductGallery(){
   if(!stage)return;
   let startX=0,startY=0;
   stage.addEventListener("touchstart",e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});
-  stage.addEventListener("touchend",e=>{const t=e.changedTouches[0];const dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){dx<0?galleryNext():galleryPrev();}},{passive:true});
+  stage.addEventListener("touchend",e=>{
+    const t=e.changedTouches[0];
+    const dx=t.clientX-startX,dy=t.clientY-startY;
+    if(Math.abs(dy)>50 && Math.abs(dy)>Math.abs(dx)){
+      dy<0?galleryProductNext():galleryProductPrev();
+    }else if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){
+      dx<0?galleryNext():galleryPrev();
+    }
+  },{passive:true});
   stage.addEventListener("click",e=>{if(e.target===stage)closeProductGallery();});
   document.addEventListener("keydown",e=>{
     const modal=document.getElementById("wbfProductGallery");
