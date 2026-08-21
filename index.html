@@ -32,20 +32,24 @@ h1{font-size:clamp(38px,6vw,70px);line-height:.95;margin:14px 0;text-transform:u
   border:1px solid #54bff2;
   box-shadow:0 0 0 1px rgba(84,191,242,.18);
   position:relative;
+  color:#111;
 }
 .special-promo-grid .card .tag{
   display:inline-block;
   background:#54bff2;
-  color:#fff;
+  color:#111;
   padding:4px 7px;
   border-radius:5px;
   letter-spacing:.8px;
 }
-.special-promo-grid .card .sale-price{
-  color:#087db8;
-}
-.special-promo-grid .card .old-price{
-  color:#777;
+.special-promo-grid .card .name,
+.special-promo-grid .card .sku,
+.special-promo-grid .card .meta,
+.special-promo-grid .card .price,
+.special-promo-grid .card .sale-price,
+.special-promo-grid .card .old-price,
+.special-promo-grid .card .price small{
+  color:#111;
 }
 @media(max-width:800px){
   .products{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
