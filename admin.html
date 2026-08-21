@@ -754,7 +754,7 @@ html, body {
 
 <div id="dashboardHome">
 <div class="cards" id="dashboardCards">
-<div class="card clickable" id="brandsCard"><div class="num">6</div><div class="muted">BRANDS</div></div>
+<div class="card clickable" id="brandsCard"><div class="num" id="brandsCount">0</div><div class="muted">BRANDS</div></div>
 <div class="card clickable" id="productsCard"><div class="num">0</div><div class="muted">SKU / PRODUCTS</div></div>
 <div class="card clickable" id="ordersCard"><div class="num" id="ordersCount">0</div><div class="muted">ORDERS BARU</div></div>
 <div class="card clickable" id="paymentsCard"><div class="num" id="paymentsCount">0</div><div class="muted">PAYMENT</div></div>
@@ -1011,6 +1011,7 @@ function restoreView(){
   if(!token) return;
   login.classList.add("hidden");
   dash.classList.remove("hidden");
+  refreshBrandCount();
   refreshOrderCount();
   refreshVisitorStats();
   const view=localStorage.getItem("wbf_admin_view")||"dashboard";
@@ -1107,6 +1108,7 @@ if(isAdmin!==true){showError("Login berhasil, tetapi akun ini belum terdaftar se
 localStorage.setItem("wbf_access_token",data.access_token);
 localStorage.setItem("wbf_admin_view","dashboard");
 login.classList.add("hidden");dash.classList.remove("hidden");
+await refreshBrandCount();
 await refreshProductCount();
 await refreshOrderCount();
 await refreshVisitorStats();
@@ -1408,6 +1410,7 @@ async function saveBrand(){
    if(!res.ok)throw new Error(data.message||data.details||"Gagal menyimpan logo brand.");
   }
   await loadBrands();
+  await refreshBrandCount();
   st.textContent=file?"Brand dan logo berhasil disimpan.":(id?"Brand berhasil diperbarui.":"Brand berhasil ditambahkan.");
   setTimeout(resetBrandForm,700);
  }catch(e){
@@ -1616,6 +1619,25 @@ async function refreshVisitorStats(){
     set("visitorTotalUnique",data.total_unique);
     set("visitorOnlineNow",data.online_now);
   }catch(e){console.warn("WBF visitor stats gagal:",e)}
+}
+
+async function refreshBrandCount(){
+  const token=authToken();
+  if(!token)return;
+  try{
+    const res=await fetch(URL+"/rest/v1/rpc/wbf_admin_brands",{
+      method:"POST",
+      headers:wbfHeaders(token,true),
+      body:"{}"
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data?.message||data?.details||"Gagal memuat jumlah brand.");
+    const count=Array.isArray(data)?data.length:0;
+    const el=document.querySelector("#brandsCard .num");
+    if(el)el.textContent=count;
+  }catch(e){
+    console.warn("WBF brand count gagal:",e);
+  }
 }
 
 async function refreshProductCount(){
